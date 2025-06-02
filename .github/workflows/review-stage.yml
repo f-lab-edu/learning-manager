@@ -1,0 +1,10 @@
+name: review-stage.yml
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  publish:
+    name: Review Source Code
+    runs-on: ubuntu-latest # 배포 환경에 맞게 수정해주어야 함

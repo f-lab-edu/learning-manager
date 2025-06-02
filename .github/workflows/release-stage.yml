@@ -1,0 +1,13 @@
+name: release-stage.yml
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*.*.*' # 'v'로 시작하는 시맨틱 버전 태그 푸시 시 워크플로 실행
+
+jobs:
+  publish:
+    name: Publish release version
+    runs-on: ubuntu-latest # 배포 환경에 맞게 수정해주어야 함
+
