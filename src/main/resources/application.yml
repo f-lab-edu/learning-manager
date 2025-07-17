@@ -1,0 +1,31 @@
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+  h2:
+    console:
+      path: /h2-console
+      enabled: true
+
+logging:
+  level:
+    web: debug
+    sql: debug
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  jpa:
+    hibernate:
+      ddl-auto: none
+logging:
+  level:
+    web: error
+    sql: error
