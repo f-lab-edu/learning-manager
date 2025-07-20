@@ -2,19 +2,22 @@ package me.chan99k.learningmanager.domain.auth;
 
 import static org.springframework.util.Assert.*;
 
+import jakarta.persistence.Embedded;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import me.chan99k.learningmanager.domain.AbstractEntity;
 
 @Getter
-public class Account {
-
-	private Long id;
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Account extends AbstractEntity {
 
 	private Long memberId;
 
 	private AccountStatus status;
-
+	@Embedded
 	private Email email;
-
+	@Embedded
 	private Password password;
 
 	/* 도메인 로직 */

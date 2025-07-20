@@ -2,20 +2,23 @@ package me.chan99k.learningmanager.domain.member;
 
 import static org.springframework.util.Assert.*;
 
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import me.chan99k.learningmanager.domain.AbstractEntity;
 
 @Getter
+@Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Member {
-
-	private Long id;
+public class Member extends AbstractEntity {
 
 	private SystemRole role;
 
 	private MemberStatus status;
 
+	@Embedded
 	private Nickname nickname;
 
 	private String profileImageUrl;
@@ -24,11 +27,11 @@ public class Member {
 
 	/* 도메인 로직 */
 
-	public static Member registerDefault() {
+	public static Member registerDefault(NicknameGenerator nicknameGenerator) {
 		Member member = new Member();
 		member.role = SystemRole.MEMBER;
 		member.status = MemberStatus.ACTIVE;
-		member.nickname = Nickname.generateWithUUID();
+		member.nickname = Nickname.generateNickname(nicknameGenerator);
 
 		return member;
 	}

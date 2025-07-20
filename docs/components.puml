@@ -1,0 +1,58 @@
+@startuml
+title "LM component diagram v0.1.0"
+skinparam componentStyle rectangle
+
+package "Infrastructure" as "Infra"{
+    component "Client Server"
+    database "MySQL"
+    database "H2"
+    component "SMTP"
+}
+
+package "Adapter" {
+  component "Web Adapter"
+  component "Persistence Adapter"
+  component "SMTP Adapter"
+}
+
+package "Application" as App {
+  package "port" {
+    package "provides (Inbound)" {
+      interface "UseCases"
+    }
+    package "requires (Outbound)" {
+      interface "Repositories"
+    }
+  }
+  component "Services"
+}
+
+package "Domain" {
+  package "Auth"{
+  }
+  package "Member"{
+
+  }
+  package "Study"{
+  }
+}
+
+
+' 의존 관계
+"Client Server" --> "Web Adapter" : uses
+
+"Web Adapter" ..> UseCases : uses
+Services .up.|> UseCases : implements
+
+Services ..> Repositories : uses
+"Persistence Adapter" .up.|> Repositories : implements
+
+"SMTP Adapter" .up.|> Repositories : implements
+"SMTP Adapter" --> "SMTP" : uses
+
+App --> Domain :uses
+
+"Persistence Adapter" --> "MySQL" : uses (prod)
+"Persistence Adapter" --> "H2" : uses (test)
+
+@enduml
