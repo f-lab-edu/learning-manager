@@ -27,11 +27,11 @@ public class Member extends AbstractEntity {
 
 	/* 도메인 로직 */
 
-	public static Member registerDefault() {
+	public static Member registerDefault(NicknameGenerator nicknameGenerator) {
 		Member member = new Member();
 		member.role = SystemRole.MEMBER;
 		member.status = MemberStatus.ACTIVE;
-		member.nickname = Nickname.generateWithUUID();
+		member.nickname = Nickname.generateNickname(nicknameGenerator);
 
 		return member;
 	}
