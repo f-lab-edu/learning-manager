@@ -50,6 +50,6 @@ public class Attendance extends AbstractEntity {
 		this.checkOutTime = Instant.now();
 
 		// checkOutTime이 checkInTime 보다 늦는지 검증
-		isTrue(this.checkOutTime.isAfter(this.checkInTime), "[System] 퇴실 시간은 입실 시간보다 빠를수 없습니다.");
+		isTrue(this.checkOutTime.isAfter(this.checkInTime), "[System] 퇴실 시간은 입실 시간보다 빠를 수 없습니다.");
 	}
 }
