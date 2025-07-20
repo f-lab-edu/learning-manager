@@ -4,6 +4,9 @@ import static org.springframework.util.Assert.*;
 
 import java.util.regex.Pattern;
 
+import jakarta.persistence.Embeddable;
+
+@Embeddable
 public record Password(String encoded) {
 
 	private static final int MIN_LENGTH = 8;
