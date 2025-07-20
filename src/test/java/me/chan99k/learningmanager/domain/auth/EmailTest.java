@@ -13,15 +13,13 @@ class EmailTest {
     @Test
     @DisplayName("올바른 형식의 이메일로 객체를 생성하는 데 성공한다")
     void create_email_with_valid_address() {
-        // when & then
         assertThatCode(() -> new Email("test@example.com")).doesNotThrowAnyException();
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", " ", "invalid-email", "test@.com", "test@domain."}) // 다양한 실패 케이스
+    @ValueSource(strings = {"", " ", "invalid-email", "test@.com", "test@domain."})
     @DisplayName("잘못된 형식의 이메일로 객체를 생성하려 하면 예외가 발생한다")
     void create_email_with_invalid_address_throws_exception(String invalidEmail) {
-        // when & then
         assertThatThrownBy(() -> new Email(invalidEmail))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("유효하지 않은 이메일 형식입니다.");
