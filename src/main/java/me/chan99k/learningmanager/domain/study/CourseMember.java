@@ -31,16 +31,19 @@ public class CourseMember extends AbstractEntity {
 	@Enumerated(EnumType.STRING)
 	private CourseRole courseRole;
 
-	private CourseMember(Course course, Long memberId, CourseRole courseRole) {
-		this.course = course;
-		this.memberId = memberId;
-		this.courseRole = courseRole;
-	}
-
 	/* 도메인 로직 */
 
-	public static CourseMember enroll(Course course, Long memberId, CourseRole courseRole){
-		return new CourseMember(course, memberId, courseRole);
+	public static CourseMember enroll(Course course, Long memberId, CourseRole courseRole) {
+		CourseMember courseMember = new CourseMember();
+		courseMember.course = course;
+		courseMember.memberId = memberId;
+		courseMember.courseRole = courseRole;
+
+		return courseMember;
+	}
+
+	public void changeRole(CourseRole newRole) {
+		this.courseRole = newRole;
 	}
 
 }

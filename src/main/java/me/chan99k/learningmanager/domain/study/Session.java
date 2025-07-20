@@ -71,10 +71,11 @@ public class Session extends AbstractEntity {
 	 * sessionLocation이 SITE일 경우에만 사용될 상세 장소 설명
 	 */
 	private String locationDetails;
-
+	// TODO :: 담당 매니저,멘토가 같으면서 루트/하위 세션 타입도 같은 세션은 서로 시간이 겹치면 안된다는 제약 조건을 추가하여야 함
 	/* 도메인 로직 */
 
-	public static Session createRootSession(Curriculum curriculum, String title, Instant scheduledAt, Instant scheduledEndAt,
+	public static Session createRootSession(Curriculum curriculum, String title, Instant scheduledAt,
+		Instant scheduledEndAt,
 		SessionType type, SessionLocation location, String locationDetails
 	) {
 		Session session = new Session();
@@ -115,6 +116,7 @@ public class Session extends AbstractEntity {
 		return subSession;
 	}
 
+	// TODO : 이미 시작한 세션의 시간은 수정하지 못하도록 해야함. ( 루트 세션은 3일 전까지, 하위 세션은 한시간 전까지 수정 가능 하도록 )
 	public void update(String title, Instant scheduledAt, Instant scheduledEndAt, SessionType type,
 		SessionLocation location, String locationDetails) {
 		this.title = title;
@@ -166,11 +168,11 @@ public class Session extends AbstractEntity {
 		}
 	}
 
-	private boolean isRootSession() {
+	boolean isRootSession() {
 		return Objects.isNull(parent);
 	}
 
-	private boolean isChildSession() {
+	boolean isChildSession() {
 		return !isRootSession();
 	}
 }

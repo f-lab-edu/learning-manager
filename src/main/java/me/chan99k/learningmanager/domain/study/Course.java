@@ -55,4 +55,8 @@ public class Course extends AbstractEntity {
 		CourseMember courseMember = CourseMember.enroll(this, memberId, courseRole);
 		this.courseMemberList.add(courseMember);
 	}
+
+	public void removeMember(Long memberId) {
+		this.courseMemberList.removeIf(courseMember -> courseMember.getMemberId().equals(memberId));
+	}
 }

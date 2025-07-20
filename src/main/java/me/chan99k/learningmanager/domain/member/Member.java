@@ -2,6 +2,7 @@ package me.chan99k.learningmanager.domain.member;
 
 import static org.springframework.util.Assert.*;
 
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -17,6 +18,7 @@ public class Member extends AbstractEntity {
 
 	private MemberStatus status;
 
+	@Embedded
 	private Nickname nickname;
 
 	private String profileImageUrl;
