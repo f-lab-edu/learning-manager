@@ -2,12 +2,13 @@ package me.chan99k.learningmanager.domain.auth;
 
 import static org.springframework.util.Assert.*;
 
+import jakarta.persistence.Entity;
 import lombok.Getter;
+import me.chan99k.learningmanager.domain.AbstractEntity;
 
 @Getter
-public class Account {
-
-	private Long id;
+@Entity
+public class Account extends AbstractEntity {
 
 	private Long memberId;
 

@@ -2,15 +2,16 @@ package me.chan99k.learningmanager.domain.member;
 
 import static org.springframework.util.Assert.*;
 
+import jakarta.persistence.Entity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import me.chan99k.learningmanager.domain.AbstractEntity;
 
 @Getter
+@Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Member {
-
-	private Long id;
+public class Member extends AbstractEntity {
 
 	private SystemRole role;
 
