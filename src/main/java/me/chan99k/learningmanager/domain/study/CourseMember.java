@@ -1,5 +1,7 @@
 package me.chan99k.learningmanager.domain.study;
 
+import static org.springframework.util.Assert.*;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -34,6 +36,10 @@ public class CourseMember extends AbstractEntity {
 	/* 도메인 로직 */
 
 	public static CourseMember enroll(Course course, Long memberId, CourseRole courseRole) {
+		notNull(course, "[System] 코스는 필수입니다.");
+		notNull(memberId, "[System] 멤버 ID는 필수입니다.");
+		notNull(courseRole, "[System] 코스 역할은 필수입니다.");
+
 		CourseMember courseMember = new CourseMember();
 		courseMember.course = course;
 		courseMember.memberId = memberId;
@@ -43,6 +49,7 @@ public class CourseMember extends AbstractEntity {
 	}
 
 	public void changeRole(CourseRole newRole) {
+		notNull(newRole, "[System] 새로운 역할은 필수입니다.");
 		this.courseRole = newRole;
 	}
 

@@ -1,13 +1,15 @@
 package me.chan99k.learningmanager.domain.study;
 
+import static org.springframework.util.Assert.*;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,7 +17,6 @@ import me.chan99k.learningmanager.domain.AbstractEntity;
 
 @Getter
 @Entity
-@Table(name = "courses")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Course extends AbstractEntity {
 	/**
@@ -40,6 +41,8 @@ public class Course extends AbstractEntity {
 	/* 도메인 로직 */
 
 	public static Course create(String title, String description) {
+		hasText(title, "코스명은 필수입니다.");
+
 		Course course = new Course();
 		course.title = title;
 		course.description = description;
@@ -47,16 +50,39 @@ public class Course extends AbstractEntity {
 	}
 
 	public void update(String title, String description) {
-		this.title = title;
-		this.description = description;
+		if (title != null) {
+			hasText(title, "[System] 코스명은 필수입니다.");
+			this.title = title;
+		}
+		if (description != null) {
+			this.description = description;
+		}
 	}
 
 	public void addMember(Long memberId, CourseRole courseRole) {
+		boolean alreadyExists = this.courseMemberList.stream().anyMatch(
+			member -> member.getMemberId().equals(memberId)
+		);
+
+		isTrue(!alreadyExists, "[System] 이미 코스에 등록된 멤버입니다.");
+
 		CourseMember courseMember = CourseMember.enroll(this, memberId, courseRole);
 		this.courseMemberList.add(courseMember);
 	}
 
 	public void removeMember(Long memberId) {
-		this.courseMemberList.removeIf(courseMember -> courseMember.getMemberId().equals(memberId));
+		boolean removed = this.courseMemberList.removeIf(
+			courseMember -> courseMember.getMemberId().equals(memberId)
+		);
+
+		isTrue(removed, "[System] 코스에 등록되지 않은 멤버입니다.");
+	}
+
+	public List<CourseMember> getCourseMemberList() {
+		return Collections.unmodifiableList(courseMemberList);
+	}
+
+	public List<Curriculum> getCurriculumList() {
+		return Collections.unmodifiableList(curriculumList);
 	}
 }

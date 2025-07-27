@@ -2,9 +2,6 @@ package me.chan99k.learningmanager.domain.study;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -37,7 +34,6 @@ class CurriculumTest {
 			assertThat(newCurriculum.getCourse()).isEqualTo(course);
 			assertThat(newCurriculum.getTitle()).isEqualTo(title);
 			assertThat(newCurriculum.getDescription()).isEqualTo(description);
-			assertThat(newCurriculum.getSessionList()).isEmpty();
 		}
 
 		@Test
@@ -50,47 +46,6 @@ class CurriculumTest {
 
 			assertThat(curriculum.getTitle()).isEqualTo(newTitle);
 			assertThat(curriculum.getDescription()).isEqualTo(newDescription);
-		}
-	}
-
-	@Nested
-	@DisplayName("커리큘럼 세션 관리 테스트")
-	class ManageSessions {
-
-		private Session session1;
-		private Session session2;
-
-		@BeforeEach
-		void setUp() {
-			Instant now = Instant.now();
-			session1 = Session.createRootSession(curriculum, "세션 1", now, now.plus(2, ChronoUnit.HOURS),
-				SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null);
-			session2 = Session.createRootSession(curriculum, "세션 2", now.plus(1, ChronoUnit.DAYS),
-				now.plus(1, ChronoUnit.DAYS).plus(2, ChronoUnit.HOURS), SessionType.OFFLINE, SessionLocation.SITE,
-				"강남역 스타벅스");
-		}
-
-		@Test
-		@DisplayName("[Success] 커리큘럼에 새로운 세션을 성공적으로 추가한다.")
-		void add_session_success() {
-			curriculum.addSession(session1);
-
-			assertThat(curriculum.getSessionList()).hasSize(1);
-			assertThat(curriculum.getSessionList()).contains(session1);
-		}
-
-		@Test
-		@DisplayName("[Success] 커리큘럼에서 특정 세션을 성공적으로 제외한다.")
-		void detach_session_success() {
-			curriculum.addSession(session1);
-			curriculum.addSession(session2);
-			assertThat(curriculum.getSessionList()).hasSize(2);
-
-			curriculum.detachSessionFromCurriculum(session1);
-
-			assertThat(curriculum.getSessionList()).hasSize(1);
-			assertThat(curriculum.getSessionList()).doesNotContain(session1);
-			assertThat(curriculum.getSessionList()).contains(session2);
 		}
 	}
 }

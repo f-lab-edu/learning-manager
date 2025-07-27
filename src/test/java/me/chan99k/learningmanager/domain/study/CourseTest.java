@@ -113,14 +113,15 @@ class CourseTest {
 		}
 
 		@Test
-		@DisplayName("[Success] 과정에 존재하지 않는 멤버를 제외해도 아무 일도 일어나지 않는다.") // TODO :: 존재하지 않는다고 메시지를 던져줘야 할지 생각해보기
-		void remove_non_existing_member_success() {
+		@DisplayName("[Failure] 과정에 존재하지 않는 멤버를 제외하려 하면 예외가 발생한다.")
+		void remove_non_existing_member_fail() {
 			course.addMember(1L, CourseRole.MENTEE);
 			assertThat(course.getCourseMemberList()).hasSize(1);
 
-			course.removeMember(99L); // 존재하지 않는 ID
-
-			assertThat(course.getCourseMemberList()).hasSize(1);
+			// 존재하지 않는 ID로 제거를 시도하면 예외가 발생하는 것을 검증합니다.
+			assertThatThrownBy(() -> course.removeMember(99L))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("[System] 코스에 등록되지 않은 멤버입니다.");
 		}
 	}
 }

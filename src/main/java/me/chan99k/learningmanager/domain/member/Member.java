@@ -4,6 +4,8 @@ import static org.springframework.util.Assert.*;
 
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,12 +16,14 @@ import me.chan99k.learningmanager.domain.AbstractEntity;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member extends AbstractEntity {
 
-	private SystemRole role;
-
-	private MemberStatus status;
-
 	@Embedded
 	private Nickname nickname;
+
+	@Enumerated(EnumType.STRING)
+	private SystemRole role;
+
+	@Enumerated(EnumType.STRING)
+	private MemberStatus status;
 
 	private String profileImageUrl;
 
