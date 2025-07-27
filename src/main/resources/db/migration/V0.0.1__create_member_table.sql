@@ -8,7 +8,7 @@ CREATE TABLE member
     last_modified_by  BIGINT       NULL COMMENT '수정자 ID',
 
     -- Member 엔티티 필드
-    nickname          VARCHAR(20)  NOT NULL COMMENT '닉네임' collate utf8mb4_unicode_cs, # case-sensitive
+    nickname VARCHAR(20) NOT NULL COMMENT '닉네임' collate utf8mb4_bin, # case-sensitive
     role              VARCHAR(20)  NOT NULL COMMENT '시스템 역할 (MEMBER, ADMIN)',
     status            VARCHAR(20)  NOT NULL COMMENT '멤버 상태 (ACTIVE, INACTIVE, WITHDRAWN, BANNED)',
     profile_image_url VARCHAR(255) NULL COMMENT '프로필 이미지 URL',
