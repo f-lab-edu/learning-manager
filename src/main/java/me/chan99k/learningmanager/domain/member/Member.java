@@ -2,6 +2,8 @@ package me.chan99k.learningmanager.domain.member;
 
 import static org.springframework.util.Assert.*;
 
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -17,6 +19,7 @@ import me.chan99k.learningmanager.domain.AbstractEntity;
 public class Member extends AbstractEntity {
 
 	@Embedded
+	@AttributeOverride(name = "value", column = @Column(name = "nickname", nullable = false, unique = true))
 	private Nickname nickname;
 
 	@Enumerated(EnumType.STRING)

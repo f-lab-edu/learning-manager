@@ -2,6 +2,8 @@ package me.chan99k.learningmanager.domain.member;
 
 import static org.springframework.util.Assert.*;
 
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -26,9 +28,11 @@ public class Account extends AbstractEntity {
 	private AccountStatus status;
 
 	@Embedded
+	@AttributeOverride(name = "address", column = @Column(name = "email", nullable = false, unique = true))
 	private Email email;
 
 	@Embedded
+	@AttributeOverride(name = "encoded", column = @Column(name = "password", nullable = false, unique = true))
 	private Password password;
 
 	/* 도메인 로직 */
