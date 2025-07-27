@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.domain.study;
+package me.chan99k.learningmanager.domain.session;
 
 public enum SessionLocation {
 	GOOGLE_MEET("구글 밋"), ZOOM("줌"), SITE("사용자 지정 장소");

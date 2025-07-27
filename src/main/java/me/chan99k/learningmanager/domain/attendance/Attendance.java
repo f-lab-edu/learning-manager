@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.domain.study;
+package me.chan99k.learningmanager.domain.attendance;
 
 import static org.springframework.util.Assert.*;
 
@@ -6,9 +6,6 @@ import java.time.Instant;
 import java.util.Objects;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,9 +16,7 @@ import me.chan99k.learningmanager.domain.AbstractEntity;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Attendance extends AbstractEntity {
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "session_id", nullable = false)
-	private Session session;
+	private Long sessionId;
 
 	private Long memberId;
 
@@ -31,12 +26,12 @@ public class Attendance extends AbstractEntity {
 
 	/* 도메인 로직 */
 
-	public static Attendance checkIn(Session session, Long memberId) {
-		notNull(session, "[System] 출석을 기록할 세션은 필수입니다.");
+	public static Attendance checkIn(Long sessionId, Long memberId) {
+		notNull(sessionId, "[System] 출석을 기록할 세션은 필수입니다.");
 		notNull(memberId, "[System] 출석을 기록할 회원은 필수입니다.");
 
 		Attendance attendance = new Attendance();
-		attendance.session = session;
+		attendance.sessionId = sessionId;
 		attendance.memberId = memberId;
 		attendance.checkInTime = Instant.now(); // 입실 시간은 현재 시간
 		attendance.checkOutTime = null; // 퇴실 시간은 아직 없음

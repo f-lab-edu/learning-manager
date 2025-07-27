@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.domain.auth;
+package me.chan99k.learningmanager.domain.member;
 
 public enum AccountStatus {
 	PENDING("대기"), ACTIVE("활성"), INACTIVE("휴면");

@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.domain.auth;
+package me.chan99k.learningmanager.domain.member;
 
 import static org.springframework.util.Assert.*;
 
