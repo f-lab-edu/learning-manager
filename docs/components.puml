@@ -1,5 +1,5 @@
 @startuml
-title "LM component diagram v0.1.0"
+title "LM component diagram v0.0.2"
 skinparam componentStyle rectangle
 
 package "Infrastructure" as "Infra"{
@@ -28,12 +28,14 @@ package "Application" as App {
 }
 
 package "Domain" {
-  package "Auth"{
+  package "Attendance"{
   }
   package "Member"{
 
   }
-  package "Study"{
+  package "Course"{
+  }
+  package "Session"{
   }
 }
 
