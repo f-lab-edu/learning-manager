@@ -1,3 +1,8 @@
+spring:
+  application:
+    name: learning-manager
+server:
+  port: 8080
 ---
 spring:
   config:
@@ -5,18 +10,40 @@ spring:
       on-profile: dev
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
     show-sql: true
+    open-in-view: false
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  flyway:
+    enabled: true
+
+logging:
+  level:
+    org.hibernate.sql: debug
+    org.springframework.web: debug
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
   h2:
     console:
       path: /h2-console
       enabled: true
-
+  flyway:
+    enabled: false
 logging:
   level:
-    web: debug
-    sql: debug
-
+    web: trace
+    sql: trace
 ---
 spring:
   config:
@@ -25,6 +52,13 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  flyway:
+    enabled: true
 logging:
   level:
     web: error
