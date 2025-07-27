@@ -27,24 +27,7 @@ logging:
     org.springframework.web: debug
 
 ---
-spring:
-  config:
-    activate:
-      on-profile: test
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-  h2:
-    console:
-      path: /h2-console
-      enabled: true
-  flyway:
-    enabled: false
-logging:
-  level:
-    web: trace
-    sql: trace
----
+
 spring:
   config:
     activate:
