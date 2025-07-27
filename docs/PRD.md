@@ -1,10 +1,12 @@
 # 제품 요구사항 명세서 (PRD): Learning Manager
 
+> v.0.0.2 | 25.07.25
 ---
 
 ## 1. 개요 (Overview)
 
-**Learning Manager**는 회원의 온/오프라인 스터디 과정을 지원하는 온라인 서비스입니다. 기존 학원 운영 ERP 시스템의 반복적이고 비효율적인 업무(출석, 일정 관리 등)를 자동화하고, 체계적인 권한 관리를 통해 **학원 관리자와 수강생이 학습 과정 자체에만 집중할 수 있는 인프라를 제공**하는 것을 목표로 합니다.
+**Learning Manager**는 회원의 온/오프라인 스터디 과정을 지원하는 온라인 서비스입니다. 기존 학원 운영 ERP 시스템의 반복적이고 비효율적인 업무(출석, 일정 관리 등)를 자동화하고, 체계적인 권한
+관리를 통해 **학원 관리자와 수강생이 학습 과정 자체에만 집중할 수 있는 인프라를 제공**하는 것을 목표로 합니다.
 
 본 프로젝트는 실제 상용 서비스를 참조하되, '스터디 관리'라는 핵심 컨셉에 맞춰 도메인 용어를 재구성하여 개인 프로젝트로서의 완성을 1차 목표로 합니다.
 
@@ -62,7 +64,8 @@
 #### 4.2.2 스터디 과정 (Course)
 
 - **(P1) 스터디 과정 개설**:
-    - **스터디장 자격**: `SystemRole`이 `ADMIN`이거나, 별도의 승인 절차를 거친 `MEMBER`만이 스터디를 개설할 수 있는 '스터디장'이 될 수 있다. (스터디장 승인 기능은 MVP 이후 구현)
+    - **스터디장 자격**: `SystemRole`이 `ADMIN`이거나, 별도의 승인 절차를 거친 `MEMBER`만이 스터디를 개설할 수 있는 '스터디장'이 될 수 있다. (스터디장 승인 기능은 MVP 이후
+      구현)
     - **생성**: 스터디장은 스터디의 제목, 설명 등을 포함하는 새로운 스터디 과정을 생성할 수 있다.
     - **공개 및 참여**: 생성된 스터디 과정은 공개되어 회원들에게 노출되며, 회원들은 참여 신청을 할 수 있다.
 - **(P0) 스터디 과정 참여**:
@@ -107,26 +110,30 @@
 
 ---
 
-## 5. 비기능적 요구사항 
+## 5. 비기능적 요구사항
 
 ### 5.1 에러 핸들링 (Error Handling)
+
 - 모든 API 실패 응답은 Spring Framework의 `ProblemDetail` 클래스를 사용하여 표준화된 형식으로 반환합니다.
 - 클라이언트가 원인을 명확히 파악할 수 있도록, 예외 메시지는 구체적인 한국어로 작성합니다. (예: "[System] 사용자를 찾을 수 없습니다.")
 
 ### 5.2 보안 (Security)
+
 - **역할 기반 접근 제어 (RBAC)**: 시스템의 모든 주요 기능 및 데이터 접근은 `SystemRole`과 `CourseRole`을 기반으로 통제됩니다.
 - **권한 매트릭스 (예시)**:
-| 리소스 | 생성(C) | 조회(R) | 수정(U) | 삭제(D) |
-| :--- | :--- | :--- | :--- | :--- |
-| `Course` | 스터디장 | 전체 회원 | 스터디장 | 스터디장 |
-| `Session` | 스터디장 | 과정 참여자 | 스터디장 | 스터디장 |
-| `Member` | (회원가입) | 본인, 관리자 | 본인, 관리자 | (탈퇴) |
+  | 리소스 | 생성(C) | 조회(R) | 수정(U) | 삭제(D) |
+  | :--- | :--- | :--- | :--- | :--- |
+  | `Course` | 스터디장 | 전체 회원 | 스터디장 | 스터디장 |
+  | `Session` | 스터디장 | 과정 참여자 | 스터디장 | 스터디장 |
+  | `Member` | (회원가입) | 본인, 관리자 | 본인, 관리자 | (탈퇴) |
 
 ### 5.3 데이터 유효성 검사 (Data Validation)
+
 - 모든 도메인 모델의 필드는 명시적인 제약조건(Null 허용 여부, 길이 제한, 값의 범위 등)을 가집니다.
 - 제약조건 위반 시, `ProblemDetail`을 통해 어떤 필드가 왜 유효하지 않은지 명확한 에러 메시지를 반환합니다.
 
 ### 5.4 감사 (Auditing)
+
 - 모든 주요 도메인 엔티티는 생성 및 수정 이력을 추적하기 위해 아래의 감사 필드를 반드시 포함합니다.
 - `createdAt` (Instant): 생성 시각
 - `createdBy` (Long): 생성자 ID (Member ID)
@@ -137,53 +144,66 @@
 
 ## 6. 도메인 모델 상세 정의
 
-### 6.1 Auth
+### 6.1 Member
 
 #### 6.1.1 `Account` : 사용자 인증 정보
+
 > 시스템 접근에 필요한 이메일, 비밀번호 등 핵심 인증 정보를 관리합니다.
+
 - **id** (Long), **memberId** (Long)
 - **status** (AccountStatus), **email** (Email), **password** (Password)
 - **createdAt**, **createdBy**, **updatedAt**, **updatedBy**
 
 ##### provides
+
 - `create()`: 신규 회원가입 요청에 따라 계정을 생성합니다.
 - `activate()`: 이메일 인증 완료 시 계정을 활성 상태로 변경합니다.
 - `deactivate()`: 휴면 상태로 전환합니다.
 - `changePassword()`: 비밀번호를 변경합니다.
 
 ##### requires
+
 - `save()`: 계정 정보 변경 사항을 DB에 저장(또는 수정)합니다.
 - `sendVerificationEmail()`: 계정 활성화를 위한 이메일을 외부 시스템에 요청합니다.
 
 #### 6.1.2 `Email` : 이메일 값 객체
+
 > 이메일 주소의 형식을 검증하고 관리합니다.
+
 - **address** (String): 이메일 주소
 
 ##### provides
+
 - `new()`: 정규식 검증을 통해 유효한 이메일 객체를 생성합니다.
 
 #### 6.1.3 `Password` : 비밀번호 값 객체
+
 > 비밀번호의 복잡도(길이, 문자 조합)를 검증하고 안전하게 암호화합니다.
+
 - **encoded** (String): 암호화된 비밀번호
 
 ##### provides
+
 - `generatePassword()`: 원본 비밀번호의 유효성을 검증하고 암호화하여 객체를 생성합니다.
 - `verify()`: 입력된 비밀번호와 암호화된 비밀번호의 일치 여부를 확인합니다.
 
 ##### requires
+
 - `PasswordEncoder.encode()`: 문자열을 암호화합니다.
 - `PasswordEncoder.match()`: 원본 문자열과 암호화된 문자열을 비교합니다.
 
-### 6.2 Member
 
-#### 6.2.1 `Member` : 사용자(회원) 정보
+#### 6.1.4 `Member` : 사용자(회원) 정보
+
 > 시스템 사용자의 프로필, 역할, 상태 등 구체적인 정보를 관리합니다.
+
 - **id** (Long)
 - **role** (SystemRole), **status** (MemberStatus), **nickname** (Nickname)
 - **profileImageUrl** (String), **selfIntroduction** (String)
 - **createdAt**, **createdBy**, **updatedAt**, **updatedBy**
 
 ##### provides
+
 - `registerDefault()`: 기본 역할과 상태를 가진 회원 정보를 생성합니다.
 - `updateProfile()`: 프로필 이미지와 자기소개를 수정합니다.
 - `changeNickname()`: 닉네임을 변경합니다.
@@ -192,19 +212,24 @@
 - `withdraw()`: 회원을 탈퇴 처리합니다.
 
 ##### requires
+
 - `save()`: 회원 정보 변경 사항을 DB에 저장(또는 수정)합니다.
 - `saveHistory()`: 회원 상태 변경 이력을 DB에 기록합니다.
 
-#### 6.2.2 `MemberStatusHistory` : 회원 상태 변경 이력
+#### 6.1.5 `MemberStatusHistory` : 회원 상태 변경 이력
+
 > 회원의 상태가 변경될 때마다 해당 기록을 저장하여 추적합니다.
+
 - **id** (Long), **memberId** (Long)
 - **status** (MemberStatus), **reason** (String)
 - **changedAt** (Instant)
 
-### 6.3 Study
+### 6.2 Course
 
-#### 6.3.1 `Course` : 스터디 과정
+#### 6.2.1 `Course` : 스터디 과정
+
 > 하나 이상의 커리큘럼을 포함하는 최상위 학습 단위입니다.
+
 - **id** (Long), **title** (String), **description** (String)
 - **courseMemberList** (List<CourseMember>), **curriculumList** (List<Curriculum>)
 - **createdAt**, **createdBy**, **updatedAt**, **updatedBy**
@@ -213,62 +238,99 @@
 - `create()`: 새로운 스터디 과정을 개설합니다.
 - `update()`: 과정 정보를 수정합니다.
 - `addMember()`: 과정에 신규 멤버를 추가하고 역할을 부여합니다.
+- `removeMember()`: 과정에서 기존 멤버를 제외합니다.
 
 ##### requires
+
 - `save()`: 과정 정보 변경 사항을 DB에 저장(또는 수정)합니다.
 
-#### 6.3.2 `CourseMember` : 과정-회원 관계
+#### 6.2.2 `CourseMember` : 과정-회원 관계
+
 > 특정 스터디 과정에 어떤 회원이 어떤 역할로 참여하는지를 정의합니다.
+
 - **id** (Long), **memberId** (Long), **courseId** (Long)
 - **courseRole** (CourseRole): 과정 내 역할 (`MANAGER`, `MENTOR`, `STUDENT`)
 
-#### 6.3.3 `Curriculum` : 스터디 커리큘럼
+#### 6.2.3 `Curriculum` : 스터디 커리큘럼
+
 > 관련된 세션들을 그룹화하는 중간 단위입니다.
+
 - **id** (Long), **courseId** (Long)
 - **title** (String), **description** (String)
-- **sessionList** (List<Session>)
 - **createdAt**, **createdBy**, **updatedAt**, **updatedBy**
 
 ##### provides
-- `create()`: 새로운 커리큘럼을 생성합니다.
+- `create()`: 새로운 커리큘람을 생성합니다.
 - `update()`: 커리큘럼 정보를 수정합니다.
-- `addSession()`: 커리큘럼에 세션을 추가합니다.
 
 ##### requires
+
 - `save()`: 커리큘럼 정보 변경 사항을 DB에 저장(또는 수정)합니다.
 
-#### 6.3.4 `Session` : 스터디 세션
+
+### 6.3 Session
+#### 6.3.1 `Session` : 스터디 세션
+
 > 실제 학습 활동이 이루어지는 최소 시간 단위입니다.
-- **id** (Long), **curriculumId** (Long), **parentSessionId** (Long)
+
+- **id** (Long), **courseId** (Long), **curriculumId** (Long)
+- **parent** (Session): 부모 세션 참조 (계층 구조)
+- **children** (List<Session>): 하위 세션 목록
+- **participants** (List<SessionParticipant>): 세션 참여자 목록
 - **title** (String), **scheduledAt** (Instant), **scheduledEndAt** (Instant)
 - **type** (SessionType), **location** (SessionLocation), **locationDetails** (String)
-- **attendanceList** (List<Attendance>)
 - **createdAt**, **createdBy**, **updatedAt**, **updatedBy**
 
 ##### provides
-- `create()`: 시간 제약조건 검증 후 새로운 세션을 생성합니다.
+- `create...()`: 역할(독립/코스/커리큘럼)에 맞는 세션을 생성합니다.
+- `createChildSession()`: 하위 세션을 생성합니다.
 - `update()`: 세션 정보를 수정합니다.
+- `addParticipant()`: 세션에 신규 참여자를 추가합니다.
+- `removeParticipant()`: 세션에서 참여자를 제외합니다.
 
 ##### requires
+
 - `save()`: 세션 정보 변경 사항을 DB에 저장(또는 수정)합니다.
 
-#### 6.3.5 `Attendance` : 출석 기록
+#### 6.3.2 `SessionParticipant` : 세션-회원 관계
+
+> 특정 스터디 세션에 어떤 회원이 어떤 역할로 참여하는지를 정의합니다.
+
+- **id** (Long), **memberId** (Long)
+- **session** (Session): 참여하는 세션 참조
+- **role** (SessionParticipantRole): 세션 내 역할 (`HOST`, `SPEAKER`, `ATTENDEE`)
+- **createdAt**, **createdBy**, **updatedAt**, **updatedBy**
+
+##### provides
+- `of()`: 세션, 멤버, 역할을 받아 새로운 참여 관계를 생성합니다.
+
+
+### 6.4 Attendance
+#### 6.4.1 `Attendance` : 출석 기록
+
 > 세션별 회원의 입실 및 퇴실 기록을 관리합니다.
+
 - **id** (Long), **memberId** (Long), **sessionId** (Long)
 - **checkInTime** (Instant), **checkOutTime** (Instant)
 - **createdAt**, **createdBy**, **updatedAt**, **updatedBy**
 
 ##### provides
+
 - `checkIn()`: 입실 시간을 기록합니다.
 - `checkOut()`: 퇴실 시간을 기록합니다.
 
 ##### requires
+
 - `save()`: 출석 정보 변경 사항을 DB에 저장(또는 수정)합니다.
 
-### 6.4 Notification
 
-#### 6.4.1 `Notification` : 알림
+
+### 6.5 Notification
+
+#### 6.5.1 `Notification` : 알림
+
 > 시스템에서 사용자에게 발송되는 모든 알림의 내용, 상태, 이력을 관리합니다.
+
 - **id** (Long), **memberId** (Long)
 - **type** (NotificationType): `EMAIL`, `SMS` 등
 - **content** (String): 알림 내용
@@ -277,11 +339,13 @@
 - **createdAt**, **createdBy**, **updatedAt**, **updatedBy**
 
 ##### provides
+
 - `create()`: 발송할 알림을 생성합니다.
 - `markAsSent()`: 발송 성공 상태로 변경합니다.
 - `fail()`: 발송 실패 상태로 변경합니다.
 
 ##### requires
+
 - `save()`: 알림 정보 변경 사항을 DB에 저장(또는 수정)합니다.
 - `send()`: 외부 게이트웨이(Email, SMS 등)를 통해 실제 알림을 발송합니다.
 
