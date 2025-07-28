@@ -11,7 +11,7 @@ CREATE TABLE account
     member_id        BIGINT       NOT NULL COMMENT '멤버 고유 ID',
     status           VARCHAR(20)  NOT NULL COMMENT '계정 상태 (PENDING, ACTIVE, INACTIVE 등)',
     email            VARCHAR(255) NOT NULL COMMENT '이메일 주소',
-    password VARCHAR(255) NOT NULL COMMENT '암호화된 비밀 번호' collate utf8mb4_bin,
+    password VARCHAR(255) NOT NULL COMMENT '암호화된 비밀 번호',
     -- 제약 조건 설정
     CONSTRAINT pk_account PRIMARY KEY (id),
     CONSTRAINT UK_account_email UNIQUE (`email`),
