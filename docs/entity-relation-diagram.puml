@@ -1,0 +1,157 @@
+@startuml
+' !theme vibrant
+' uncomment the line above for a different theme
+
+hide circle
+skinparam linetype ortho
+
+' skinparam commands for better layout and appearance
+skinparam {
+    shadowing false
+    handwritten false
+    classBackgroundColor White
+    classArrowColor #666666
+    classBorderColor #666666
+    noteBackgroundColor #F9F9F9
+    noteBorderColor #666666
+    packageStyle rectangle
+}
+
+package "User Management" {
+    entity "member" as member {
+      * id: BIGINT (PK)
+      --
+      * nickname: VARCHAR(20) (UK)
+      * role: VARCHAR(20)
+      * status: VARCHAR(20)
+      profile_image_url: VARCHAR(255)
+      self_introduction: VARCHAR(255)
+      --
+      * created_at: DATETIME(6)
+      last_modified_at: DATETIME(6)
+      * created_by: BIGINT
+      last_modified_by: BIGINT
+    }
+
+    entity "account" as account {
+      * id: BIGINT (PK)
+      --
+      * member_id: BIGINT (FK)
+      * status: VARCHAR(20)
+      * email: VARCHAR(255) (UK)
+      * password: VARCHAR(255)
+      --
+      * created_at: DATETIME(6)
+      last_modified_at: DATETIME(6)
+      * created_by: BIGINT
+      last_modified_by: BIGINT
+    }
+}
+
+package "Course Management" {
+    entity "course" as course {
+      * id: BIGINT (PK)
+      --
+      * title: VARCHAR(255) (UK)
+      description: VARCHAR(255)
+      --
+      * created_at: DATETIME(6)
+      last_modified_at: DATETIME(6)
+      * created_by: BIGINT
+      last_modified_by: BIGINT
+    }
+
+    entity "curriculum" as curriculum {
+      * id: BIGINT (PK)
+      --
+      * course_id: BIGINT (FK)
+      * title: VARCHAR(255)
+      description: VARCHAR(255)
+      --
+      * created_at: DATETIME(6)
+      last_modified_at: DATETIME(6)
+      * created_by: BIGINT
+      last_modified_by: BIGINT
+    }
+
+    entity "course_member" as course_member {
+      * id: BIGINT (PK)
+      --
+      * course_id: BIGINT (FK)
+      * member_id: BIGINT (FK)
+      * course_role: VARCHAR(20)
+      --
+      * created_at: DATETIME(6)
+      last_modified_at: DATETIME(6)
+      * created_by: BIGINT
+      last_modified_by: BIGINT
+    }
+}
+
+package "Session Management" {
+    entity "session" as session {
+      * id: BIGINT (PK)
+      --
+      course_id: BIGINT (FK)
+      curriculum_id: BIGINT (FK)
+      parent_id: BIGINT (FK)
+      * title: VARCHAR(255)
+      * scheduled_at: DATETIME(6)
+      * scheduled_end_at: DATETIME(6)
+      * type: VARCHAR(50)
+      * location: VARCHAR(50)
+      location_details: VARCHAR(255)
+      --
+      * created_at: DATETIME(6)
+      last_modified_at: DATETIME(6)
+      * created_by: BIGINT
+      last_modified_by: BIGINT
+    }
+
+    entity "session_participant" as session_participant {
+      * id: BIGINT (PK)
+      --
+      * session_id: BIGINT (FK)
+      * member_id: BIGINT (FK)
+      * role: VARCHAR(255)
+      --
+      * created_at: DATETIME(6)
+      last_modified_at: DATETIME(6)
+      * created_by: BIGINT
+      last_modified_by: BIGINT
+    }
+}
+
+package "Attendance Management" {
+    entity "attendance" as attendance {
+      * id: BIGINT (PK)
+      --
+      * session_id: BIGINT (FK)
+      * member_id: BIGINT (FK)
+      * check_in_time: DATETIME(6)
+      check_out_time: DATETIME(6)
+      --
+      * created_at: DATETIME(6)
+      last_modified_at: DATETIME(6)
+      * created_by: BIGINT
+      last_modified_by: BIGINT
+    }
+}
+
+' Define relationships with cardinality
+member ||-|| account
+member ||--o{ course_member
+member ||--o{ attendance
+member ||--o{ session_participant
+
+course ||--o{ curriculum
+course ||--o{ course_member
+course ||--o{ session
+
+curriculum ||--o{ session
+
+session ||--o{ attendance
+session ||--o{ session_participant
+session }o--o{ session
+
+@enduml
