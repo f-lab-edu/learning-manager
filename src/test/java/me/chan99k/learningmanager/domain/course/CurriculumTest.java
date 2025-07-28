@@ -37,15 +37,41 @@ class CurriculumTest {
 		}
 
 		@Test
-		@DisplayName("[Success] 커리큘럼의 제목과 설명을 성공적으로 수정한다.")
+		@DisplayName("[Success] 커리큘럼의 제목을 성공적으로 수정한다.")
 		void update_curriculum_success() {
-			String newTitle = "수정된 커리큘럼";
-			String newDescription = "Spring 심화";
+			String newTitle = "수정된 커리큘럼 제목";
 
-			curriculum.update(newTitle, newDescription);
+			curriculum.updateTitle(newTitle);
 
 			assertThat(curriculum.getTitle()).isEqualTo(newTitle);
+		}
+
+		@Test
+		@DisplayName("[Success] 커리큘럼의 설명을 성공적으로 수정한다.")
+		void update_curriculum_description_success() {
+			String newDescription = "수정된 커리큘럼 설명";
+
+			curriculum.updateDescription(newDescription);
+
 			assertThat(curriculum.getDescription()).isEqualTo(newDescription);
+		}
+
+		@Test
+		@DisplayName("[Failure] 커리큘럼 제목이 비어있으면 수정에 실패한다")
+		void fail_to_update_course_when_title_is_null() {
+
+			assertThatThrownBy(() -> curriculum.updateTitle(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("[System] 커리큘럼명 값이 비어 있습니다.");
+		}
+
+		@Test
+		@DisplayName("[Failure] 커리큘럼 설명이 비어있으면 수정에 실패한다")
+		void fail_to_update_course_when_description_is_null() {
+
+			assertThatThrownBy(() -> curriculum.updateDescription(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("[System] 커리큘럼에 대한 설명 값이 비어 있습니다.");
 		}
 	}
 }

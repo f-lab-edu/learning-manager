@@ -2,10 +2,13 @@ package me.chan99k.learningmanager.domain.course;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 class CourseTest {
 
@@ -36,15 +39,52 @@ class CourseTest {
 		}
 
 		@Test
-		@DisplayName("[Success] 과정의 제목과 설명을 성공적으로 수정한다.")
-		void update_course_success() {
-			String newTitle = "수정된 스터디";
-			String newDescription = "Spring 심화 스터디입니다.";
+		@DisplayName("[Success] 과정의 제목을 성공적으로 수정한다.")
+		void update_title_success() {
+			String newTitle = "수정된 스터디 과정 제목";
 
-			course.update(newTitle, newDescription);
+			course.updateTitle(newTitle);
 
 			assertThat(course.getTitle()).isEqualTo(newTitle);
+		}
+
+		@Test
+		@DisplayName("[Success] 과정의 설명을 성공적으로 수정한다.")
+		void update_description_success() {
+			String newDescription = "새로운 설명";
+
+			course.updateDescription(newDescription);
+
 			assertThat(course.getDescription()).isEqualTo(newDescription);
+		}
+
+		@Test
+		@DisplayName("[Failure] 과정 제목이 비어있으면 수정에 실패한다")
+		void fail_to_update_course_when_title_is_null() {
+
+			assertThatThrownBy(() -> course.updateTitle(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("[System] 과정명 값이 비어 있습니다.");
+		}
+
+		@Test
+		@DisplayName("[Failure] 과정 설명이 비어있으면 수정에 실패한다")
+		void fail_to_update_course_when_description_is_null() {
+
+			assertThatThrownBy(() -> course.updateDescription(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("[System] 과정에 대한 설명 값이 비어 있습니다.");
+		}
+
+		@Test
+		@DisplayName("[Success] getCourseMemberList는 수정 불가능한 리스트를 반환한다.")
+		void getCourseMemberList_returns_unmodifiable_list() {
+			course.addMember(1L, CourseRole.MENTEE);
+			List<CourseMember> memberList = course.getCourseMemberList();
+
+			// 외부에서 리스트를 수정하려고 할 때 예외가 발생하는지 검증
+			assertThatThrownBy(() -> memberList.add(null))
+				.isInstanceOf(UnsupportedOperationException.class);
 		}
 	}
 
@@ -121,7 +161,80 @@ class CourseTest {
 			// 존재하지 않는 ID로 제거를 시도하면 예외가 발생하는 것을 검증합니다.
 			assertThatThrownBy(() -> course.removeMember(99L))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 코스에 등록되지 않은 멤버입니다.");
+				.hasMessage("[System] 과정에 등록되지 않은 멤버입니다.");
+		}
+	}
+
+	@Nested
+	@DisplayName("과정 커리큘럼 관리 테스트")
+	class ManageCurriculum {
+
+		@Test
+		@DisplayName("[Success] 과정에 새로운 커리큘럼을 성공적으로 추가한다.")
+		void add_curriculum_success() {
+			String curriculumTitle = "1주차: JPA 시작하기";
+			String curriculumDescription = "엔티티 매핑과 영속성 컨텍스트에 대해 학습합니다.";
+
+			course.addCurriculum(curriculumTitle, curriculumDescription);
+
+			assertThat(course.getCurriculumList()).hasSize(1);
+			Curriculum addedCurriculum = course.getCurriculumList().get(0);
+
+			assertThat(addedCurriculum.getTitle()).isEqualTo(curriculumTitle);
+			assertThat(addedCurriculum.getDescription()).isEqualTo(curriculumDescription);
+			assertThat(addedCurriculum.getCourse()).isEqualTo(course); // 연관관계 확인
+		}
+
+		@Test
+		@DisplayName("[Success] 과정에 존재하는 커리큘럼을 성공적으로 제거한다.")
+		void remove_curriculum_success() {
+			course.addCurriculum("1주차", "JPA 기초");
+			course.addCurriculum("2주차", "JPA 심화");
+			assertThat(course.getCurriculumList()).hasSize(2);
+
+			Curriculum curriculumToRemove = course.getCurriculumList().get(0);
+
+			course.removeCurriculum(curriculumToRemove);
+
+			assertThat(course.getCurriculumList()).hasSize(1);
+			assertThat(course.getCurriculumList()).doesNotContain(curriculumToRemove);
+			assertThat(course.getCurriculumList().get(0).getTitle()).isEqualTo("2주차");
+		}
+
+		@Test
+		@DisplayName("[Failure] 과정에 속하지 않은 커리큘럼을 제거하려 하면 예외가 발생한다.")
+		void remove_non_existing_curriculum_fail() {
+			course.addCurriculum("1주차", "JPA 기초");
+
+			// 다른 과정에 속한 별개의 커리큘럼 생성
+			Course anotherCourse = Course.create("다른 과정", "설명");
+			Curriculum anoutherCoursesCurriculum = Curriculum.create(anotherCourse, "다른 커리큘럼", "설명");
+
+			// 테스트를 위해 ID를 임의로 설정.
+			ReflectionTestUtils.setField(anoutherCoursesCurriculum, "id", 99L);
+
+			assertThatThrownBy(() -> course.removeCurriculum(anoutherCoursesCurriculum))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("[System] 해당 과정에 존재하지 않는 커리큘럼입니다. ID: 99");
+		}
+
+		@Test
+		@DisplayName("[Failure] null 커리큘럼을 제거하려 하면 예외가 발생한다.")
+		void remove_null_curriculum_fail() {
+			assertThatThrownBy(() -> course.removeCurriculum(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("[System] 제거할 커리큘럼은 null일 수 없습니다.");
+		}
+
+		@Test
+		@DisplayName("[Success] getCurriculumList는 수정 불가능한 리스트를 반환한다.")
+		void getCurriculumList_returns_unmodifiable_list() {
+			course.addCurriculum("Test Title", "Test Desc");
+			List<Curriculum> curriculumList = course.getCurriculumList();
+
+			// 외부에서 리스트를 수정하려고 할 때 예외가 발생하는지 검증
+			assertThatThrownBy(() -> curriculumList.add(null))
+				.isInstanceOf(UnsupportedOperationException.class);
 		}
 	}
 }
