@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.domain.study;
+package me.chan99k.learningmanager.domain.course;
 
 public enum CourseRole {
 	MANAGER("과정 매니저"), MENTOR("과정 멘토"), MENTEE("과정 멘티");

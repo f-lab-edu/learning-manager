@@ -1,6 +1,6 @@
-package me.chan99k.learningmanager.domain.study;
+package me.chan99k.learningmanager.domain.course;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

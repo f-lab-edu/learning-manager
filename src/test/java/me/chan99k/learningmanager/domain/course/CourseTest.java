@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.domain.study;
+package me.chan99k.learningmanager.domain.course;
 
 import static org.assertj.core.api.Assertions.*;
 
