@@ -7,41 +7,29 @@ import java.util.Collections;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import me.chan99k.learningmanager.domain.AbstractEntity;
 
-@Getter
 @Entity
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Course extends AbstractEntity {
-	/**
-	 * 스터디 과정명
-	 */
+	@Column(nullable = false)
 	private String title;
-	/**
-	 * 과정에 대한 간략한 설명
-	 */
+
 	private String description;
-	/**
-	 * 과정에 속한 멤버 목록
-	 */
+
 	@OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	private List<CourseMember> courseMemberList = new ArrayList<>();
-	/**
-	 * 과정에 속한 커리큘럼 목록
-	 */
+
 	@OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	private List<Curriculum> curriculumList = new ArrayList<>();
 
 	/* 도메인 로직 */
 
 	public static Course create(String title, String description) {
-		hasText(title, "코스명은 필수입니다.");
+		hasText(title, "[시스템] 과정명은 필수값 입니다.");
 
 		Course course = new Course();
 		course.title = title;
@@ -49,14 +37,14 @@ public class Course extends AbstractEntity {
 		return course;
 	}
 
-	public void update(String title, String description) {
-		if (title != null) {
-			hasText(title, "[System] 코스명은 필수입니다.");
-			this.title = title;
-		}
-		if (description != null) {
-			this.description = description;
-		}
+	public void updateTitle(String newTitle) {
+		hasText(newTitle, "[System] 과정명 값이 비어 있습니다.");
+		this.title = newTitle;
+	}
+
+	public void updateDescription(String newDescription) {
+		hasText(newDescription, "[System] 과정에 대한 설명 값이 비어 있습니다.");
+		this.description = newDescription;
 	}
 
 	public void addMember(Long memberId, CourseRole courseRole) {
@@ -64,7 +52,7 @@ public class Course extends AbstractEntity {
 			member -> member.getMemberId().equals(memberId)
 		);
 
-		isTrue(!alreadyExists, "[System] 이미 코스에 등록된 멤버입니다.");
+		isTrue(!alreadyExists, "[System] 이미 과정에 등록된 멤버입니다.");
 
 		CourseMember courseMember = CourseMember.enroll(this, memberId, courseRole);
 		this.courseMemberList.add(courseMember);
@@ -75,7 +63,31 @@ public class Course extends AbstractEntity {
 			courseMember -> courseMember.getMemberId().equals(memberId)
 		);
 
-		isTrue(removed, "[System] 코스에 등록되지 않은 멤버입니다.");
+		isTrue(removed, "[System] 과정에 등록되지 않은 멤버입니다.");
+	}
+
+	public void addCurriculum(String title, String description) {
+		Curriculum curriculum = Curriculum.create(this, title, description);
+
+		this.curriculumList.add(curriculum);
+	}
+
+	public void removeCurriculum(Curriculum curriculum) {
+		notNull(curriculum, "[System] 제거할 커리큘럼은 null일 수 없습니다.");
+
+		boolean removed = this.curriculumList.remove(curriculum);
+
+		isTrue(removed, "[System] 해당 과정에 존재하지 않는 커리큘럼입니다. ID: " + curriculum.getId());
+	}
+
+	/* 게터 로직 */
+
+	public String getTitle() {
+		return title;
+	}
+
+	public String getDescription() {
+		return description;
 	}
 
 	public List<CourseMember> getCourseMemberList() {

@@ -21,11 +21,9 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import lombok.Getter;
 import me.chan99k.learningmanager.domain.AbstractEntity;
 
 @Entity
-@Getter
 public class Session extends AbstractEntity {
 	@Column(name = "course_id")
 	private Long courseId;
@@ -124,7 +122,7 @@ public class Session extends AbstractEntity {
 			.anyMatch(p -> p.getMemberId().equals(memberId));
 		isTrue(!alreadyExists, "[System] 이미 세션에 참여 중인 멤버입니다.");
 
-		SessionParticipant participant = SessionParticipant.of(this, memberId, role);
+		SessionParticipant participant = SessionParticipant.of(memberId, this, role);
 		this.participants.add(participant);
 	}
 
@@ -201,6 +199,14 @@ public class Session extends AbstractEntity {
 		}
 	}
 
+	public Instant getScheduledAt() {
+		return scheduledAt;
+	}
+
+	public Instant getScheduledEndAt() {
+		return scheduledEndAt;
+	}
+
 	public List<SessionParticipant> getParticipants() {
 		return Collections.unmodifiableList(this.participants);
 	}
@@ -211,5 +217,37 @@ public class Session extends AbstractEntity {
 
 	boolean isChildSession() {
 		return !this.isRootSession();
+	}
+
+	public Long getCourseId() {
+		return courseId;
+	}
+
+	public Long getCurriculumId() {
+		return curriculumId;
+	}
+
+	public Session getParent() {
+		return parent;
+	}
+
+	public List<Session> getChildren() {
+		return children;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public SessionType getType() {
+		return type;
+	}
+
+	public SessionLocation getLocation() {
+		return location;
+	}
+
+	public String getLocationDetails() {
+		return locationDetails;
 	}
 }
