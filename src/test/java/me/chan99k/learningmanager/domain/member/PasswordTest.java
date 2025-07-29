@@ -1,12 +1,11 @@
 package me.chan99k.learningmanager.domain.member;
 
+import static org.assertj.core.api.Assertions.*;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PasswordTest {
 
@@ -25,6 +24,29 @@ class PasswordTest {
     @DisplayName("[Success] 올바른 형식의 비밀번호로 객체를 생성하는 데 성공한다")
     void create_password_with_valid_format() {
         assertThatCode(() -> Password.generatePassword("ValidPass1!", passwordEncoder)).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("[Success] 올바른 비밀번호로 검증 시 true를 반환한다")
+    void verify_success_with_correct_password() {
+        String rawPassword = "CorrectPassword1!";
+        Password password = Password.generatePassword(rawPassword, passwordEncoder);
+
+        boolean result = password.verify(rawPassword, passwordEncoder);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    @DisplayName("[Failure] 틀린 비밀번호로 검증 시 false를 반환한다")
+    void verify_failure_with_incorrect_password() {
+        String rawPassword = "CorrectPassword1!";
+        String wrongPassword = "WrongPassword1!";
+        Password password = Password.generatePassword(rawPassword, passwordEncoder);
+
+        boolean result = password.verify(wrongPassword, passwordEncoder);
+
+        assertThat(result).isFalse();
     }
 
     @ParameterizedTest
