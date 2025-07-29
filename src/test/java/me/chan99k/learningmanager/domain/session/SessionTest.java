@@ -185,8 +185,10 @@ class SessionTest {
 
 		@BeforeEach
 		void setUp() {
-			session = Session.createStandaloneSession("참여자 관리 테스트 세션", now, now.plus(1, ChronoUnit.HOURS),
-				SessionType.ONLINE, SessionLocation.ZOOM, null);
+			// 수정이 가능한 미래의 세션으로 설정
+			Instant futureStartTime = now.plus(4, ChronoUnit.DAYS);
+			session = Session.createStandaloneSession("참여자 관리 테스트 세션", futureStartTime,
+				futureStartTime.plus(1, ChronoUnit.HOURS), SessionType.ONLINE, SessionLocation.ZOOM, null);
 		}
 
 		@Test
@@ -224,49 +226,160 @@ class SessionTest {
 			assertThat(session.getParticipants()).hasSize(1);
 			assertThat(session.getParticipants().get(0).getMemberId()).isEqualTo(memberId2);
 		}
+
+		@Test
+		@DisplayName("[Success] 참여자의 역할을 성공적으로 변경한다.")
+		void change_participant_role_success() {
+
+			Long memberId = 1L;
+			session.addParticipant(memberId, SessionParticipantRole.ATTENDEE);
+
+			session.changeParticipantRole(memberId, SessionParticipantRole.SPEAKER);
+
+			SessionParticipant participant = session.getParticipants().get(0);
+			assertThat(participant.getRole()).isEqualTo(SessionParticipantRole.SPEAKER);
+		}
+
+		@Test
+		@DisplayName("[Success] 다른 호스트가 없을 때, 참여자를 호스트로 성공적으로 변경한다.")
+		void change_participant_role_to_host_success() {
+
+			Long memberId = 1L;
+			session.addParticipant(memberId, SessionParticipantRole.ATTENDEE);
+			session.addParticipant(2L, SessionParticipantRole.SPEAKER);
+
+			session.changeParticipantRole(memberId, SessionParticipantRole.HOST);
+
+			SessionParticipant participant = session.getParticipants().stream()
+				.filter(p -> p.getMemberId().equals(memberId)).findFirst().get();
+			assertThat(participant.getRole()).isEqualTo(SessionParticipantRole.HOST);
+		}
+
+		@Test
+		@DisplayName("[Failure] 이미 호스트가 존재할 때, 다른 참여자를 호스트로 변경하면 예외가 발생한다.")
+		void change_participant_role_to_host_fail_if_host_already_exists() {
+			session.addParticipant(1L, SessionParticipantRole.HOST);
+			session.addParticipant(2L, SessionParticipantRole.ATTENDEE);
+
+			assertThatThrownBy(() -> session.changeParticipantRole(2L, SessionParticipantRole.HOST))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("[System] 세션에는 한 명의 호스트만 지정할 수 있습니다.");
+		}
+
+		@Test
+		@DisplayName("[Failure] 참여자가 동일한 역할로 변경을 시도하면 예외가 발생한다.")
+		void change_participant_role_to_same_role_fail() {
+			Long memberId = 1L;
+			session.addParticipant(memberId, SessionParticipantRole.SPEAKER);
+
+			assertThatThrownBy(() -> session.changeParticipantRole(memberId, SessionParticipantRole.SPEAKER))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("[System] 이미 해당 역할을 가지고 있습니다.");
+		}
 	}
 
 	@Nested
 	@DisplayName("세션 정보 수정 테스트")
-	class UpdateSessionTest {
+	class SessionUpdateTest {
 
-		private Session session;
+		private Session updatableSession;
 
 		@BeforeEach
 		void setUp() {
+			// 수정이 항상 가능한, 충분히 미래의 세션을 설정
 			Instant futureStartTime = now.plus(4, ChronoUnit.DAYS);
 			Instant futureEndTime = futureStartTime.plus(2, ChronoUnit.HOURS);
-
-			session = Session.createStandaloneSession("충분히 미래인 세션", futureStartTime, futureEndTime,
+			updatableSession = Session.createStandaloneSession("수정 가능한 세션", futureStartTime, futureEndTime,
 				SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null);
 		}
 
 		@Test
-		@DisplayName("[Success] 유효한 정보로 세션 내용을 성공적으로 수정한다.")
-		void update_session_success() {
+		@DisplayName("[Success] 세션의 기본 정보(제목, 타입)를 성공적으로 수정한다.")
+		void change_info_success() {
 			String newTitle = "수정된 제목";
-			Instant newStartTime = now.plus(1, ChronoUnit.DAYS);
-			Instant newEndTime = newStartTime.plus(3, ChronoUnit.HOURS);
+			SessionType newType = SessionType.OFFLINE;
 
-			session.update(newTitle, newStartTime, newEndTime, SessionType.OFFLINE, SessionLocation.SITE, "강남역 스터디룸");
+			updatableSession.changeInfo(newTitle, newType);
 
-			assertThat(session.getTitle()).isEqualTo(newTitle);
-			assertThat(session.getScheduledAt()).isEqualTo(newStartTime);
-			assertThat(session.getLocation()).isEqualTo(SessionLocation.SITE);
-			assertThat(session.getLocationDetails()).isEqualTo("강남역 스터디룸");
+			assertThat(updatableSession.getTitle()).isEqualTo(newTitle);
+			assertThat(updatableSession.getType()).isEqualTo(newType);
 		}
 
 		@Test
-		@DisplayName("[Failure] 수정하려는 시간이 제약조건을 위반하면 예외가 발생한다.")
-		void update_fail_due_to_invalid_time() {
-			String newTitle = "수정된 제목";
-			Instant newStartTime = now.plus(1, ChronoUnit.DAYS);
-			Instant newEndTime = newStartTime.minus(1, ChronoUnit.SECONDS);
+		@DisplayName("[Success] 세션의 시간을 성공적으로 재조정한다.")
+		void reschedule_success() {
+			Instant newStartTime = now.plus(5, ChronoUnit.DAYS);
+			Instant newEndTime = newStartTime.plus(3, ChronoUnit.HOURS);
 
-			assertThatThrownBy(() -> session.update(newTitle, newStartTime, newEndTime, SessionType.ONLINE,
-				SessionLocation.GOOGLE_MEET, null))
+			updatableSession.reschedule(newStartTime, newEndTime);
+
+			assertThat(updatableSession.getScheduledAt()).isEqualTo(newStartTime);
+			assertThat(updatableSession.getScheduledEndAt()).isEqualTo(newEndTime);
+		}
+
+		@Test
+		@DisplayName("[Success] 세션의 장소를 성공적으로 변경한다.")
+		void change_location_success() {
+			SessionLocation newLocation = SessionLocation.SITE;
+			String newDetails = "강남역 스터디룸";
+
+			updatableSession.changeLocation(newLocation, newDetails);
+
+			assertThat(updatableSession.getLocation()).isEqualTo(newLocation);
+			assertThat(updatableSession.getLocationDetails()).isEqualTo(newDetails);
+		}
+
+		@Test
+		@DisplayName("[Failure] 재조정하려는 시간이 제약조건(시작시간 < 종료시간)을 위반하면 예외가 발생한다.")
+		void reschedule_fail_due_to_invalid_time() {
+			Instant newStartTime = now.plus(5, ChronoUnit.DAYS);
+			Instant newEndTime = newStartTime.minus(1, ChronoUnit.SECONDS); // 종료시간이 더 빠름
+
+			assertThatThrownBy(() -> updatableSession.reschedule(newStartTime, newEndTime))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("[System] 세션 시작 시간은 종료 시간보다 빨라야 합니다.");
+		}
+
+		@Test
+		@DisplayName("[Failure] 이미 시작된 세션은 수정할 수 없다.")
+		void update_fail_if_session_already_started() {
+			Instant pastTime = now.minus(1, ChronoUnit.HOURS);
+			Session startedSession = Session.createStandaloneSession("이미 시작된 세션", pastTime,
+				pastTime.plus(2, ChronoUnit.HOURS),
+				SessionType.ONLINE, SessionLocation.ZOOM, null);
+
+			assertThatThrownBy(() -> startedSession.changeInfo("수정 시도", SessionType.OFFLINE))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("[System] 이미 시작된 세션은 수정할 수 없습니다.");
+		}
+
+		@Test
+		@DisplayName("[Failure] 루트 세션은 시작 3일 이내에는 수정할 수 없다.")
+		void update_fail_if_root_session_is_within_3_days_of_start() {
+			Instant soonTime = now.plus(2, ChronoUnit.DAYS); // 3일 이내
+			Session soonSession = Session.createStandaloneSession("곧 시작하는 세션", soonTime,
+				soonTime.plus(2, ChronoUnit.HOURS),
+				SessionType.ONLINE, SessionLocation.ZOOM, null);
+
+			assertThatThrownBy(() -> soonSession.changeInfo("수정 시도", SessionType.OFFLINE))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("[System] 루트 세션은 시작 3일 전까지만 수정할 수 있습니다.");
+		}
+
+		@Test
+		@DisplayName("[Failure] 하위 세션은 시작 1시간 이내에는 수정할 수 없다.")
+		void update_fail_if_child_session_is_within_1_hour_of_start() {
+			Session root = Session.createStandaloneSession("부모 세션", now, now.plus(5, ChronoUnit.HOURS),
+				SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null);
+
+			Instant childStartTime = now.plus(30, ChronoUnit.MINUTES); // 1시간 이내
+			Session child = root.createChildSession("곧 시작하는 하위 세션", childStartTime,
+				childStartTime.plus(30, ChronoUnit.MINUTES),
+				SessionType.OFFLINE, SessionLocation.SITE, "주기율 카페");
+
+			assertThatThrownBy(() -> child.changeInfo("수정 시도", SessionType.ONLINE))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("[System] 하위 세션은 시작 1시간 전까지만 수정할 수 있습니다.");
 		}
 	}
 }

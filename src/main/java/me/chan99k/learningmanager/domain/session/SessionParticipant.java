@@ -45,11 +45,13 @@ public class SessionParticipant extends AbstractEntity {
 		return memberId;
 	}
 
-	public Session getSession() {
-		return session;
-	}
-
 	public SessionParticipantRole getRole() {
 		return role;
+	}
+
+	public void changeRole(SessionParticipantRole newRole) {
+		notNull(newRole, "[System] 새로운 역할은 null일 수 없습니다.");
+		isTrue(this.role != newRole, "[System] 이미 해당 역할을 가지고 있습니다.");
+		this.role = newRole;
 	}
 }
