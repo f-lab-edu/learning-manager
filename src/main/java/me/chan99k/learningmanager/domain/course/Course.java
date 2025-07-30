@@ -15,7 +15,7 @@ import me.chan99k.learningmanager.domain.AbstractEntity;
 
 @Entity
 public class Course extends AbstractEntity {
-	@Column(nullable = false)
+	@Column(nullable = false, unique = true)
 	private String title;
 
 	private String description;

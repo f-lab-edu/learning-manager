@@ -1,0 +1,53 @@
+@startuml
+
+title 1.1 [P0] Member Registration - (1) 회원 가입 요청
+
+actor "User (Guest)" as User
+participant "MemberController" as Controller
+participant "MemberRegistrationService" as AppService
+participant "Member" as MemberDomain
+participant "Account" as AccountDomain
+participant "MemberRepository" as Repository
+participant "EmailSender" as EmailAdapter
+
+User -> Controller: Request Member Registration
+activate Controller
+
+Controller -> AppService: register
+activate AppService
+alt Validation Failure
+    AppService --> Controller: ErrorResponse (400 Bad Request or 409 Conflict)
+    deactivate AppService
+    Controller --> User: Error Code
+    deactivate Controller
+else Validation Success
+
+AppService -> MemberDomain: registerDefault
+activate MemberDomain
+MemberDomain --> AppService: newMember
+deactivate MemberDomain
+
+AppService -> AccountDomain: create
+activate AccountDomain
+AccountDomain --> AppService: newAccount (PENDING)
+deactivate AccountDomain
+
+AppService -> Repository: save
+activate Repository
+Repository --> AppService: savedMember, savedAccount
+deactivate Repository
+
+AppService -> EmailAdapter: sendActivationEmail
+activate EmailAdapter
+EmailAdapter --> AppService: (async)
+deactivate EmailAdapter
+
+AppService --> Controller: MemberRegistrationResponse
+deactivate AppService
+
+Controller --> User: 201 Created
+deactivate Controller
+
+end
+
+@enduml

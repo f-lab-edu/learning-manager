@@ -14,7 +14,7 @@ import me.chan99k.learningmanager.domain.AbstractEntity;
 public class Member extends AbstractEntity {
 
 	@Embedded
-	@AttributeOverride(name = "value", column = @Column(name = "nickname", nullable = false, unique = true))
+	@AttributeOverride(name = "value", column = @Column(name = "nickname", nullable = false, unique = true, length = 20))
 	private Nickname nickname;
 
 	@Enumerated(EnumType.STRING)
@@ -28,7 +28,7 @@ public class Member extends AbstractEntity {
 	private String selfIntroduction;
 
 	/* 도메인 로직 */
-
+	// TODO :: Account 관련 로직들을 정의하고 Account 에 위임하기
 	public static Member registerDefault(NicknameGenerator nicknameGenerator) {
 		Member member = new Member();
 		member.role = SystemRole.MEMBER;
