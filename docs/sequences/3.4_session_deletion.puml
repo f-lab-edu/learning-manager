@@ -1,0 +1,31 @@
+@startuml
+
+title 3.4 [P2] Session Deletion
+
+actor "User (Manager)" as User
+participant "CredentialValidator" as Validator
+participant "SessionController" as Controller
+participant "SessionService" as AppService
+participant "CourseRepository" as Repository
+
+User -> Controller: Delete Session
+activate Validator
+activate Controller
+Validator --> User: 401 Unauthorized
+Validator --> User: 403 Forbidden
+deactivate Validator
+
+Controller -> AppService: deleteSession
+activate AppService
+
+AppService -> Repository: deleteSessionById
+activate Repository
+deactivate Repository
+
+AppService --> Controller: void
+deactivate AppService
+
+Controller --> User: 204 No Content
+deactivate Controller
+
+@enduml

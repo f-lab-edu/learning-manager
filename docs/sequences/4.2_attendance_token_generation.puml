@@ -1,0 +1,38 @@
+@startuml
+
+title 4.2 [P1] Attendance Token Generation
+
+actor "User (Manager)" as User
+participant "CredentialValidator" as Validator
+participant "AttendanceController" as Controller
+participant "AttendanceService" as AppService
+participant "CourseRepository" as SessionRepo
+participant "AttendanceTokenManager" as TokenManager
+
+User -> Controller: Generate Attendance Token
+activate Validator
+activate Controller
+Validator --> User: 401 Unauthorized
+Validator --> User: 403 Forbidden
+deactivate Validator
+
+Controller -> AppService: generateAttendanceToken
+activate AppService
+
+AppService -> SessionRepo: findSessionById
+activate SessionRepo
+SessionRepo --> AppService: session
+deactivate SessionRepo
+
+AppService -> TokenManager: createToken
+activate TokenManager
+TokenManager --> AppService: token (e.g., QR Code data)
+deactivate TokenManager
+
+AppService --> Controller: AttendanceTokenResponse
+deactivate AppService
+
+Controller --> User: 200 OK (token)
+deactivate Controller
+
+@enduml

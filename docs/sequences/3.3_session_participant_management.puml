@@ -1,0 +1,128 @@
+@startuml
+
+title 3.3 [P2] Session Participant Management : 스터디 세션 참여자 관리
+
+actor "User (Manager)" as User
+participant "CredentialValidator" as Validator
+participant "SessionController" as Controller
+participant "SessionService" as AppService
+participant "Session" as SessionDomain
+participant "CourseRepository" as Repository
+
+User -> Controller: Add Participant to Session
+activate Validator
+activate Controller
+Validator --> User: 401 Unauthorized
+Validator --> User: 403 Forbidden
+deactivate Validator
+
+Controller -> AppService: addParticipant
+activate AppService
+alt Role Constraint Violation
+    AppService --> Controller: ErrorResponse (400 Bad Request)
+    deactivate AppService
+    Controller --> User: Error Code
+    deactivate Controller
+else Valid Participant Addition
+
+AppService -> Repository: findSessionById
+activate Repository
+Repository --> AppService: session
+deactivate Repository
+
+AppService -> session: addParticipant
+activate SessionDomain
+deactivate SessionDomain
+
+AppService -> Repository: save
+activate Repository
+deactivate Repository
+
+AppService --> Controller: void
+deactivate AppService
+
+Controller --> User: 200 OK
+deactivate Controller
+
+end
+
+User -> Controller: Remove Participant from Session
+activate Validator
+activate Controller
+Validator --> User: 401 Unauthorized
+Validator --> User: 403 Forbidden
+deactivate Validator
+
+Controller -> AppService: removeParticipant
+activate AppService
+alt Role Constraint Violation
+    AppService --> Controller: ErrorResponse (400 Bad Request)
+    deactivate AppService
+    Controller --> User: Error Code
+    deactivate Controller
+else Valid Participant Removal
+
+AppService -> Repository: findSessionById
+activate Repository
+Repository --> AppService: session
+deactivate Repository
+
+
+
+AppService -> session: removeParticipant
+activate SessionDomain
+deactivate SessionDomain
+
+AppService -> Repository: save
+activate Repository
+deactivate Repository
+
+
+AppService --> Controller: void
+deactivate AppService
+
+Controller --> User: 204 No Content
+deactivate Controller
+
+end
+
+User -> Controller: Change Participant Role in Session
+activate Validator
+activate Controller
+Validator --> User: 401 Unauthorized
+Validator --> User: 403 Forbidden
+deactivate Validator
+
+Controller -> AppService: changeParticipantRole
+activate AppService
+
+alt Role Constraint Violation
+    AppService --> Controller: ErrorResponse (400 Bad Request)
+    deactivate AppService
+    Controller --> User: Error Code
+    deactivate Controller
+
+else Valid Role Change
+
+AppService -> Repository: findSessionById
+activate Repository
+Repository --> AppService: session
+deactivate Repository
+
+AppService -> session: changeParticipantRole
+activate SessionDomain
+deactivate SessionDomain
+
+AppService -> Repository: save
+activate Repository
+deactivate Repository
+
+AppService --> Controller: void
+deactivate AppService
+
+Controller --> User: 200 OK
+deactivate Controller
+
+end
+
+@enduml
