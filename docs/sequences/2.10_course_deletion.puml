@@ -1,0 +1,51 @@
+@startuml
+
+title 2.10 [P2] Course Deletion : 스터디 과정 삭제
+
+actor "User (Manager)" as User
+participant "CredentialValidator" as Validator
+participant "CourseController" as Controller
+participant "CourseService" as AppService
+participant "CourseRepository" as Repository
+
+User -> Controller: Delete Course
+activate Validator
+activate Controller
+Validator --> User: 401 Unauthorized
+Validator --> User: 403 Forbidden
+deactivate Validator
+
+Controller -> AppService: deleteCourse
+activate AppService
+alt Members Exist in Course
+    AppService --> Controller: ErrorResponse (400 Bad Request or 409 Conflict)
+    deactivate AppService
+    Controller --> User: Error Code
+    deactivate Controller
+else No Members in Course
+
+AppService -> Repository: findById
+activate Repository
+Repository --> AppService: course
+deactivate Repository
+
+' 과정에 코스-멤버가 남아 있다면,
+' 함께 삭제한다.
+note right of AppService
+  과정에 코스-멤버가 남아 있다면,
+  함께 삭제한다. (CourseMember는 Member 와는 별도의 엔티티임)
+end note
+
+AppService -> Repository: delete
+activate Repository
+deactivate Repository
+
+AppService --> Controller: void
+deactivate AppService
+
+Controller --> User: 204 No Content
+deactivate Controller
+
+end
+
+@enduml

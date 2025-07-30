@@ -1,0 +1,43 @@
+@startuml
+
+title 2.8 [P2] Course Member Removal : 스터디 과정 멤버 제외
+
+actor "User (Manager)" as User
+participant "CredentialValidator" as Validator
+participant "CourseController" as Controller
+participant "CourseService" as AppService
+participant "Course" as CourseDomain
+participant "CourseRepository" as Repository
+
+User -> Controller: Remove Member from Course
+activate Validator
+activate Controller
+Validator --> User: 401 Unauthorized
+Validator --> User: 403 Forbidden
+deactivate Validator
+
+Controller -> AppService: removeMemberFromCourse
+activate AppService
+
+AppService -> Repository: findById
+activate Repository
+Repository --> AppService: course
+deactivate Repository
+
+AppService -> CourseDomain: removeMember
+activate CourseDomain
+CourseDomain --> AppService : ok
+deactivate CourseDomain
+
+AppService -> Repository: save
+activate Repository
+Repository --> AppService : ok
+deactivate Repository
+
+AppService --> Controller: void
+deactivate AppService
+
+Controller --> User: 204 No Content
+deactivate Controller
+
+@enduml

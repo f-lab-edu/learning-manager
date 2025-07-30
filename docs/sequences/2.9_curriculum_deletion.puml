@@ -1,0 +1,55 @@
+@startuml
+
+title 2.9 [P2] Curriculum Deletion : 스터디 커리큘럼 삭제
+
+actor "User (Manager)" as User
+participant "CredentialValidator" as Validator
+participant "CourseController" as Controller
+participant "CourseService" as AppService
+participant "Course" as CourseDomain
+participant "CourseRepository" as Repository
+participant "CourseRepository" as SessionRepo
+
+User -> Controller: Delete Curriculum
+activate Validator
+activate Controller
+Validator --> User: 401 Unauthorized
+Validator --> User: 403 Forbidden
+deactivate Validator
+
+Controller -> AppService: deleteCurriculum
+activate AppService
+alt Sessions Exist for Curriculum
+    AppService --> Controller: ErrorResponse (400 Bad Request or 409 Conflict)
+    deactivate AppService
+    Controller --> User: Error Code
+    deactivate Controller
+else No Sessions for Curriculum
+
+AppService -> SessionRepo: hasCurriculumSessions
+activate SessionRepo
+SessionRepo --> AppService: false
+deactivate SessionRepo
+
+AppService -> Repository: findById
+activate Repository
+Repository --> AppService: course
+deactivate Repository
+
+AppService -> course: removeCurriculum
+activate CourseDomain
+deactivate CourseDomain
+
+AppService -> Repository: save
+activate Repository
+deactivate Repository
+
+AppService --> Controller: void
+deactivate AppService
+
+Controller --> User: 204 No Content
+deactivate Controller
+
+end
+
+@enduml
