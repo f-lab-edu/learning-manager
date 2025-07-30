@@ -1,0 +1,56 @@
+@startuml
+
+title 2.2 [P0] Add Member to Course : 스터디 멤버 추가
+
+actor "User (Manager)" as User
+participant "CredentialValidator" as Validator
+participant "CourseController" as Controller
+participant "CourseService" as AppService
+participant "Course" as CourseDomain
+participant "CourseRepository" as CourseRepo
+participant "MemberRepository" as MemberRepo
+
+User -> Controller: Add Member to Course
+activate Validator
+activate Controller
+Validator --> User: 401 Unauthorized
+Validator --> User: 403 Forbidden
+deactivate Validator
+
+Controller -> AppService: addMemberToCourse
+activate AppService
+alt Member Not Found or Already Participating
+    AppService --> Controller: ErrorResponse (404 Not Found or 409 Conflict)
+    deactivate AppService
+    Controller --> User: Error Code
+    deactivate Controller
+else Valid Member Addition
+
+AppService -> CourseRepo: findById
+activate CourseRepo
+CourseRepo --> AppService: course
+deactivate CourseRepo
+
+AppService -> MemberRepo: findByEmail
+activate MemberRepo
+MemberRepo --> AppService: member
+deactivate MemberRepo
+
+AppService -> CourseDomain: addMember
+activate CourseDomain
+CourseDomain --> AppService : ok
+deactivate CourseDomain
+
+AppService -> CourseRepo: save
+activate CourseRepo
+deactivate CourseRepo
+
+AppService --> Controller: void
+deactivate AppService
+
+Controller --> User: 200 OK
+deactivate Controller
+
+end
+
+@enduml

@@ -1,0 +1,39 @@
+@startuml
+
+title 2.1 [P0] Course Creation : 스터디 과정 생성
+
+actor "User (Manager)" as User
+participant "CredentialValidator" as Validator
+participant "CourseController" as Controller
+participant "CourseService" as AppService
+participant "Course" as CourseDomain
+participant "CourseRepository" as Repository
+
+User -> Controller: Create Course
+activate Validator
+activate Controller
+Validator --> User: 401 Unauthorized
+Validator --> User: 403 Forbidden
+deactivate Validator
+
+Controller -> AppService: createCourse
+activate AppService
+
+AppService -> CourseDomain: create
+activate CourseDomain
+CourseDomain --> AppService: newCourse
+deactivate CourseDomain
+
+AppService -> Repository: save
+activate Repository
+Repository --> AppService: savedCourse
+deactivate Repository
+
+AppService --> Controller: CourseResponse
+deactivate AppService
+
+Controller --> User: 201 Created
+deactivate Controller
+deactivate Validator
+
+@enduml

@@ -1,0 +1,47 @@
+@startuml
+
+title 2.4 [P1] Course Update
+
+actor "User (Manager)" as User
+participant "CredentialValidator" as Validator
+participant "CourseController" as Controller
+participant "CourseService" as AppService
+participant "Course" as CourseDomain
+participant "CourseRepository" as Repository
+
+User -> Controller: Update Course
+activate Validator
+activate Controller
+Validator --> User: 401 Unauthorized
+Validator --> User: 403 Forbidden
+deactivate Validator
+
+Controller -> AppService: updateCourse
+activate AppService
+
+AppService -> Repository: findById
+activate Repository
+Repository --> AppService: course
+deactivate Repository
+
+AppService -> CourseDomain: updateTitle
+activate CourseDomain
+CourseDomain --> AppService : ok
+deactivate CourseDomain
+
+AppService -> CourseDomain: updateDescription
+activate CourseDomain
+CourseDomain --> AppService : ok
+deactivate CourseDomain
+
+AppService -> Repository: save
+activate Repository
+deactivate Repository
+
+AppService --> Controller: CourseResponse
+deactivate AppService
+
+Controller --> User: 200 OK
+deactivate Controller
+
+@enduml
