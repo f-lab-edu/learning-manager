@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 class MemberTest {
 
@@ -22,6 +23,13 @@ class MemberTest {
 	@Nested
 	@DisplayName("회원 관리 테스트")
 	class MemberCreationTEst {
+		@Test
+		@DisplayName("[Success] 회원 ID 반환에 성공한다.")
+		void success_to_return_memberId() {
+			ReflectionTestUtils.setField(member, "id", 1L);
+			assertThat(member.getId()).isNotNull();
+		}
+
 		@Test
 		@DisplayName("[Success] 프로필 업데이트에 성공한다.")
 		void success_to_update_profile() {
@@ -87,11 +95,11 @@ class MemberTest {
 		@Test
 		@DisplayName("[Success] 휴면 상태인 회원을 활성화하는데 성공한다")
 		void success_to_activate_member() {
-		    member.deactivate(); // 휴면 상태로 변경
-		    assertThat(member.getStatus()).isEqualTo(MemberStatus.INACTIVE);
+			member.deactivate(); // 휴면 상태로 변경
+			assertThat(member.getStatus()).isEqualTo(MemberStatus.INACTIVE);
 
-		    member.activate();
-		    assertThat(member.getStatus()).isEqualTo(MemberStatus.ACTIVE);
+			member.activate();
+			assertThat(member.getStatus()).isEqualTo(MemberStatus.ACTIVE);
 		}
 
 		@Test

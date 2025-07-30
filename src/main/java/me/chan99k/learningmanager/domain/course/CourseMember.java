@@ -8,14 +8,10 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import me.chan99k.learningmanager.domain.AbstractEntity;
 
-@Getter
 @Entity
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+
 public class CourseMember extends AbstractEntity {
 	/**
 	 * 사용자 ID
@@ -53,4 +49,17 @@ public class CourseMember extends AbstractEntity {
 		this.courseRole = newRole;
 	}
 
+	/* 게터 로직 */
+
+	public Long getMemberId() {
+		return memberId;
+	}
+
+	public Course getCourse() {
+		return course;
+	}
+
+	public CourseRole getCourseRole() {
+		return courseRole;
+	}
 }

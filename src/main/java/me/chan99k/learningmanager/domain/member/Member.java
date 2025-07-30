@@ -8,14 +8,9 @@ import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import me.chan99k.learningmanager.domain.AbstractEntity;
 
-@Getter
 @Entity
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member extends AbstractEntity {
 
 	@Embedded
@@ -85,5 +80,25 @@ public class Member extends AbstractEntity {
 	public void unban() {
 		state(this.status == MemberStatus.BANNED, "이용 정지 상태의 회원만 해제될 수 있습니다.");
 		this.status = MemberStatus.ACTIVE;
+	}
+
+	public Nickname getNickname() {
+		return nickname;
+	}
+
+	public SystemRole getRole() {
+		return role;
+	}
+
+	public MemberStatus getStatus() {
+		return status;
+	}
+
+	public String getProfileImageUrl() {
+		return profileImageUrl;
+	}
+
+	public String getSelfIntroduction() {
+		return selfIntroduction;
 	}
 }

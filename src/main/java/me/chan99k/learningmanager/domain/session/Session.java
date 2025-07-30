@@ -21,11 +21,9 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import lombok.Getter;
 import me.chan99k.learningmanager.domain.AbstractEntity;
 
 @Entity
-@Getter
 public class Session extends AbstractEntity {
 	@Column(name = "course_id")
 	private Long courseId;
@@ -43,6 +41,7 @@ public class Session extends AbstractEntity {
 	@OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<SessionParticipant> participants = new ArrayList<>();
 
+	@Column(nullable = false)
 	private String title;
 
 	private Instant scheduledAt;
@@ -57,26 +56,27 @@ public class Session extends AbstractEntity {
 
 	private String locationDetails;
 
-	// TODO :: 담당 매니저,멘토가 같으면서 루트/하위 세션 타입도 같은 세션은 서로 시간이 겹치면 안된다는 제약 조건을 추가하여야 함
-	/* Domain Logic */
+	protected Session() {
+	}
 
-	private static Session create(String title, Instant scheduledAt, Instant scheduledEndAt,
+	private Session(String title, Instant scheduledAt, Instant scheduledEndAt,
 		SessionType type, SessionLocation location, String locationDetails
 	) {
-		Session session = new Session();
-		session.title = title;
-		session.scheduledAt = scheduledAt;
-		session.scheduledEndAt = scheduledEndAt;
-		session.type = type;
-		session.location = location;
-		session.locationDetails = locationDetails;
-		return session;
+		this.title = title;
+		this.scheduledAt = scheduledAt;
+		this.scheduledEndAt = scheduledEndAt;
+		this.type = type;
+		this.location = location;
+		this.locationDetails = locationDetails;
 	}
+
+	// TODO :: 담당 매니저,멘토가 같으면서 루트/하위 세션 타입도 같은 세션은 서로 시간이 겹치면 안된다는 제약 조건을 추가하여야 함
+	/* Domain Logic */
 
 	public static Session createStandaloneSession(String title, Instant scheduledAt, Instant scheduledEndAt,
 		SessionType type, SessionLocation location, String locationDetails
 	) {
-		Session session = create(title, scheduledAt, scheduledEndAt, type, location, locationDetails);
+		Session session = new Session(title, scheduledAt, scheduledEndAt, type, location, locationDetails);
 		session.validate();
 		return session;
 	}
@@ -86,7 +86,7 @@ public class Session extends AbstractEntity {
 		SessionType type, SessionLocation location, String locationDetails
 	) {
 		notNull(courseId, "[System] 코스 ID는 필수입니다.");
-		Session session = create(title, scheduledAt, scheduledEndAt, type, location, locationDetails);
+		Session session = new Session(title, scheduledAt, scheduledEndAt, type, location, locationDetails);
 		session.courseId = courseId;
 		session.validate();
 		return session;
@@ -96,7 +96,7 @@ public class Session extends AbstractEntity {
 		Instant scheduledEndAt, SessionType type, SessionLocation location, String locationDetails) {
 		notNull(courseId, "[System] 코스 ID는 필수입니다.");
 		notNull(curriculumId, "[System] 커리큘럼 ID는 필수입니다.");
-		Session session = create(title, scheduledAt, scheduledEndAt, type, location, locationDetails);
+		Session session = new Session(title, scheduledAt, scheduledEndAt, type, location, locationDetails);
 		session.courseId = courseId;
 		session.curriculumId = curriculumId;
 		session.validate();
@@ -108,7 +108,7 @@ public class Session extends AbstractEntity {
 	) {
 		isTrue(this.isRootSession(), "[System] 하위 세션은 또 다른 하위 세션을 가질 수 없습니다.");
 
-		Session child = create(title, scheduledAt, scheduledEndAt, type, location, locationDetails);
+		Session child = new Session(title, scheduledAt, scheduledEndAt, type, location, locationDetails);
 		child.parent = this;
 		// 하위 세션은 부모의 소속(코스, 커리큘럼)을 상속
 		child.courseId = this.courseId;
@@ -124,28 +124,66 @@ public class Session extends AbstractEntity {
 			.anyMatch(p -> p.getMemberId().equals(memberId));
 		isTrue(!alreadyExists, "[System] 이미 세션에 참여 중인 멤버입니다.");
 
-		SessionParticipant participant = SessionParticipant.of(this, memberId, role);
+		SessionParticipant participant = SessionParticipant.of(memberId, this, role);
 		this.participants.add(participant);
 	}
 
 	public void removeParticipant(Long memberId) {
-		this.participants.removeIf(p -> p.getMemberId().equals(memberId));
+		boolean removed = this.participants.removeIf(p -> p.getMemberId().equals(memberId));
+		isTrue(removed, "[System] 해당 세션에 참여하지 않는 멤버입니다.");
 	}
 
-	public void update(String title, Instant scheduledAt,
-		Instant scheduledEndAt, SessionType type,
-		SessionLocation location, String locationDetails
-	) {
-
+	public void changeParticipantRole(Long memberId, SessionParticipantRole newRole) {
+		// 수정 가능 여부를 먼저 검증
 		validateUpdatable();
 
-		this.title = title;
-		this.scheduledAt = scheduledAt;
-		this.scheduledEndAt = scheduledEndAt;
-		this.type = type;
-		this.location = location;
-		this.locationDetails = locationDetails;
+		// 역할 변경에 대한 비즈니스 규칙 검증
+		// -> HOST는 세션에 한 명만 존재해야 한다
+		if (newRole == SessionParticipantRole.HOST) {
+			boolean anotherHostExists = this.participants.stream()
+				.anyMatch(p -> p.getRole() == SessionParticipantRole.HOST && !p.getMemberId().equals(memberId));
+			isTrue(!anotherHostExists, "[System] 세션에는 한 명의 호스트만 지정할 수 있습니다.");
+		}
 
+		// 대상 참여자를 찾아서 실제 역할 변경을 위임
+		SessionParticipant participant = findParticipant(memberId);
+		participant.changeRole(newRole);
+	}
+
+	private SessionParticipant findParticipant(Long memberId) {
+		return this.participants.stream()
+			.filter(p -> p.getMemberId().equals(memberId))
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("[System] 해당 세션에 참여하지 않는 멤버입니다."));
+	}
+
+	/**
+	 * 세션의 시간을 재조정합니다.
+	 */
+	public void reschedule(Instant newScheduledAt, Instant newScheduledEndAt) {
+		validateUpdatable();
+		this.scheduledAt = newScheduledAt;
+		this.scheduledEndAt = newScheduledEndAt;
+		validate();
+	}
+
+	/**
+	 * 세션의 기본 정보를 변경합니다.
+	 */
+	public void changeInfo(String newTitle, SessionType newType) {
+		validateUpdatable();
+		this.title = newTitle;
+		this.type = newType;
+		validate();
+	}
+
+	/**
+	 * 세션의 장소를 변경합니다.
+	 */
+	public void changeLocation(SessionLocation newLocation, String newLocationDetails) {
+		validateUpdatable();
+		this.location = newLocation;
+		this.locationDetails = newLocationDetails;
 		validate();
 	}
 
@@ -201,6 +239,14 @@ public class Session extends AbstractEntity {
 		}
 	}
 
+	public Instant getScheduledAt() {
+		return scheduledAt;
+	}
+
+	public Instant getScheduledEndAt() {
+		return scheduledEndAt;
+	}
+
 	public List<SessionParticipant> getParticipants() {
 		return Collections.unmodifiableList(this.participants);
 	}
@@ -211,5 +257,37 @@ public class Session extends AbstractEntity {
 
 	boolean isChildSession() {
 		return !this.isRootSession();
+	}
+
+	public Long getCourseId() {
+		return courseId;
+	}
+
+	public Long getCurriculumId() {
+		return curriculumId;
+	}
+
+	public Session getParent() {
+		return parent;
+	}
+
+	public List<Session> getChildren() {
+		return children;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public SessionType getType() {
+		return type;
+	}
+
+	public SessionLocation getLocation() {
+		return location;
+	}
+
+	public String getLocationDetails() {
+		return locationDetails;
 	}
 }

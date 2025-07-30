@@ -6,14 +6,10 @@ import java.time.Instant;
 import java.util.Objects;
 
 import jakarta.persistence.Entity;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import me.chan99k.learningmanager.domain.AbstractEntity;
 
-@Getter
 @Entity
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+
 public class Attendance extends AbstractEntity {
 
 	private Long sessionId;
@@ -46,5 +42,21 @@ public class Attendance extends AbstractEntity {
 
 		// checkOutTime이 checkInTime 보다 늦는지 검증
 		isTrue(this.checkOutTime.isAfter(this.checkInTime), "[System] 퇴실 시간은 입실 시간보다 빠를 수 없습니다.");
+	}
+
+	public Long getSessionId() {
+		return sessionId;
+	}
+
+	public Long getMemberId() {
+		return memberId;
+	}
+
+	public Instant getCheckInTime() {
+		return checkInTime;
+	}
+
+	public Instant getCheckOutTime() {
+		return checkOutTime;
 	}
 }

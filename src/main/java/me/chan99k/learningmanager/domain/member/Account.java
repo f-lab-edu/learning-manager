@@ -11,14 +11,9 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import me.chan99k.learningmanager.domain.AbstractEntity;
 
-@Getter
 @Entity
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Account extends AbstractEntity {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "member_id", nullable = false)
@@ -63,4 +58,19 @@ public class Account extends AbstractEntity {
 		this.status = AccountStatus.INACTIVE;
 	}
 
+	public Member getMember() {
+		return member;
+	}
+
+	public AccountStatus getStatus() {
+		return status;
+	}
+
+	public Email getEmail() {
+		return email;
+	}
+
+	public Password getPassword() {
+		return password;
+	}
 }

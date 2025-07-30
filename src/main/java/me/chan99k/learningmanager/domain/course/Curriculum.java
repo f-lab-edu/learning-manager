@@ -2,20 +2,13 @@ package me.chan99k.learningmanager.domain.course;
 
 import static org.springframework.util.Assert.*;
 
-import org.springframework.util.StringUtils;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import me.chan99k.learningmanager.domain.AbstractEntity;
 
-@Getter
 @Entity
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Curriculum extends AbstractEntity {
 
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -39,12 +32,27 @@ public class Curriculum extends AbstractEntity {
 		return curriculum;
 	}
 
-	public void update(String title, String description) {
-		if (StringUtils.hasText(title)) {
-			this.title = title;
-		}
-		if (description != null) {
-			this.description = description;
-		}
+	public void updateTitle(String newTitle) {
+		hasText(newTitle, "[System] 커리큘럼명 값이 비어 있습니다.");
+		this.title = newTitle;
+	}
+
+	public void updateDescription(String newDescription) {
+		hasText(newDescription, "[System] 커리큘럼에 대한 설명 값이 비어 있습니다.");
+		this.description = newDescription;
+	}
+
+	/* 게터 로직 */
+
+	public Course getCourse() {
+		return course;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public String getDescription() {
+		return description;
 	}
 }
