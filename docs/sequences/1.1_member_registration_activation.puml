@@ -1,0 +1,47 @@
+@startuml
+
+title 1.1 [P0] Member Registration - (2) 인증 이메일을 통한 회원 활성화
+
+actor "User (Guest)" as User
+participant "MemberController" as Controller
+participant "MemberActivationService" as AppService
+participant "Account" as AccountDomain
+participant "MemberRepository" as Repository
+
+User -> Controller: Activate Member
+activate Controller
+
+Controller -> AppService: activate
+activate AppService
+
+alt Invalid Activation Link
+    AppService --> Controller: ErrorResponse (400 Bad Request)
+    deactivate AppService
+    Controller --> User: Error Code
+    deactivate Controller
+else Valid Activation Link
+
+AppService -> Repository: findByAccountActivationToken
+activate Repository
+Repository --> AppService: member (PENDING)
+deactivate Repository
+
+AppService -> AccountDomain: activate
+activate AccountDomain
+AccountDomain --> AppService: member (ACTIVE)
+deactivate AccountDomain
+
+AppService -> Repository: save(member)
+activate Repository
+Repository --> AppService
+deactivate Repository
+
+AppService --> Controller: void
+deactivate AppService
+
+Controller --> User: 302 Redirect (to Login Page)
+deactivate Controller
+
+end
+
+@enduml

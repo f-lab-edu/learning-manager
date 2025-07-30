@@ -1,0 +1,47 @@
+@startuml
+
+title 1.2 [P0] Member Login
+
+actor "User (Guest)" as User
+participant "LoginController" as Controller
+participant "MemberAuthenticationService" as AppService
+participant "MemberRepository" as Repository
+participant "PasswordEncoder" as Encoder
+participant "CredentialProvider" as CredentialProvider
+
+User -> Controller: Request Login
+activate Controller
+
+Controller -> AppService: login
+activate AppService
+alt Invalid Credentials or Inactive Account
+    AppService --> Controller: ErrorResponse (401 Unauthorized or 403 Forbidden)
+    deactivate AppService
+    Controller --> User: Error Code
+    deactivate Controller
+else Valid Credentials
+
+AppService -> Repository: findByAccountEmail
+activate Repository
+Repository --> AppService: member
+deactivate Repository
+
+AppService -> Encoder: match password
+activate Encoder
+Encoder --> AppService: true
+deactivate Encoder
+
+AppService -> CredentialProvider: issueCredential
+activate CredentialProvider
+CredentialProvider --> AppService: credential
+deactivate CredentialProvider
+
+AppService --> Controller: LoginResponse (credential)
+deactivate AppService
+
+Controller --> User: 200 OK (credential)
+deactivate Controller
+
+end
+
+@enduml

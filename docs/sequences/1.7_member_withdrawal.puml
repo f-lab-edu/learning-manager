@@ -1,0 +1,61 @@
+@startuml
+
+title 1.7 [P2] Member Withdrawal : 회원 탈퇴
+
+actor "User (Member)" as User
+participant "CredentialValidator" as Validator
+participant "MemberController" as Controller
+participant "MemberService" as AppService
+participant "Member" as MemberDomain
+participant "Account" as AccountDomain
+participant "MemberRepository" as MemberRepo
+participant "CourseRepository" as CourseRepo
+
+User -> Controller: Request Member Withdrawal
+activate Validator
+activate Controller
+Validator --> User: 401 Unauthorized
+deactivate Validator
+
+Controller -> AppService: withdraw
+activate AppService
+alt Active Courses Exist
+    AppService --> Controller: ErrorResponse (400 Bad Request or 409 Conflict)
+    deactivate AppService
+    Controller --> User: Error Code
+    deactivate Controller
+else No Active Courses
+
+AppService -> CourseRepo: hasActiveCoursesAsManager
+activate CourseRepo
+CourseRepo --> AppService: false
+deactivate CourseRepo
+
+AppService -> MemberRepo: findById
+activate MemberRepo
+MemberRepo --> AppService: member
+deactivate MemberRepo
+
+AppService -> member: withdraw
+activate MemberDomain
+MemberDomain --> AppService
+deactivate MemberDomain
+
+loop for each account in member
+    AppService -> account: deactivate
+    activate AccountDomain
+    deactivate AccountDomain
+end
+
+AppService -> MemberRepo: save
+activate MemberRepo
+deactivate MemberRepo
+
+AppService --> Controller: void
+deactivate AppService
+
+Controller --> User: 204 No Content
+deactivate Controller
+end
+
+@enduml

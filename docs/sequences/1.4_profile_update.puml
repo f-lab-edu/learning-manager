@@ -1,0 +1,56 @@
+@startuml
+
+title 1.4 [P1] Profile Update : 회원 정보 관리
+
+actor "User (Member)" as User
+participant "CredentialValidator" as Validator
+participant "MemberProfileController" as Controller
+participant "MemberProfileService" as AppService
+participant "Member" as MemberDomain
+participant "MemberRepository" as Repository
+
+User -> Controller: Update Profile
+activate Validator
+activate Controller
+Validator --> User: 401 Unauthorized
+deactivate Validator
+
+Controller -> AppService: updateProfile
+
+alt Duplicate Nickname
+    activate AppService
+    AppService --> Controller: ErrorResponse (409 Conflict)
+    deactivate AppService
+    Controller --> User: Error Code
+    deactivate Controller
+else Valid Profile Update
+    activate AppService
+    AppService -> Repository: findById
+    activate Repository
+    Repository --> AppService: member
+deactivate Repository
+
+AppService -> MemberDomain: updateProfile
+activate MemberDomain
+MemberDomain --> AppService
+deactivate MemberDomain
+
+AppService -> MemberDomain: changeNickname
+activate MemberDomain
+MemberDomain --> AppService
+deactivate MemberDomain
+
+AppService -> Repository: save
+activate Repository
+Repository --> AppService
+deactivate Repository
+
+AppService --> Controller: ProfileResponse
+deactivate AppService
+
+
+Controller --> User: 200 OK
+deactivate Controller
+
+end
+@enduml

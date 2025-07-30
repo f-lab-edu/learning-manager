@@ -1,0 +1,54 @@
+@startuml
+
+title 1.6 [P3] Authentication Method Addition : 사용자 계정 추가
+
+actor "User (Member)" as User
+participant "CredentialValidator" as Validator
+participant "AccountController" as Controller
+participant "AccountService" as AppService
+participant "Account" as AccountDomain
+participant "MemberRepository" as MemberRepo
+participant "MemberRepository" as AccountRepo
+
+User -> Controller: Add Authentication Method
+activate Validator
+activate Controller
+Validator --> User: 401 Unauthorized
+deactivate Validator
+
+Controller -> AppService: addAccount
+activate AppService
+alt Duplicate Authentication Method
+    AppService --> Controller: ErrorResponse (409 Conflict)
+    deactivate AppService
+    Controller --> User: Error Code
+    deactivate Controller
+else Valid Authentication Method
+
+AppService -> MemberRepo: findById
+activate MemberRepo
+MemberRepo --> AppService: member
+deactivate MemberRepo
+
+AppService -> AccountRepo: existsByAccountEmail
+activate AccountRepo
+AccountRepo --> AppService: false
+deactivate AccountRepo
+
+AppService -> AccountDomain: create
+activate AccountDomain
+AccountDomain --> AppService: newAccount
+deactivate AccountDomain
+
+AppService -> AccountRepo: save(member)
+activate AccountRepo
+AccountRepo --> AppService
+deactivate AccountRepo
+
+AppService --> Controller: AccountResponse
+deactivate AppService
+
+Controller --> User: 201 Created
+deactivate Controller
+end
+@enduml
