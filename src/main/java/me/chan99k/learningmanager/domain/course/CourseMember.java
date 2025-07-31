@@ -1,5 +1,6 @@
 package me.chan99k.learningmanager.domain.course;
 
+import static me.chan99k.learningmanager.domain.course.CourseProblemCode.*;
 import static org.springframework.util.Assert.*;
 
 import jakarta.persistence.Entity;
@@ -32,9 +33,9 @@ public class CourseMember extends AbstractEntity {
 	/* 도메인 로직 */
 
 	public static CourseMember enroll(Course course, Long memberId, CourseRole courseRole) {
-		notNull(course, "[System] 코스는 필수입니다.");
-		notNull(memberId, "[System] 멤버 ID는 필수입니다.");
-		notNull(courseRole, "[System] 코스 역할은 필수입니다.");
+		notNull(course, COURSE_REQUIRED.getMessage());
+		notNull(memberId, MEMBER_ID_REQUIRED.getMessage());
+		notNull(courseRole, COURSE_ROLE_REQUIRED.getMessage());
 
 		CourseMember courseMember = new CourseMember();
 		courseMember.course = course;
@@ -45,7 +46,7 @@ public class CourseMember extends AbstractEntity {
 	}
 
 	public void changeRole(CourseRole newRole) {
-		notNull(newRole, "[System] 새로운 역할은 필수입니다.");
+		notNull(newRole, NEW_ROLE_REQUIRED.getMessage());
 		this.courseRole = newRole;
 	}
 

@@ -1,5 +1,6 @@
 package me.chan99k.learningmanager.domain.course;
 
+import static me.chan99k.learningmanager.domain.course.CourseProblemCode.*;
 import static org.springframework.util.Assert.*;
 
 import java.util.ArrayList;
@@ -29,7 +30,7 @@ public class Course extends AbstractEntity {
 	/* 도메인 로직 */
 
 	public static Course create(String title, String description) {
-		hasText(title, "[시스템] 과정명은 필수값 입니다.");
+		hasText(title, COURSE_TITLE_REQUIRED.getMessage());
 
 		Course course = new Course();
 		course.title = title;
@@ -38,12 +39,12 @@ public class Course extends AbstractEntity {
 	}
 
 	public void updateTitle(String newTitle) {
-		hasText(newTitle, "[System] 과정명 값이 비어 있습니다.");
+		hasText(newTitle, COURSE_TITLE_REQUIRED.getMessage());
 		this.title = newTitle;
 	}
 
 	public void updateDescription(String newDescription) {
-		hasText(newDescription, "[System] 과정에 대한 설명 값이 비어 있습니다.");
+		hasText(newDescription, COURSE_DESCRIPTION_REQUIRED.getMessage());
 		this.description = newDescription;
 	}
 
@@ -52,7 +53,7 @@ public class Course extends AbstractEntity {
 			member -> member.getMemberId().equals(memberId)
 		);
 
-		isTrue(!alreadyExists, "[System] 이미 과정에 등록된 멤버입니다.");
+		isTrue(!alreadyExists, COURSE_MEMBER_ALREADY_REGISTERED.getMessage());
 
 		CourseMember courseMember = CourseMember.enroll(this, memberId, courseRole);
 		this.courseMemberList.add(courseMember);
@@ -63,7 +64,7 @@ public class Course extends AbstractEntity {
 			courseMember -> courseMember.getMemberId().equals(memberId)
 		);
 
-		isTrue(removed, "[System] 과정에 등록되지 않은 멤버입니다.");
+		isTrue(removed, COURSE_MEMBER_NOT_REGISTERED.getMessage());
 	}
 
 	public void addCurriculum(String title, String description) {
@@ -73,11 +74,11 @@ public class Course extends AbstractEntity {
 	}
 
 	public void removeCurriculum(Curriculum curriculum) {
-		notNull(curriculum, "[System] 제거할 커리큘럼은 null일 수 없습니다.");
+		notNull(curriculum, CURRICULUM_NULL.getMessage());
 
 		boolean removed = this.curriculumList.remove(curriculum);
 
-		isTrue(removed, "[System] 해당 과정에 존재하지 않는 커리큘럼입니다. ID: " + curriculum.getId());
+		isTrue(removed, CURRICULUM_NOT_FOUND_IN_COURSE.getMessage() + " ID: " + curriculum.getId());
 	}
 
 	/* 게터 로직 */

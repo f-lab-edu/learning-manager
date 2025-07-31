@@ -1,5 +1,6 @@
 package me.chan99k.learningmanager.domain.course;
 
+import static me.chan99k.learningmanager.domain.course.CourseProblemCode.*;
 import static org.springframework.util.Assert.*;
 
 import jakarta.persistence.Entity;
@@ -22,8 +23,8 @@ public class Curriculum extends AbstractEntity {
 	/* 도메인 로직 */
 
 	public static Curriculum create(Course course, String title, String description) {
-		notNull(course, "[System] 커리큘럼은 반드시 코스에 속해야 합니다.");
-		hasText(title, "[System] 커리큘럼명은 필수입니다.");
+		notNull(course, CURRICULUM_COURSE_REQUIRED.getMessage());
+		hasText(title, CURRICULUM_TITLE_REQUIRED.getMessage());
 
 		Curriculum curriculum = new Curriculum();
 		curriculum.course = course;
@@ -33,12 +34,12 @@ public class Curriculum extends AbstractEntity {
 	}
 
 	public void updateTitle(String newTitle) {
-		hasText(newTitle, "[System] 커리큘럼명 값이 비어 있습니다.");
+		hasText(newTitle, CURRICULUM_TITLE_REQUIRED.getMessage());
 		this.title = newTitle;
 	}
 
 	public void updateDescription(String newDescription) {
-		hasText(newDescription, "[System] 커리큘럼에 대한 설명 값이 비어 있습니다.");
+		hasText(newDescription, CURRICULUM_DESCRIPTION_REQUIRED.getMessage());
 		this.description = newDescription;
 	}
 
