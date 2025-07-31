@@ -1,0 +1,36 @@
+@startuml
+
+title 4.3 [P1] Attendance Status View
+
+actor "User (Member/Manager)" as User
+participant "CredentialValidator" as Validator
+participant "AttendanceController" as Controller
+participant "AttendanceQueryService" as AppService
+participant "CourseRepository" as Repository
+
+User -> Controller: View Attendance Status
+activate Validator
+activate Controller
+Validator --> User: 401 Unauthorized
+Validator --> User: 403 Forbidden
+deactivate Validator
+
+Controller -> AppService: getAttendanceStatus
+activate AppService
+
+AppService -> Repository: findAttendanceByCourseAndMember
+activate Repository
+Repository --> AppService: attendanceList
+deactivate Repository
+
+note right of AppService
+    출석률 계산
+end note
+
+AppService --> Controller: AttendanceStatusResponse
+deactivate AppService
+
+Controller --> User: 200 OK (attendanceStatus)
+deactivate Controller
+
+@enduml

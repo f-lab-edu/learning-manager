@@ -1,0 +1,62 @@
+@startuml
+
+title 4.1 [P0] Attendance Record
+
+actor "User (Member)" as User
+participant "CredentialValidator" as Validator
+participant "AttendanceController" as Controller
+participant "AttendanceService" as AppService
+participant "Attendance" as AttendanceDomain
+participant "AttendanceRepository" as Repository
+participant "CourseRepository" as SessionRepo
+
+User -> Controller: Record Attendance
+activate Validator
+activate Controller
+Validator --> User: 401 Unauthorized
+Validator --> User: 403 Forbidden
+deactivate Validator
+
+Controller -> AppService: recordAttendance
+activate AppService
+alt Invalid Authentication or Duplicate Processing
+    AppService --> Controller: ErrorResponse (400 Bad Request or 409 Conflict)
+    deactivate AppService
+    Controller --> User: Error Code
+    deactivate Controller
+else Valid Attendance Record
+
+AppService -> SessionRepo: findSessionById(sessionId) && validateAuthCode(authCode)
+activate SessionRepo
+SessionRepo --> AppService: session
+deactivate SessionRepo
+
+alt isCheckIn
+    AppService -> AttendanceDomain: checkIn(sessionId, memberId)
+    activate AttendanceDomain
+    AttendanceDomain --> AppService: newAttendance
+    deactivate AttendanceDomain
+    AppService -> Repository: save(newAttendance)
+else isCheckOut
+    AppService -> Repository: findBySessionAndMember(sessionId, memberId)
+    activate Repository
+    Repository --> AppService: attendance
+    deactivate Repository
+    AppService -> attendance: checkOut()
+    activate AttendanceDomain
+    deactivate AttendanceDomain
+    AppService -> Repository: save(attendance)
+end
+
+activate Repository
+deactivate Repository
+
+AppService --> Controller: AttendanceResponse
+deactivate AppService
+
+Controller --> User: 200 OK
+deactivate Controller
+
+end
+
+@enduml

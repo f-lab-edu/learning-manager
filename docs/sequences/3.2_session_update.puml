@@ -1,0 +1,57 @@
+@startuml
+
+title 3.2 [P1] Session Update
+
+actor "User (Manager)" as User
+participant "CredentialValidator" as Validator
+participant "SessionController" as Controller
+participant "SessionService" as AppService
+participant "Session" as SessionDomain
+participant "CourseRepository" as Repository
+
+User -> Controller: Update Session
+activate Validator
+activate Controller
+Validator --> User: 401 Unauthorized
+Validator --> User: 403 Forbidden
+deactivate Validator
+
+Controller -> AppService: updateSession
+activate AppService
+alt Session Constraint Violation
+    AppService --> Controller: ErrorResponse (400 Bad Request)
+    deactivate AppService
+    Controller --> User: Error Code
+    deactivate Controller
+else Valid Session Update
+
+AppService -> Repository: findSessionById
+activate Repository
+Repository --> AppService: session
+deactivate Repository
+
+AppService -> session: reschedule
+activate SessionDomain
+deactivate SessionDomain
+
+AppService -> session: changeInfo
+activate SessionDomain
+deactivate SessionDomain
+
+AppService -> session: changeLocation
+activate SessionDomain
+deactivate SessionDomain
+
+AppService -> Repository: save
+activate Repository
+deactivate Repository
+
+AppService --> Controller: SessionResponse
+deactivate AppService
+
+Controller --> User: 200 OK
+deactivate Controller
+
+end
+
+@enduml

@@ -1,0 +1,52 @@
+@startuml
+
+title 3.1 [P0] Session Creation
+
+actor "User (Manager/Admin)" as User
+participant "CredentialValidator" as Validator
+participant "SessionController" as Controller
+participant "SessionService" as AppService
+participant "Session" as SessionDomain
+participant "CourseRepository" as Repository
+
+User -> Controller: Create Session
+activate Validator
+activate Controller
+Validator --> User: 401 Unauthorized
+Validator --> User: 403 Forbidden
+deactivate Validator
+
+Controller -> AppService: createSession
+activate AppService
+alt Session Constraint Violation or Parent Entity Not Found
+    AppService --> Controller: ErrorResponse (400 Bad Request or 404 Not Found)
+    deactivate AppService
+    Controller --> User: Error Code
+    deactivate Controller
+else Valid Session Creation
+
+alt createCommand is for Standalone Session
+    AppService -> SessionDomain: createStandaloneSession
+else createCommand is for Course Session
+    AppService -> SessionDomain: createCourseSession
+else createCommand is for Curriculum Session
+    AppService -> SessionDomain: createCurriculumSession
+end
+activate SessionDomain
+SessionDomain --> AppService: newSession
+deactivate SessionDomain
+
+AppService -> Repository: save
+activate Repository
+Repository --> AppService: savedSession
+deactivate Repository
+
+AppService --> Controller: SessionResponse
+deactivate AppService
+
+Controller --> User: 201 Created
+deactivate Controller
+
+end
+
+@enduml
