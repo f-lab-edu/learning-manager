@@ -1,5 +1,6 @@
 package me.chan99k.learningmanager.domain.member;
 
+import static me.chan99k.learningmanager.domain.member.MemberProblemCode.*;
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.DisplayName;
@@ -55,7 +56,7 @@ class PasswordTest {
     void password_length_validation(String invalidPassword) {
         assertThatThrownBy(() -> Password.generatePassword(invalidPassword, passwordEncoder))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("비밀번호는 최소 8자 이상, 64자 이하여야 합니다.");
+            .hasMessage(PASSWORD_LENGTH_INVALID.getMessage());
     }
 
     @Test
@@ -63,7 +64,7 @@ class PasswordTest {
     void password_requires_lowercase() {
         assertThatThrownBy(() -> Password.generatePassword("VALIDPASS1!", passwordEncoder))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("비밀번호에는 소문자가 최소 1개 이상 포함되어야 합니다.");
+            .hasMessage(PASSWORD_NO_LOWERCASE.getMessage());
     }
 
     @Test
@@ -71,7 +72,7 @@ class PasswordTest {
     void password_requires_uppercase() {
         assertThatThrownBy(() -> Password.generatePassword("validpass1!", passwordEncoder))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("비밀번호에는 대문자가 최소 1개 이상 포함되어야 합니다.");
+            .hasMessage(PASSWORD_NO_UPPERCASE.getMessage());
     }
 
     @Test
@@ -79,7 +80,7 @@ class PasswordTest {
     void password_requires_digit() {
         assertThatThrownBy(() -> Password.generatePassword("ValidPass!", passwordEncoder))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("비밀번호에는 숫자가 최소 1개 이상 포함되어야 합니다.");
+            .hasMessage(PASSWORD_NO_DIGIT.getMessage());
     }
 
     @Test
@@ -87,7 +88,7 @@ class PasswordTest {
     void password_requires_special_char() {
         assertThatThrownBy(() -> Password.generatePassword("ValidPass1", passwordEncoder))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("비밀번호에는 특수문자가 최소 1개 이상 포함되어야 합니다.");
+            .hasMessage(PASSWORD_NO_SPECIAL_CHAR.getMessage());
     }
 
     @Test
@@ -95,6 +96,6 @@ class PasswordTest {
     void password_cannot_contain_whitespace() {
         assertThatThrownBy(() -> Password.generatePassword("Valid Pass 1!", passwordEncoder))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("비밀번호에 공백을 포함할 수 없습니다.");
+            .hasMessage(PASSWORD_CONTAINS_WHITESPACE.getMessage());
     }
 }

@@ -1,5 +1,6 @@
 package me.chan99k.learningmanager.domain.member;
 
+import static me.chan99k.learningmanager.domain.member.MemberProblemCode.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.UUID;
@@ -75,7 +76,7 @@ class MemberTest {
 
 			assertThatThrownBy(member::ban)
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage("활동 중인 회원만 이용 정지될 수 있습니다.");
+				.hasMessage(MEMBER_NOT_ACTIVE.getMessage());
 		}
 
 		@Test
@@ -83,13 +84,13 @@ class MemberTest {
 		void activate_fails_if_not_inactive() {
 			assertThatThrownBy(member::activate)
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage("휴면 상태의 회원만 활성화할 수 있습니다.");
+				.hasMessage(MEMBER_NOT_INACTIVE.getMessage());
 
 			member.ban(); // BANNED 상태로 변경
 
 			assertThatThrownBy(member::activate)
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage("휴면 상태의 회원만 활성화할 수 있습니다.");
+				.hasMessage(MEMBER_NOT_INACTIVE.getMessage());
 		}
 
 		@Test
@@ -125,7 +126,7 @@ class MemberTest {
 
 			assertThatThrownBy(member::deactivate)
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage("이미 휴면 상태의 회원입니다.");
+				.hasMessage(MEMBER_ALREADY_INACTIVE.getMessage());
 		}
 
 		@Test
@@ -135,7 +136,7 @@ class MemberTest {
 
 			assertThatThrownBy(member::withdraw)
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage("이미 탈퇴한 회원입니다.");
+				.hasMessage(MEMBER_ALREADY_WITHDRAWN.getMessage());
 		}
 
 		@Test
@@ -144,7 +145,7 @@ class MemberTest {
 			// 기본 상태(ACTIVE)에서 unban 시도
 			assertThatThrownBy(member::unban)
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage("이용 정지 상태의 회원만 해제될 수 있습니다.");
+				.hasMessage(MEMBER_NOT_BANNED.getMessage());
 		}
 	}
 
@@ -163,7 +164,8 @@ class MemberTest {
 		void fail_to_promote_admin() {
 			member.promoteToAdmin();
 			assertThat(member.getRole()).isEqualTo(SystemRole.ADMIN);
-			assertThatThrownBy(() -> member.promoteToAdmin()).isInstanceOf(IllegalStateException.class);
+			assertThatThrownBy(() -> member.promoteToAdmin()).isInstanceOf(IllegalStateException.class)
+				.hasMessage(MEMBER_NOT_GENERAL.getMessage());
 		}
 
 		@Test
@@ -179,7 +181,8 @@ class MemberTest {
 		@Test
 		@DisplayName("[Failure] 더 강등할 등급이 없는 경우, 회원 등급 강등에 실패한다..")
 		void fail_to_demote_member() {
-			assertThatThrownBy(() -> member.demoteToMember()).isInstanceOf(IllegalStateException.class);
+			assertThatThrownBy(() -> member.demoteToMember()).isInstanceOf(IllegalStateException.class)
+				.hasMessage(MEMBER_NOT_ADMIN.getMessage());
 		}
 	}
 }

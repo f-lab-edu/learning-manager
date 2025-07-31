@@ -1,5 +1,6 @@
 package me.chan99k.learningmanager.domain.member;
 
+import static me.chan99k.learningmanager.domain.member.MemberProblemCode.*;
 import static org.springframework.util.Assert.*;
 
 import jakarta.persistence.AttributeOverride;
@@ -48,37 +49,37 @@ public class Member extends AbstractEntity {
 	}
 
 	public void promoteToAdmin() {
-		state(this.role == SystemRole.MEMBER, "일반 회원만 관리자로 승격될 수 있습니다.");
+		state(this.role == SystemRole.MEMBER, MEMBER_NOT_GENERAL.getMessage());
 		this.role = SystemRole.ADMIN;
 	}
 
 	public void demoteToMember() {
-		state(this.role == SystemRole.ADMIN, "관리자만 일반 회원으로 강등될 수 있습니다.");
+		state(this.role == SystemRole.ADMIN, MEMBER_NOT_ADMIN.getMessage());
 		this.role = SystemRole.MEMBER;
 	}
 
 	public void deactivate() {
-		state(this.status != MemberStatus.INACTIVE, "이미 휴면 상태의 회원입니다.");
+		state(this.status != MemberStatus.INACTIVE, MEMBER_ALREADY_INACTIVE.getMessage());
 		this.status = MemberStatus.INACTIVE;
 	}
 
 	public void activate() {
-		state(this.status == MemberStatus.INACTIVE, "휴면 상태의 회원만 활성화할 수 있습니다.");
+		state(this.status == MemberStatus.INACTIVE, MEMBER_NOT_INACTIVE.getMessage());
 		this.status = MemberStatus.ACTIVE;
 	}
 
 	public void withdraw() {
-		state(this.status != MemberStatus.WITHDRAWN, "이미 탈퇴한 회원입니다.");
+		state(this.status != MemberStatus.WITHDRAWN, MEMBER_ALREADY_WITHDRAWN.getMessage());
 		this.status = MemberStatus.WITHDRAWN;
 	}
 
 	public void ban() {
-		state(this.status == MemberStatus.ACTIVE, "활동 중인 회원만 이용 정지될 수 있습니다.");
+		state(this.status == MemberStatus.ACTIVE, MEMBER_NOT_ACTIVE.getMessage());
 		this.status = MemberStatus.BANNED;
 	}
 
 	public void unban() {
-		state(this.status == MemberStatus.BANNED, "이용 정지 상태의 회원만 해제될 수 있습니다.");
+		state(this.status == MemberStatus.BANNED, MEMBER_NOT_BANNED.getMessage());
 		this.status = MemberStatus.ACTIVE;
 	}
 

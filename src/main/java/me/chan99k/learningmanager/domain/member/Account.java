@@ -1,5 +1,6 @@
 package me.chan99k.learningmanager.domain.member;
 
+import static me.chan99k.learningmanager.domain.member.MemberProblemCode.*;
 import static org.springframework.util.Assert.*;
 
 import jakarta.persistence.AttributeOverride;
@@ -33,7 +34,7 @@ public class Account extends AbstractEntity {
 	/* 도메인 로직 */
 
 	public static Account create(Member member, String emailAddress, String rawPassword, PasswordEncoder encoder) {
-		notNull(member, "[System] 계정은 반드시 멤버에 속해야 합니다.");
+		notNull(member, ACCOUNT_MEMBER_REQUIRED.getMessage());
 
 		Account account = new Account();
 		account.member = member;
@@ -49,12 +50,13 @@ public class Account extends AbstractEntity {
 	}
 
 	public void activate() {
-		state(status == AccountStatus.PENDING || status == AccountStatus.INACTIVE, "[System] 활성 대기/비활성 상태의 계정이 아닙니다.");
+		state(status == AccountStatus.PENDING || status == AccountStatus.INACTIVE,
+			ACCOUNT_NOT_PENDING_OR_INACTIVE.getMessage());
 		this.status = AccountStatus.ACTIVE;
 	}
 
 	public void deactivate() {
-		state(status == AccountStatus.ACTIVE, "[System] 활성 상태의 계정이 아닙니다.");
+		state(status == AccountStatus.ACTIVE, ACCOUNT_NOT_ACTIVE.getMessage());
 		this.status = AccountStatus.INACTIVE;
 	}
 
