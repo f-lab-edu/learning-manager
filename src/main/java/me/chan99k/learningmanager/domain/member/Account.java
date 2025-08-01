@@ -9,15 +9,12 @@ import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import me.chan99k.learningmanager.domain.AbstractEntity;
 
 @Entity
 public class Account extends AbstractEntity {
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "member_id", nullable = false)
+	@ManyToOne
 	private Member member;
 
 	@Enumerated(EnumType.STRING)
@@ -33,46 +30,47 @@ public class Account extends AbstractEntity {
 
 	/* 도메인 로직 */
 
-	public static Account create(Member member, String emailAddress, String rawPassword, PasswordEncoder encoder) {
-		notNull(member, ACCOUNT_MEMBER_REQUIRED.getMessage());
-
-		Account account = new Account();
-		account.member = member;
-		account.email = new Email(emailAddress);
-		account.password = Password.generatePassword(rawPassword, encoder);
-		account.status = AccountStatus.PENDING;
-
-		return account;
+	protected Account() {
 	}
 
-	public void changePassword(String password, PasswordEncoder encoder) {
+	private Account(Member member, String email, String rawPassword, PasswordEncoder encoder) {
+		notNull(member, ACCOUNT_MEMBER_REQUIRED.getMessage());
+
+		this.email = new Email(email);
+		this.password = Password.generatePassword(rawPassword, encoder);
+		this.status = AccountStatus.PENDING;
+	}
+
+	protected static Account create(Member member, String email, String rawPassword, PasswordEncoder encoder) {
+		return new Account(member, email, rawPassword, encoder);
+	}
+
+	void changePassword(String password, PasswordEncoder encoder) {
 		this.password = Password.generatePassword(password, encoder);
 	}
 
-	public void activate() {
+	void activate() {
 		state(status == AccountStatus.PENDING || status == AccountStatus.INACTIVE,
 			ACCOUNT_NOT_PENDING_OR_INACTIVE.getMessage());
 		this.status = AccountStatus.ACTIVE;
 	}
 
-	public void deactivate() {
+	void deactivate() {
 		state(status == AccountStatus.ACTIVE, ACCOUNT_NOT_ACTIVE.getMessage());
 		this.status = AccountStatus.INACTIVE;
 	}
 
-	public Member getMember() {
-		return member;
-	}
+	/* 게터 로직 */
 
-	public AccountStatus getStatus() {
+	AccountStatus getStatus() {
 		return status;
 	}
 
-	public Email getEmail() {
+	Email getEmail() {
 		return email;
 	}
 
-	public Password getPassword() {
+	Password getPassword() {
 		return password;
 	}
 }
