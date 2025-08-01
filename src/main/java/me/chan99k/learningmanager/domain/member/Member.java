@@ -69,7 +69,7 @@ public class Member extends AbstractEntity {
 	}
 
 	Account findAccountById(Long accountId) {
-		notNull(accountId, "[System] 계정 ID는 null일 수 없습니다.");
+		notNull(accountId, ACCOUNT_ID_REQUIRED.getMessage());
 		return accounts.stream()
 			.filter(account -> accountId.equals(account.getId()))
 			.findFirst()
