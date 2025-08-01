@@ -1,5 +1,6 @@
 package me.chan99k.learningmanager.domain.attendance;
 
+import static me.chan99k.learningmanager.domain.attendance.AttendanceProblemCode.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.time.Instant;
@@ -69,7 +70,7 @@ class AttendanceTest {
 			assertThat(attendance.getCheckOutTime()).isNotNull();
 			assertThatThrownBy(attendance::checkOut)
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage("[System] 이미 퇴실 처리된 출석 기록입니다.");
+				.hasMessage(ALREADY_CHECKED_OUT.getMessage());
 		}
 	}
 }

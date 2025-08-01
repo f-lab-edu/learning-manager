@@ -1,5 +1,6 @@
 package me.chan99k.learningmanager.domain.session;
 
+import static me.chan99k.learningmanager.domain.session.SessionProblemCode.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.time.Instant;
@@ -86,7 +87,7 @@ class SessionTest {
 			assertThatThrownBy(() -> Session.createStandaloneSession("잘못된 시간", startTime, endTime, SessionType.ONLINE,
 				SessionLocation.GOOGLE_MEET, null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 세션 시작 시간은 종료 시간보다 빨라야 합니다.");
+				.hasMessage(START_TIME_MUST_BE_BEFORE_END_TIME.getMessage());
 		}
 
 		@Test
@@ -98,7 +99,7 @@ class SessionTest {
 			assertThatThrownBy(() -> Session.createStandaloneSession("이틀 걸친 세션", startTime, endTime, SessionType.ONLINE,
 				SessionLocation.ZOOM, null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 세션은 이틀에 걸쳐 진행될 수 없습니다.");
+				.hasMessage(SESSION_CANNOT_SPAN_MULTIPLE_DAYS.getMessage());
 		}
 
 		@Test
@@ -107,7 +108,7 @@ class SessionTest {
 			assertThatThrownBy(() -> Session.createStandaloneSession("오프라인 스터디", now, now.plus(2, ChronoUnit.HOURS),
 				SessionType.OFFLINE, SessionLocation.SITE, null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 오프라인 세션은 상세 장소 설명이 필수입니다.");
+				.hasMessage(OFFLINE_SESSION_LOCATION_DETAIL_REQUIRED.getMessage());
 		}
 
 		@Test
@@ -119,7 +120,7 @@ class SessionTest {
 			assertThatThrownBy(() -> Session.createStandaloneSession("24시간 세션", startTime, endTime, SessionType.ONLINE,
 				SessionLocation.ZOOM, null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 세션은 24시간을 초과할 수 없습니다.");
+				.hasMessage(SESSION_DURATION_EXCEEDS_24_HOURS.getMessage());
 		}
 	}
 
@@ -162,11 +163,11 @@ class SessionTest {
 			assertThatThrownBy(() -> childSession.createChildSession("2차 하위 세션", now.plus(1, ChronoUnit.HOURS),
 				now.plus(2, ChronoUnit.HOURS), SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 하위 세션은 또 다른 하위 세션을 가질 수 없습니다.");
+				.hasMessage(INVALID_SESSION_HIERARCHY.getMessage());
 		}
 
 		@Test
-		@DisplayName("[Failure] 하위 세션의 시간이 부모 세션의 범위를 벗어나면 예외가 발생한다.")
+		@DisplayName("[Failure] 하위 세션의 시간이 부모 세션 종료시간보다 늦으면 예외가 발생한다.")
 		void create_fail_due_to_time_range_violation() {
 			Instant subStartTime = now.plus(1, ChronoUnit.HOURS);
 			Instant subEndTime = now.plus(9, ChronoUnit.HOURS); // 부모 종료 시간(8시간 뒤)보다 늦음
@@ -174,7 +175,7 @@ class SessionTest {
 			assertThatThrownBy(() -> rootSession.createChildSession("시간 초과 세션", subStartTime, subEndTime,
 				SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 하위 세션의 종료 시간은 부모 세션의 종료 시간보다 늦을 수 없습니다.");
+				.hasMessage(CHILD_SESSION_END_TIME_AFTER_PARENT.getMessage());
 		}
 	}
 
@@ -210,7 +211,7 @@ class SessionTest {
 
 			assertThatThrownBy(() -> session.addParticipant(memberId, SessionParticipantRole.HOST))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 이미 세션에 참여 중인 멤버입니다.");
+				.hasMessage(ALREADY_PARTICIPATING_MEMBER.getMessage());
 		}
 
 		@Test
@@ -252,6 +253,7 @@ class SessionTest {
 
 			SessionParticipant participant = session.getParticipants().stream()
 				.filter(p -> p.getMemberId().equals(memberId)).findFirst().get();
+
 			assertThat(participant.getRole()).isEqualTo(SessionParticipantRole.HOST);
 		}
 
@@ -263,7 +265,7 @@ class SessionTest {
 
 			assertThatThrownBy(() -> session.changeParticipantRole(2L, SessionParticipantRole.HOST))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 세션에는 한 명의 호스트만 지정할 수 있습니다.");
+				.hasMessage(ONLY_ONE_HOST_ALLOWED.getMessage());
 		}
 
 		@Test
@@ -274,7 +276,7 @@ class SessionTest {
 
 			assertThatThrownBy(() -> session.changeParticipantRole(memberId, SessionParticipantRole.SPEAKER))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 이미 해당 역할을 가지고 있습니다.");
+				.hasMessage(SAME_ROLE_PARTICIPANT_ALREADY.getMessage());
 		}
 	}
 
@@ -337,11 +339,11 @@ class SessionTest {
 
 			assertThatThrownBy(() -> updatableSession.reschedule(newStartTime, newEndTime))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 세션 시작 시간은 종료 시간보다 빨라야 합니다.");
+				.hasMessage(START_TIME_MUST_BE_BEFORE_END_TIME.getMessage());
 		}
 
 		@Test
-		@DisplayName("[Failure] 이미 시작된 세션은 수정할 수 없다.")
+		@DisplayName("[Failure] 이미 시작된 세션을 수정하려 하면 예외가 발생한다.")
 		void update_fail_if_session_already_started() {
 			Instant pastTime = now.minus(1, ChronoUnit.HOURS);
 			Session startedSession = Session.createStandaloneSession("이미 시작된 세션", pastTime,
@@ -350,7 +352,7 @@ class SessionTest {
 
 			assertThatThrownBy(() -> startedSession.changeInfo("수정 시도", SessionType.OFFLINE))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 이미 시작된 세션은 수정할 수 없습니다.");
+				.hasMessage(CANNOT_MODIFY_STARTED_SESSION.getMessage());
 		}
 
 		@Test
@@ -363,7 +365,7 @@ class SessionTest {
 
 			assertThatThrownBy(() -> soonSession.changeInfo("수정 시도", SessionType.OFFLINE))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 루트 세션은 시작 3일 전까지만 수정할 수 있습니다.");
+				.hasMessage(ROOT_SESSION_MODIFICATION_DEADLINE_EXCEEDED.getMessage());
 		}
 
 		@Test
@@ -379,7 +381,7 @@ class SessionTest {
 
 			assertThatThrownBy(() -> child.changeInfo("수정 시도", SessionType.ONLINE))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 하위 세션은 시작 1시간 전까지만 수정할 수 있습니다.");
+				.hasMessage(CHILD_SESSION_MODIFICATION_DEADLINE_EXCEEDED.getMessage());
 		}
 	}
 }

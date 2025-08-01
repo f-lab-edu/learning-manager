@@ -1,5 +1,6 @@
 package me.chan99k.learningmanager.domain.course;
 
+import static me.chan99k.learningmanager.domain.course.CourseProblemCode.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.List;
@@ -16,7 +17,7 @@ class CourseTest {
 
 	@BeforeEach
 	void setUp() {
-		course = Course.create("수정전 스터디", "JPA 기초 스터디입니다.");
+		course = Course.create("수정전 스터디", "스터디 설명");
 	}
 
 	@Nested
@@ -64,7 +65,7 @@ class CourseTest {
 
 			assertThatThrownBy(() -> course.updateTitle(null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 과정명 값이 비어 있습니다.");
+				.hasMessage(COURSE_TITLE_REQUIRED.getMessage());
 		}
 
 		@Test
@@ -73,7 +74,7 @@ class CourseTest {
 
 			assertThatThrownBy(() -> course.updateDescription(null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 과정에 대한 설명 값이 비어 있습니다.");
+				.hasMessage(COURSE_DESCRIPTION_REQUIRED.getMessage());
 		}
 
 		@Test
@@ -161,7 +162,7 @@ class CourseTest {
 			// 존재하지 않는 ID로 제거를 시도하면 예외가 발생하는 것을 검증합니다.
 			assertThatThrownBy(() -> course.removeMember(99L))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 과정에 등록되지 않은 멤버입니다.");
+				.hasMessage(COURSE_MEMBER_NOT_REGISTERED.getMessage());
 		}
 	}
 
@@ -215,7 +216,7 @@ class CourseTest {
 
 			assertThatThrownBy(() -> course.removeCurriculum(anoutherCoursesCurriculum))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 해당 과정에 존재하지 않는 커리큘럼입니다. ID: 99");
+				.hasMessage(CURRICULUM_NOT_FOUND_IN_COURSE.getMessage() + " ID: 99");
 		}
 
 		@Test
@@ -223,7 +224,7 @@ class CourseTest {
 		void remove_null_curriculum_fail() {
 			assertThatThrownBy(() -> course.removeCurriculum(null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 제거할 커리큘럼은 null일 수 없습니다.");
+				.hasMessage(CURRICULUM_NULL.getMessage());
 		}
 
 		@Test

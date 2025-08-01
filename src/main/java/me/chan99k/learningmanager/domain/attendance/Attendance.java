@@ -1,5 +1,6 @@
 package me.chan99k.learningmanager.domain.attendance;
 
+import static me.chan99k.learningmanager.domain.attendance.AttendanceProblemCode.*;
 import static org.springframework.util.Assert.*;
 
 import java.time.Instant;
@@ -23,8 +24,8 @@ public class Attendance extends AbstractEntity {
 	/* 도메인 로직 */
 
 	public static Attendance checkIn(Long sessionId, Long memberId) {
-		notNull(sessionId, "[System] 출석을 기록할 세션은 필수입니다.");
-		notNull(memberId, "[System] 출석을 기록할 회원은 필수입니다.");
+		notNull(sessionId, SESSION_ID_REQUIRED.getMessage());
+		notNull(memberId, MEMBER_ID_REQUIRED.getMessage());
 
 		Attendance attendance = new Attendance();
 		attendance.sessionId = sessionId;
@@ -36,12 +37,12 @@ public class Attendance extends AbstractEntity {
 	}
 
 	public void checkOut() {
-		state(Objects.isNull(checkOutTime), "[System] 이미 퇴실 처리된 출석 기록입니다.");
+		state(Objects.isNull(checkOutTime), ALREADY_CHECKED_OUT.getMessage());
 
 		this.checkOutTime = Instant.now();
 
 		// checkOutTime이 checkInTime 보다 늦는지 검증
-		isTrue(this.checkOutTime.isAfter(this.checkInTime), "[System] 퇴실 시간은 입실 시간보다 빠를 수 없습니다.");
+		isTrue(this.checkOutTime.isAfter(this.checkInTime), CHECK_OUT_TIME_BEFORE_CHECK_IN_TIME.getMessage());
 	}
 
 	public Long getSessionId() {

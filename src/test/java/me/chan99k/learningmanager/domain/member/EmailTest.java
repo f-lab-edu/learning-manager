@@ -1,12 +1,12 @@
 package me.chan99k.learningmanager.domain.member;
 
+import static me.chan99k.learningmanager.domain.member.MemberProblemCode.*;
+import static org.assertj.core.api.Assertions.*;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EmailTest {
 
@@ -22,6 +22,6 @@ class EmailTest {
     void create_email_with_invalid_address_throws_exception(String invalidEmail) {
         assertThatThrownBy(() -> new Email(invalidEmail))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("유효하지 않은 이메일 형식입니다.");
+			.hasMessage(INVALID_EMAIL_FORMAT.getMessage());
     }
 }

@@ -1,5 +1,6 @@
 package me.chan99k.learningmanager.domain.member;
 
+import static me.chan99k.learningmanager.domain.member.MemberProblemCode.*;
 import static org.springframework.util.Assert.*;
 
 import java.util.regex.Pattern;
@@ -13,6 +14,6 @@ public record Email(String address) {
 	);
 
 	public Email {
-		isTrue(PATTERN.matcher(address).matches(), "유효하지 않은 이메일 형식입니다.");
+		isTrue(PATTERN.matcher(address).matches(), INVALID_EMAIL_FORMAT.getMessage());
 	}
 }

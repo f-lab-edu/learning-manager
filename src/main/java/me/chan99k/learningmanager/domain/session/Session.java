@@ -1,5 +1,6 @@
 package me.chan99k.learningmanager.domain.session;
 
+import static me.chan99k.learningmanager.domain.session.SessionProblemCode.*;
 import static org.springframework.util.Assert.*;
 
 import java.time.Duration;
@@ -85,7 +86,7 @@ public class Session extends AbstractEntity {
 		Instant scheduledAt, Instant scheduledEndAt,
 		SessionType type, SessionLocation location, String locationDetails
 	) {
-		notNull(courseId, "[System] 코스 ID는 필수입니다.");
+		notNull(courseId, COURSE_ID_REQUIRED.getMessage());
 		Session session = new Session(title, scheduledAt, scheduledEndAt, type, location, locationDetails);
 		session.courseId = courseId;
 		session.validate();
@@ -94,8 +95,8 @@ public class Session extends AbstractEntity {
 
 	public static Session createCurriculumSession(Long courseId, Long curriculumId, String title, Instant scheduledAt,
 		Instant scheduledEndAt, SessionType type, SessionLocation location, String locationDetails) {
-		notNull(courseId, "[System] 코스 ID는 필수입니다.");
-		notNull(curriculumId, "[System] 커리큘럼 ID는 필수입니다.");
+		notNull(courseId, COURSE_ID_REQUIRED.getMessage());
+		notNull(curriculumId, CURRICULUM_ID_REQUIRED.getMessage());
 		Session session = new Session(title, scheduledAt, scheduledEndAt, type, location, locationDetails);
 		session.courseId = courseId;
 		session.curriculumId = curriculumId;
@@ -106,7 +107,7 @@ public class Session extends AbstractEntity {
 	public Session createChildSession(String title, Instant scheduledAt, Instant scheduledEndAt,
 		SessionType type, SessionLocation location, String locationDetails
 	) {
-		isTrue(this.isRootSession(), "[System] 하위 세션은 또 다른 하위 세션을 가질 수 없습니다.");
+		isTrue(this.isRootSession(), INVALID_SESSION_HIERARCHY.getMessage());
 
 		Session child = new Session(title, scheduledAt, scheduledEndAt, type, location, locationDetails);
 		child.parent = this;
@@ -122,7 +123,7 @@ public class Session extends AbstractEntity {
 	public void addParticipant(Long memberId, SessionParticipantRole role) {
 		boolean alreadyExists = this.participants.stream()
 			.anyMatch(p -> p.getMemberId().equals(memberId));
-		isTrue(!alreadyExists, "[System] 이미 세션에 참여 중인 멤버입니다.");
+		isTrue(!alreadyExists, ALREADY_PARTICIPATING_MEMBER.getMessage());
 
 		SessionParticipant participant = SessionParticipant.of(memberId, this, role);
 		this.participants.add(participant);
@@ -130,7 +131,7 @@ public class Session extends AbstractEntity {
 
 	public void removeParticipant(Long memberId) {
 		boolean removed = this.participants.removeIf(p -> p.getMemberId().equals(memberId));
-		isTrue(removed, "[System] 해당 세션에 참여하지 않는 멤버입니다.");
+		isTrue(removed, MEMBER_NOT_PARTICIPATING.getMessage());
 	}
 
 	public void changeParticipantRole(Long memberId, SessionParticipantRole newRole) {
@@ -142,7 +143,7 @@ public class Session extends AbstractEntity {
 		if (newRole == SessionParticipantRole.HOST) {
 			boolean anotherHostExists = this.participants.stream()
 				.anyMatch(p -> p.getRole() == SessionParticipantRole.HOST && !p.getMemberId().equals(memberId));
-			isTrue(!anotherHostExists, "[System] 세션에는 한 명의 호스트만 지정할 수 있습니다.");
+			isTrue(!anotherHostExists, ONLY_ONE_HOST_ALLOWED.getMessage());
 		}
 
 		// 대상 참여자를 찾아서 실제 역할 변경을 위임
@@ -154,7 +155,7 @@ public class Session extends AbstractEntity {
 		return this.participants.stream()
 			.filter(p -> p.getMemberId().equals(memberId))
 			.findFirst()
-			.orElseThrow(() -> new IllegalArgumentException("[System] 해당 세션에 참여하지 않는 멤버입니다."));
+			.orElseThrow(() -> new IllegalArgumentException(MEMBER_NOT_PARTICIPATING.getMessage()));
 	}
 
 	/**
@@ -195,47 +196,47 @@ public class Session extends AbstractEntity {
 
 	private void validateUpdatable() {
 		Instant now = Instant.now();
-		isTrue(now.isBefore(this.scheduledAt), "[System] 이미 시작된 세션은 수정할 수 없습니다.");
+		isTrue(now.isBefore(this.scheduledAt), CANNOT_MODIFY_STARTED_SESSION.getMessage());
 
 		if (isRootSession()) {
 			// 루트 세션은 시작 3일 전까지만 수정 가능
 			isTrue(now.isBefore(this.scheduledAt.minus(3, ChronoUnit.DAYS)),
-				"[System] 루트 세션은 시작 3일 전까지만 수정할 수 있습니다.");
+				ROOT_SESSION_MODIFICATION_DEADLINE_EXCEEDED.getMessage());
 		} else {
 			// 하위 세션은 시작 1시간 전까지만 수정 가능
 			isTrue(now.isBefore(this.scheduledAt.minus(1, ChronoUnit.HOURS)),
-				"[System] 하위 세션은 시작 1시간 전까지만 수정할 수 있습니다.");
+				CHILD_SESSION_MODIFICATION_DEADLINE_EXCEEDED.getMessage());
 		}
 	}
 
 	private void validateSessionTime() {
-		notNull(scheduledAt, "[System] 세션 시작 시간은 필수입니다.");
-		notNull(scheduledEndAt, "[System] 세션 종료 시간은 필수입니다.");
-		isTrue(scheduledAt.isBefore(scheduledEndAt), "[System] 세션 시작 시간은 종료 시간보다 빨라야 합니다.");
+		notNull(scheduledAt, SESSION_START_TIME_REQUIRED.getMessage());
+		notNull(scheduledEndAt, SESSION_END_TIME_REQUIRED.getMessage());
+		isTrue(scheduledAt.isBefore(scheduledEndAt), START_TIME_MUST_BE_BEFORE_END_TIME.getMessage());
 
 		long durationHours = Duration.between(scheduledAt, scheduledEndAt).toHours();
-		isTrue(durationHours < 24, "[System] 세션은 24시간을 초과할 수 없습니다.");
+		isTrue(durationHours < 24, SESSION_DURATION_EXCEEDS_24_HOURS.getMessage());
 
 		long startDay = scheduledAt.truncatedTo(ChronoUnit.DAYS).toEpochMilli();
 		long endDay = scheduledEndAt.truncatedTo(ChronoUnit.DAYS).toEpochMilli();
 
-		isTrue(startDay == endDay, "[System] 세션은 이틀에 걸쳐 진행될 수 없습니다.");
+		isTrue(startDay == endDay, SESSION_CANNOT_SPAN_MULTIPLE_DAYS.getMessage());
 	}
 
 	private void validateLocation() {
 		if (location == SessionLocation.SITE) {
-			hasText(locationDetails, "[System] 오프라인 세션은 상세 장소 설명이 필수입니다.");
+			hasText(locationDetails, OFFLINE_SESSION_LOCATION_DETAIL_REQUIRED.getMessage());
 		} else {
-			isTrue(!StringUtils.hasText(locationDetails), "[System] 온라인 세션은 상세 장소 설명을 가질 수 없습니다.");
+			isTrue(!StringUtils.hasText(locationDetails), ONLINE_SESSION_CANNOT_HAVE_LOCATION_DETAIL.getMessage());
 		}
 	}
 
 	private void validateHierarchy() {
 		if (isChildSession()) {
-			notNull(parent, "[System] 하위 세션은 반드시 부모 세션을 가져야 합니다.");
-			isTrue(!scheduledAt.isBefore(parent.getScheduledAt()), "[System] 하위 세션의 시작 시간은 부모 세션의 시작 시간보다 빠를 수 없습니다.");
+			notNull(parent, CHILD_SESSION_MUST_HAVE_PARENT.getMessage());
+			isTrue(!scheduledAt.isBefore(parent.getScheduledAt()), CHILD_SESSION_START_TIME_BEFORE_PARENT.getMessage());
 			isTrue(!scheduledEndAt.isAfter(parent.getScheduledEndAt()),
-				"[System] 하위 세션의 종료 시간은 부모 세션의 종료 시간보다 늦을 수 없습니다.");
+				CHILD_SESSION_END_TIME_AFTER_PARENT.getMessage());
 		}
 	}
 

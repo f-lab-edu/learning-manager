@@ -1,5 +1,6 @@
 package me.chan99k.learningmanager.domain.session;
 
+import static me.chan99k.learningmanager.domain.session.SessionProblemCode.*;
 import static org.springframework.util.Assert.*;
 
 import jakarta.persistence.Column;
@@ -34,9 +35,9 @@ public class SessionParticipant extends AbstractEntity {
 	}
 
 	public static SessionParticipant of(Long memberId, Session session, SessionParticipantRole role) {
-		notNull(session, "[System] Session 은 null 일 수 없습니다.");
-		notNull(memberId, "[System] Member ID 는 null 일 수 없습니다.");
-		notNull(role, "[System] Role 은 null 일 수 없습니다.");
+		notNull(session, SESSION_REQUIRED.getMessage());
+		notNull(memberId, MEMBER_ID_REQUIRED.getMessage());
+		notNull(role, PARTICIPANT_ROLE_REQUIRED.getMessage());
 
 		return new SessionParticipant(memberId, session, role);
 	}
@@ -50,8 +51,8 @@ public class SessionParticipant extends AbstractEntity {
 	}
 
 	public void changeRole(SessionParticipantRole newRole) {
-		notNull(newRole, "[System] 새로운 역할은 null일 수 없습니다.");
-		isTrue(this.role != newRole, "[System] 이미 해당 역할을 가지고 있습니다.");
+		notNull(newRole, PARTICIPANT_ROLE_REQUIRED.getMessage());
+		isTrue(this.role != newRole, SAME_ROLE_PARTICIPANT_ALREADY.getMessage());
 		this.role = newRole;
 	}
 }

@@ -1,5 +1,6 @@
 package me.chan99k.learningmanager.domain.course;
 
+import static me.chan99k.learningmanager.domain.course.CourseProblemCode.*;
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -62,7 +63,7 @@ class CurriculumTest {
 
 			assertThatThrownBy(() -> curriculum.updateTitle(null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 커리큘럼명 값이 비어 있습니다.");
+				.hasMessage(CURRICULUM_TITLE_REQUIRED.getMessage());
 		}
 
 		@Test
@@ -71,7 +72,7 @@ class CurriculumTest {
 
 			assertThatThrownBy(() -> curriculum.updateDescription(null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 커리큘럼에 대한 설명 값이 비어 있습니다.");
+				.hasMessage(CURRICULUM_DESCRIPTION_REQUIRED.getMessage());
 		}
 	}
 }

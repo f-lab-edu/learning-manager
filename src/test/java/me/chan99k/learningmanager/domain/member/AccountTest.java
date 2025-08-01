@@ -1,5 +1,6 @@
 package me.chan99k.learningmanager.domain.member;
 
+import static me.chan99k.learningmanager.domain.member.MemberProblemCode.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.time.Instant;
@@ -48,7 +49,7 @@ class AccountTest {
 		void create_account_with_null_memberId_throws_exception() {
 			assertThatThrownBy(() -> Account.create(null, "test@example.com", "ValidPass123!", passwordEncoder))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 계정은 반드시 멤버에 속해야 합니다.");
+				.hasMessage(ACCOUNT_MEMBER_REQUIRED.getMessage());
 		}
 
 	}
@@ -92,7 +93,7 @@ class AccountTest {
 
 			assertThatThrownBy(account::activate)
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage("[System] 활성 대기/비활성 상태의 계정이 아닙니다.");
+				.hasMessage(ACCOUNT_NOT_PENDING_OR_INACTIVE.getMessage());
 		}
 
 		@Test
@@ -102,7 +103,7 @@ class AccountTest {
 
 			assertThatThrownBy(account::activate)
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage("[System] 활성 대기/비활성 상태의 계정이 아닙니다.");
+				.hasMessage(ACCOUNT_NOT_PENDING_OR_INACTIVE.getMessage());
 		}
 
 		@Test
@@ -121,7 +122,7 @@ class AccountTest {
 
 			assertThatThrownBy(account::deactivate)
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage("[System] 활성 상태의 계정이 아닙니다.");
+				.hasMessage(ACCOUNT_NOT_ACTIVE.getMessage());
 		}
 	}
 

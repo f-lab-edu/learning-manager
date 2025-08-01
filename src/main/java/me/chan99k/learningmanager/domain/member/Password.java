@@ -1,5 +1,6 @@
 package me.chan99k.learningmanager.domain.member;
 
+import static me.chan99k.learningmanager.domain.member.MemberProblemCode.*;
 import static org.springframework.util.Assert.*;
 
 import java.util.regex.Pattern;
@@ -28,12 +29,13 @@ public record Password(String encoded) {
 	}
 
 	private static void validatePattern(String password) {
-		state(password.length() >= MIN_LENGTH && password.length() <= MAX_LENGTH, "비밀번호는 최소 8자 이상, 64자 이하여야 합니다.");
-		state(LOWERCASE_PATTERN.matcher(password).matches(), "비밀번호에는 소문자가 최소 1개 이상 포함되어야 합니다.");
-		state(UPPERCASE_PATTERN.matcher(password).matches(), "비밀번호에는 대문자가 최소 1개 이상 포함되어야 합니다.");
-		state(DIGIT_PATTERN.matcher(password).matches(), "비밀번호에는 숫자가 최소 1개 이상 포함되어야 합니다.");
-		state(SPECIAL_CHAR_PATTERN.matcher(password).matches(), "비밀번호에는 특수문자가 최소 1개 이상 포함되어야 합니다.");
-		state(!WHITESPACE_PATTERN.matcher(password).matches(), "비밀번호에 공백을 포함할 수 없습니다.");
+		state(password.length() >= MIN_LENGTH && password.length() <= MAX_LENGTH, PASSWORD_LENGTH_INVALID.getMessage());
+		state(LOWERCASE_PATTERN.matcher(password).matches(), PASSWORD_NO_LOWERCASE.getMessage());
+		state(UPPERCASE_PATTERN.matcher(password).matches(), PASSWORD_NO_UPPERCASE.getMessage());
+		state(DIGIT_PATTERN.matcher(password).matches(), PASSWORD_NO_DIGIT.getMessage());
+		state(SPECIAL_CHAR_PATTERN.matcher(password).matches(), PASSWORD_NO_SPECIAL_CHAR.getMessage());
+		state(!WHITESPACE_PATTERN.matcher(password).matches(), PASSWORD_CONTAINS_WHITESPACE.getMessage());
 	}
 
 }
+
