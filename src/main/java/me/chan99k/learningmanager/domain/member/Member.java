@@ -3,16 +3,23 @@ package me.chan99k.learningmanager.domain.member;
 import static me.chan99k.learningmanager.domain.member.MemberProblemCode.*;
 import static org.springframework.util.Assert.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.OneToMany;
 import me.chan99k.learningmanager.domain.AbstractEntity;
 
 @Entity
 public class Member extends AbstractEntity {
+	@OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Account> accounts = new ArrayList<>();
 
 	@Embedded
 	@AttributeOverride(name = "value", column = @Column(name = "nickname", nullable = false, unique = true, length = 20))
@@ -28,8 +35,10 @@ public class Member extends AbstractEntity {
 
 	private String selfIntroduction;
 
+	protected Member() {
+	}
+
 	/* 도메인 로직 */
-	// TODO :: Account 관련 로직들을 정의하고 Account 에 위임하기
 	public static Member registerDefault(NicknameGenerator nicknameGenerator) {
 		Member member = new Member();
 		member.role = SystemRole.MEMBER;
@@ -37,6 +46,34 @@ public class Member extends AbstractEntity {
 		member.nickname = Nickname.generateNickname(nicknameGenerator);
 
 		return member;
+	}
+
+	public void addAccount(String email, String rawPassword, PasswordEncoder encoder) {
+		Account account = Account.create(this, email, rawPassword, encoder);
+		this.accounts.add(account);
+	}
+
+	public void changeAccountPassword(Long accountId, String newRawPassword, PasswordEncoder encoder) {
+		Account account = findAccountById(accountId);
+		account.changePassword(newRawPassword, encoder);
+	}
+
+	public void activateAccount(Long accountId) {
+		Account account = findAccountById(accountId);
+		account.activate();
+	}
+
+	public void deactivateAccount(Long accountId) {
+		Account account = findAccountById(accountId);
+		account.deactivate();
+	}
+
+	Account findAccountById(Long accountId) {
+		notNull(accountId, ACCOUNT_ID_REQUIRED.getMessage());
+		return accounts.stream()
+			.filter(account -> accountId.equals(account.getId()))
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException(CANNOT_FOUND_ACCOUNT.getMessage()));
 	}
 
 	public void changeNickname(Nickname nickname) {
@@ -82,6 +119,8 @@ public class Member extends AbstractEntity {
 		state(this.status == MemberStatus.BANNED, MEMBER_NOT_BANNED.getMessage());
 		this.status = MemberStatus.ACTIVE;
 	}
+
+	/* 게터 로직 */
 
 	public Nickname getNickname() {
 		return nickname;

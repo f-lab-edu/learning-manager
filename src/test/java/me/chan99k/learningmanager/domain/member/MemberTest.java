@@ -3,7 +3,8 @@ package me.chan99k.learningmanager.domain.member;
 import static me.chan99k.learningmanager.domain.member.MemberProblemCode.*;
 import static org.assertj.core.api.Assertions.*;
 
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,22 +14,51 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 class MemberTest {
 
+	private PasswordEncoder passwordEncoder;
 	private Member member;
-	private final NicknameGenerator nicknameGenerator = () -> "user_" + UUID.randomUUID().toString().substring(0, 8);
+
+	private Member createTestMember() {
+		Member testMember = new Member();
+
+		ReflectionTestUtils.setField(testMember, "nickname", new Nickname("testuser"));
+		ReflectionTestUtils.setField(testMember, "role", SystemRole.MEMBER);
+		ReflectionTestUtils.setField(testMember, "status", MemberStatus.ACTIVE);
+		ReflectionTestUtils.setField(testMember, "accounts", new ArrayList<>());
+		return testMember;
+	}
 
 	@BeforeEach
 	void setUp() {
-		member = Member.registerDefault(nicknameGenerator);
+		this.passwordEncoder = new PasswordEncoder() {
+			@Override
+			public String encode(String rawString) {
+				return rawString.toUpperCase();
+			}
+
+			@Override
+			public boolean match(String rawString, String encoded) {
+				return encoded.equals(encode(rawString));
+			}
+		};
+		member = createTestMember();
 	}
 
 	@Nested
 	@DisplayName("회원 관리 테스트")
-	class MemberCreationTEst {
+	class MemberCreationTest {
+		private NicknameGenerator stubGenerator;
+
+		@BeforeEach
+		void setUp() {
+			stubGenerator = () -> "defaultUser";
+		}
+
 		@Test
 		@DisplayName("[Success] 회원 ID 반환에 성공한다.")
 		void success_to_return_memberId() {
 			ReflectionTestUtils.setField(member, "id", 1L);
 			assertThat(member.getId()).isNotNull();
+			assertThat(member.getId()).isEqualTo(1L);
 		}
 
 		@Test
@@ -41,6 +71,17 @@ class MemberTest {
 			assertThat(member.getProfileImageUrl()).isEqualTo(updatingUrl);
 			assertThat(member.getSelfIntroduction()).isEqualTo(updatingIntro);
 		}
+
+		@Test
+		@DisplayName("[Success] 닉네임 생성기를 통해 기본 회원 생성에 성공한다")
+		void success_to_register_default_member() {
+			Member defaultMember = Member.registerDefault(stubGenerator);
+
+			assertThat(defaultMember).isNotNull();
+			assertThat(defaultMember.getNickname().value()).isEqualTo("defaultUser");
+			assertThat(defaultMember.getRole()).isEqualTo(SystemRole.MEMBER);
+			assertThat(defaultMember.getStatus()).isEqualTo(MemberStatus.ACTIVE);
+		}
 	}
 
 	@Nested
@@ -49,20 +90,13 @@ class MemberTest {
 		@Test
 		@DisplayName("[Success] 회원 닉네임 변경에 성공한다")
 		void update_member_nickname() {
-			assertThat(member.getNickname().value().startsWith("user_")).isTrue();
-			assertThat(member.getNickname().value().length()).isEqualTo(13);
+			assertThat(member.getNickname().value()).isEqualTo("testuser");
 
-			Nickname newNickname = new Nickname("변경하려는 닉네임");
+			Nickname newNickname = new Nickname("newnickname");
 
 			member.changeNickname(newNickname);
 
 			assertThat(member.getNickname()).isEqualTo(newNickname);
-		}
-
-		@Test
-		@DisplayName("[Failure] 제약조건에 맞지 않는 닉네임이라면 닉네임 변경에 실패한다.")
-		void fail_to_update_nickname() {
-			// TODO : 닉네임 제약 조건을 추가하고 테스트 코드 작성 필요
 		}
 	}
 
@@ -183,6 +217,83 @@ class MemberTest {
 		void fail_to_demote_member() {
 			assertThatThrownBy(() -> member.demoteToMember()).isInstanceOf(IllegalStateException.class)
 				.hasMessage(MEMBER_NOT_ADMIN.getMessage());
+		}
+	}
+
+	@Nested
+	@DisplayName("계정 정보 관리 테스트")
+	class AccountManagementTest {
+
+		private Long accountId;
+
+		@BeforeEach
+		void setUp() {
+			member.addAccount("chan99k@example.com", "deprecatingPassword123!", passwordEncoder);
+
+			List<Account> accounts = (List<Account>)ReflectionTestUtils.getField(member, "accounts");
+			Account addedAccount = accounts.get(0);
+			accountId = 1L;
+			ReflectionTestUtils.setField(addedAccount, "id", accountId);
+		}
+
+		@Test
+		@DisplayName("[Success] 기존 비밀번호를 새로운 비밀번호로 바꾸는 데 성공한다.")
+		void success_to_changePassword() {
+			Account account = member.findAccountById(accountId);
+			String oldEncodedPassword = account.getPassword().encoded();
+			String newRawPassword = "newPassword123!";
+
+			member.changeAccountPassword(accountId, newRawPassword, passwordEncoder);
+
+			Account updatedAccount = member.findAccountById(accountId);
+
+			assertThat(updatedAccount.getPassword().encoded()).isNotEqualTo(oldEncodedPassword);
+			assertThat(passwordEncoder.match(newRawPassword, updatedAccount.getPassword().encoded())).isTrue();
+		}
+
+		@Test
+		@DisplayName("[Success] 계정 사용을 활성화하는데 성공한다.")
+		void success_to_activate_account() {
+			Account account = member.findAccountById(accountId);
+			assertThat(account.getStatus()).isEqualTo(AccountStatus.PENDING);
+
+			member.activateAccount(accountId);
+
+			Account updatedAccount = member.findAccountById(accountId);
+
+			assertThat(updatedAccount.getStatus()).isEqualTo(AccountStatus.ACTIVE);
+		}
+
+		@Test
+		@DisplayName("[Failure] 활성 상태의 계정이라면 활성화에 실패한다.")
+		void fail_to_activate_account_when_status_is_not_pending_or_inactive() {
+			member.activateAccount(accountId);
+
+			assertThatThrownBy(() -> member.activateAccount(accountId))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ACCOUNT_NOT_PENDING_OR_INACTIVE.getMessage());
+		}
+
+		@Test
+		@DisplayName("[Success] 계정을 비활성화 하는데 성공한다.")
+		void success_to_deactivate_account() {
+			member.activateAccount(accountId);
+			Account account = member.findAccountById(accountId);
+			assertThat(account.getStatus()).isEqualTo(AccountStatus.ACTIVE);
+
+			member.deactivateAccount(accountId);
+
+			Account updatedAccount = member.findAccountById(accountId);
+
+			assertThat(updatedAccount.getStatus()).isEqualTo(AccountStatus.INACTIVE);
+		}
+
+		@Test
+		@DisplayName("[Failure] 활성 상태의 계정이 아니라면 비활성화에 실패한다.")
+		void fail_to_deactivate_account() {
+			assertThatThrownBy(() -> member.deactivateAccount(accountId))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ACCOUNT_NOT_ACTIVE.getMessage());
 		}
 	}
 }
