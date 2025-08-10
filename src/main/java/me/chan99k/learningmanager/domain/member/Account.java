@@ -9,12 +9,15 @@ import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import me.chan99k.learningmanager.domain.AbstractEntity;
 
 @Entity
 public class Account extends AbstractEntity {
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "member_id", nullable = false)
 	private Member member;
 
 	@Enumerated(EnumType.STRING)
@@ -45,6 +48,7 @@ public class Account extends AbstractEntity {
 		return new Account(member, email, rawPassword, encoder);
 	}
 
+	// TODO : 레이스 컨디션에서의 정합성 확인하고 보장할 수 있도록 변경하기
 	void changePassword(String password, PasswordEncoder encoder) {
 		this.password = Password.generatePassword(password, encoder);
 	}
