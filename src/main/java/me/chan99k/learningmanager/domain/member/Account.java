@@ -38,7 +38,7 @@ public class Account extends AbstractEntity {
 
 	private Account(Member member, String email, String rawPassword, PasswordEncoder encoder) {
 		notNull(member, ACCOUNT_MEMBER_REQUIRED.getMessage());
-
+		this.member = member;
 		this.email = new Email(email);
 		this.password = Password.generatePassword(rawPassword, encoder);
 		this.status = AccountStatus.PENDING;
