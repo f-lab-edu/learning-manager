@@ -13,6 +13,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Version;
 
 /**
  * 생성/수정 시간 및 생성/수정 주체를 관리하기 위한 엔티티.
@@ -38,6 +39,9 @@ public abstract class AbstractEntity {
 
 	@LastModifiedBy
 	private Long lastModifiedBy;
+
+	@Version
+	private Long version;
 
 	/**
 	 * 엔티티의 고유 식별자를 반환합니다.
