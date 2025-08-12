@@ -29,7 +29,10 @@ public enum MemberProblemCode implements ProblemCode {
 
 	MEMBER_NICKNAME_REQUIRED("DML019", "[System] 닉네임은 비어 있을 수 없습니다."),
 	MEMBER_NICKNAME_CONSTRAINTS_FOR_LENGTH("DML020", "[System] 닉네임은 %d자 이상 %d자 이하여야 합니다."),
-	MEMBER_NICKNAME_CONSTRAINTS_FOR_CHARACTER("DML021", "[System] 닉네임은 한글, 영문, 숫자만 사용할 수 있습니다.");
+	MEMBER_NICKNAME_CONSTRAINTS_FOR_CHARACTER("DML021", "[System] 닉네임은 한글, 영문, 숫자만 사용할 수 있습니다."),
+
+	EMAIL_ALREADY_EXISTS("DML022", "[System] 이미 등록된 이메일입니다."),
+	MEMBER_REGISTRATION_FAILED("DML023", "[System] 회원 등록에 실패했습니다.");
 
 
 	private final String code;
