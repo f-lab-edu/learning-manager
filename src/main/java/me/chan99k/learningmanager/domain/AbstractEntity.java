@@ -47,7 +47,7 @@ public abstract class AbstractEntity {
 	private Long lastModifiedBy;
 
 	@Version
-	private Long version;
+	private Long version; // TODO :: 하위 엔티티의 수정에 의한 버전 변경이 루트 엔티티의 버전을 변경할 수 있도록 수정하기
 
 	/**
 	 * 엔티티의 고유 식별자를 반환한다.

@@ -48,7 +48,8 @@ public class Account extends AbstractEntity {
 		return new Account(member, email, rawPassword, encoder);
 	}
 
-	// TODO : 레이스 컨디션에서의 정합성 확인하고 보장할 수 있도록 변경하기
+	/* 도메인 로직 */
+
 	void changePassword(String password, PasswordEncoder encoder) {
 		this.password = Password.generatePassword(password, encoder);
 	}
