@@ -2,7 +2,7 @@
 ' !theme vibrant
 ' uncomment the line above for a different theme
 
-hide circle
+title "LM Entity Relation diagram v0.0.3"
 skinparam linetype ortho
 
 ' skinparam commands for better layout and appearance
@@ -31,6 +31,7 @@ package "User Management" {
       last_modified_at: DATETIME(6)
       * created_by: BIGINT
       last_modified_by: BIGINT
+      * version: BIGINT
     }
 
     entity "account" as account {
@@ -45,6 +46,7 @@ package "User Management" {
       last_modified_at: DATETIME(6)
       * created_by: BIGINT
       last_modified_by: BIGINT
+      * version: BIGINT
     }
 }
 
@@ -59,6 +61,7 @@ package "Course Management" {
       last_modified_at: DATETIME(6)
       * created_by: BIGINT
       last_modified_by: BIGINT
+      * version: BIGINT
     }
 
     entity "curriculum" as curriculum {
@@ -72,6 +75,7 @@ package "Course Management" {
       last_modified_at: DATETIME(6)
       * created_by: BIGINT
       last_modified_by: BIGINT
+      * version: BIGINT
     }
 
     entity "course_member" as course_member {
@@ -85,6 +89,7 @@ package "Course Management" {
       last_modified_at: DATETIME(6)
       * created_by: BIGINT
       last_modified_by: BIGINT
+      * version: BIGINT
     }
 }
 
@@ -106,6 +111,7 @@ package "Session Management" {
       last_modified_at: DATETIME(6)
       * created_by: BIGINT
       last_modified_by: BIGINT
+      * version: BIGINT
     }
 
     entity "session_participant" as session_participant {
@@ -119,6 +125,7 @@ package "Session Management" {
       last_modified_at: DATETIME(6)
       * created_by: BIGINT
       last_modified_by: BIGINT
+      * version: BIGINT
     }
 }
 
@@ -135,6 +142,7 @@ package "Attendance Management" {
       last_modified_at: DATETIME(6)
       * created_by: BIGINT
       last_modified_by: BIGINT
+      * version: BIGINT
     }
 }
 
