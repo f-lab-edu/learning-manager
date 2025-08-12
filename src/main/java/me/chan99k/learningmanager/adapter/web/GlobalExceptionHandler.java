@@ -80,17 +80,6 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.badRequest().body(problemDetail);
 	}
 
-	@ExceptionHandler(HttpMessageNotReadableException.class)
-	public ResponseEntity<ProblemDetail> handleBadRequest(HttpMessageNotReadableException ex) {
-		ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
-
-		problemDetail.setType(URI.create("https://api.lm.com/errors/invalid-json-request"));
-		problemDetail.setTitle("Bad Request");
-		problemDetail.setProperty("code", "INVALID JSON");
-
-		return ResponseEntity.badRequest().body(problemDetail);
-	}
-
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ProblemDetail> handleGeneralException(Exception e) {
 		ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
