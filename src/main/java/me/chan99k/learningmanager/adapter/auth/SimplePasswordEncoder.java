@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.adapter.security;
+package me.chan99k.learningmanager.adapter.auth;
 
 import org.springframework.stereotype.Component;
 
