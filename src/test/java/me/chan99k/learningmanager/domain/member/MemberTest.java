@@ -80,7 +80,7 @@ class MemberTest {
 			assertThat(defaultMember).isNotNull();
 			assertThat(defaultMember.getNickname().value()).isEqualTo("defaultUser");
 			assertThat(defaultMember.getRole()).isEqualTo(SystemRole.MEMBER);
-			assertThat(defaultMember.getStatus()).isEqualTo(MemberStatus.ACTIVE);
+			assertThat(defaultMember.getStatus()).isEqualTo(MemberStatus.PENDING);
 		}
 	}
 
@@ -118,13 +118,13 @@ class MemberTest {
 		void activate_fails_if_not_inactive() {
 			assertThatThrownBy(member::activate)
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(MEMBER_NOT_INACTIVE.getMessage());
+				.hasMessage(MEMBER_NOT_PENDING_OR_INACTIVE.getMessage());
 
 			member.ban(); // BANNED 상태로 변경
 
 			assertThatThrownBy(member::activate)
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(MEMBER_NOT_INACTIVE.getMessage());
+				.hasMessage(MEMBER_NOT_PENDING_OR_INACTIVE.getMessage());
 		}
 
 		@Test
