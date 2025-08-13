@@ -4,6 +4,7 @@ import static me.chan99k.learningmanager.domain.member.MemberProblemCode.*;
 import static org.springframework.util.Assert.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import jakarta.persistence.AttributeOverride;
@@ -121,6 +122,10 @@ public class Member extends AbstractEntity {
 	}
 
 	/* 게터 로직 */
+
+	public List<Account> getAccounts() {
+		return Collections.unmodifiableList(accounts);
+	}
 
 	public Nickname getNickname() {
 		return nickname;
