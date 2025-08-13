@@ -6,6 +6,7 @@ import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -75,6 +76,17 @@ public class GlobalExceptionHandler {
 		problemDetail.setType(URI.create("https://api.lm.com/errors/invalid-argument"));
 		problemDetail.setTitle("Invalid Argument");
 		problemDetail.setProperty("code", "INVALID_ARGUMENT");
+
+		return ResponseEntity.badRequest().body(problemDetail);
+	}
+
+	@ExceptionHandler(HttpMessageNotReadableException.class)
+	public ResponseEntity<ProblemDetail> handleBadRequest(HttpMessageNotReadableException ex) {
+		ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+
+		problemDetail.setType(URI.create("https://api.lm.com/errors/invalid-json-request"));
+		problemDetail.setTitle("Bad Request");
+		problemDetail.setProperty("code", "INVALID JSON");
 
 		return ResponseEntity.badRequest().body(problemDetail);
 	}
