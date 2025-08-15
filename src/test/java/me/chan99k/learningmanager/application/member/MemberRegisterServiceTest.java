@@ -20,7 +20,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import me.chan99k.learningmanager.application.member.provides.MemberRegistration;
 import me.chan99k.learningmanager.application.member.provides.SignUpConfirmation;
-import me.chan99k.learningmanager.application.member.requires.MemberRepository;
+import me.chan99k.learningmanager.application.member.requires.MemberCommandRepository;
+import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
 import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.Account;
 import me.chan99k.learningmanager.domain.member.AccountStatus;
@@ -44,7 +45,9 @@ public class MemberRegisterServiceTest {
 	private static final Long MEMBER_ID = 2L;  // 시스템 회원 때문에 2L부터 시작
 	private static final Long ACCOUNT_ID = 2L; // 시스템 계정 때문에 2L부터 시작
 	@Mock
-	private MemberRepository memberRepository;
+	private MemberCommandRepository memberCommandRepository;
+	@Mock
+	private MemberQueryRepository memberQueryRepository;
 	@Mock
 	private PasswordEncoder passwordEncoder;
 	@Mock
@@ -57,10 +60,11 @@ public class MemberRegisterServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		reset(memberRepository, passwordEncoder, nicknameGenerator, signUpConfirmer, emailSender);
+		reset(memberCommandRepository, passwordEncoder, nicknameGenerator, signUpConfirmer, emailSender);
 
 		memberRegisterService = new MemberRegisterService(
-			memberRepository,
+			memberCommandRepository,
+			memberQueryRepository,
 			passwordEncoder,
 			nicknameGenerator,
 			signUpConfirmer,
@@ -84,7 +88,7 @@ public class MemberRegisterServiceTest {
 				.willReturn(GENERATED_NICKNAME);
 			given(signUpConfirmer.generateAndStoreToken(anyLong(), anyString(), any()))
 				.willReturn(TEST_ACTIVATION_TOKEN);
-			given(memberRepository.save(any(Member.class)))
+			given(memberCommandRepository.save(any(Member.class)))
 				.willAnswer(invocation -> {
 					Member member = invocation.getArgument(0);
 					ReflectionTestUtils.setField(member, "id", MEMBER_ID);
@@ -104,7 +108,7 @@ public class MemberRegisterServiceTest {
 
 			verify(nicknameGenerator).generate();                  // 1. 닉네임 생성 (Member.registerDefault)
 			verify(passwordEncoder).encode(anyString());           // 2. 패스워드 인코딩 (addAccount)
-			verify(memberRepository).save(any(Member.class));                  // 3. 회원 저장
+			verify(memberCommandRepository).save(any(Member.class));                  // 3. 회원 저장
 			verify(signUpConfirmer).generateAndStoreToken(anyLong(), anyString(), any()); // 4. 토큰 생성
 			verify(emailSender).sendSignUpConfirmEmail(anyString(), anyString());         // 5. 이메일 발송
 		}
@@ -120,7 +124,7 @@ public class MemberRegisterServiceTest {
 			assertThat(response.memberId()).isEqualTo(MEMBER_ID);
 
 			ArgumentCaptor<Member> memberCaptor = ArgumentCaptor.forClass(Member.class);
-			verify(memberRepository).save(memberCaptor.capture());
+			verify(memberCommandRepository).save(memberCaptor.capture());
 			Member createdMember = memberCaptor.getValue();
 
 			assertThat(createdMember.getStatus()).isEqualTo(
@@ -162,7 +166,7 @@ public class MemberRegisterServiceTest {
 				.isInstanceOf(RuntimeException.class);
 
 			// 후속 작업이 호출되지 않아야 함
-			verify(memberRepository, never()).save(any(Member.class));
+			verify(memberCommandRepository, never()).save(any(Member.class));
 			verify(signUpConfirmer, never()).generateAndStoreToken(anyLong(), anyString(), any());
 			verify(emailSender, never()).sendSignUpConfirmEmail(anyString(), anyString());
 		}
@@ -183,7 +187,7 @@ public class MemberRegisterServiceTest {
 				.isInstanceOf(RuntimeException.class);
 
 			// 후속 작업이 호출되지 않아야 함
-			verify(memberRepository, never()).save(any(Member.class));
+			verify(memberCommandRepository, never()).save(any(Member.class));
 			verify(signUpConfirmer, never()).generateAndStoreToken(anyLong(), anyString(), any());
 			verify(emailSender, never()).sendSignUpConfirmEmail(anyString(), anyString());
 		}
@@ -198,7 +202,7 @@ public class MemberRegisterServiceTest {
 				.willReturn(ENCODED_PASSWORD);
 
 			// 데이터베이스 저장 실패 시나리오
-			given(memberRepository.save(any(Member.class)))
+			given(memberCommandRepository.save(any(Member.class)))
 				.willThrow(new RuntimeException("[System] Database에서 알수 없는 예외 발생"));
 
 			MemberRegistration.Request request = createValidRequest();
@@ -218,7 +222,7 @@ public class MemberRegisterServiceTest {
 	class ActivateSignUpMemberTest {
 		@AfterEach
 		void tearDownMocks() {
-			clearInvocations(signUpConfirmer, memberRepository);
+			clearInvocations(signUpConfirmer, memberCommandRepository);
 		}
 
 		@Test
@@ -227,13 +231,13 @@ public class MemberRegisterServiceTest {
 			Member pendingMember = createMemberWithPendingAccount();
 
 			given(signUpConfirmer.getMemberIdByToken(TEST_ACTIVATION_TOKEN)).willReturn(MEMBER_ID);
-			given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(pendingMember));
+			given(memberQueryRepository.findById(MEMBER_ID)).willReturn(Optional.of(pendingMember));
 
 			memberRegisterService.activateSignUpMember(new SignUpConfirmation.Request(TEST_ACTIVATION_TOKEN));
 
 			verify(signUpConfirmer).getMemberIdByToken(TEST_ACTIVATION_TOKEN);
-			verify(memberRepository).findById(MEMBER_ID);
-			verify(memberRepository).save(pendingMember);
+			verify(memberQueryRepository).findById(MEMBER_ID);
+			verify(memberCommandRepository).save(pendingMember);
 			verify(signUpConfirmer).removeToken(TEST_ACTIVATION_TOKEN);
 		}
 
@@ -242,7 +246,7 @@ public class MemberRegisterServiceTest {
 		void activateSignUpMemberTest02() {
 			given(signUpConfirmer.getMemberIdByToken(TEST_ACTIVATION_TOKEN)).willReturn(MEMBER_ID);
 			Member pendingMember = createMemberWithPendingAccount();
-			given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(pendingMember));
+			given(memberQueryRepository.findById(MEMBER_ID)).willReturn(Optional.of(pendingMember));
 
 			assertThat(pendingMember.getStatus()).isEqualTo(MemberStatus.PENDING);
 			Account account = pendingMember.getAccounts().get(0);
@@ -268,8 +272,8 @@ public class MemberRegisterServiceTest {
 				.isInstanceOf(DomainException.class)
 				.hasMessage(INVALID_ACTIVATION_TOKEN.getMessage());
 
-			verify(memberRepository, never()).findById(anyLong());
-			verify(memberRepository, never()).save(any(Member.class));
+			verify(memberQueryRepository, never()).findById(anyLong());
+			verify(memberCommandRepository, never()).save(any(Member.class));
 			verify(signUpConfirmer, never()).removeToken(anyString());
 		}
 
@@ -284,8 +288,8 @@ public class MemberRegisterServiceTest {
 				.isInstanceOf(DomainException.class)
 				.hasMessage(EXPIRED_TEST_ACTIVATION_TOKEN.getMessage());
 
-			verify(memberRepository, never()).findById(anyLong());
-			verify(memberRepository, never()).save(any(Member.class));
+			verify(memberQueryRepository, never()).findById(anyLong());
+			verify(memberCommandRepository, never()).save(any(Member.class));
 			verify(signUpConfirmer, never()).removeToken(anyString());
 		}
 
@@ -293,14 +297,14 @@ public class MemberRegisterServiceTest {
 		@DisplayName("[Failure] 회원 이메일 인증 과정에서 존재하지 않는 회원일 경우, 즉시 예외를 던지고 중단한다")
 		void activateSignUpMemberTest04() {
 			given(signUpConfirmer.getMemberIdByToken(TEST_ACTIVATION_TOKEN)).willReturn(999L);
-			given(memberRepository.findById(999L)).willReturn(Optional.empty());
+			given(memberQueryRepository.findById(999L)).willReturn(Optional.empty());
 
 			assertThatThrownBy(() -> memberRegisterService.activateSignUpMember(new SignUpConfirmation.Request(
 				TEST_ACTIVATION_TOKEN)))
 				.isInstanceOf(DomainException.class)
 				.hasMessage(MEMBER_NOT_FOUND.getMessage());
 
-			verify(memberRepository, never()).save(any(Member.class));
+			verify(memberCommandRepository, never()).save(any(Member.class));
 			verify(signUpConfirmer, never()).removeToken(TEST_ACTIVATION_TOKEN);
 		}
 

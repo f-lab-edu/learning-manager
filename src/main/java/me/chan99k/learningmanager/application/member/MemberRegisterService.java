@@ -11,7 +11,8 @@ import jakarta.transaction.Transactional;
 import me.chan99k.learningmanager.application.member.provides.AccountAddition;
 import me.chan99k.learningmanager.application.member.provides.MemberRegistration;
 import me.chan99k.learningmanager.application.member.provides.SignUpConfirmation;
-import me.chan99k.learningmanager.application.member.requires.MemberRepository;
+import me.chan99k.learningmanager.application.member.requires.MemberCommandRepository;
+import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
 import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.Account;
 import me.chan99k.learningmanager.domain.member.EmailSender;
@@ -23,7 +24,9 @@ import me.chan99k.learningmanager.domain.member.SignUpConfirmer;
 @Service
 @Transactional
 public class MemberRegisterService implements MemberRegistration, AccountAddition, SignUpConfirmation {
-	private final MemberRepository memberRepository;
+	private final MemberCommandRepository memberCommandRepository;
+
+	private final MemberQueryRepository memberQueryRepository;
 
 	private final PasswordEncoder passwordEncoder;
 
@@ -34,10 +37,14 @@ public class MemberRegisterService implements MemberRegistration, AccountAdditio
 	private final EmailSender emailSender;
 
 	public MemberRegisterService(
-		MemberRepository memberRepository, PasswordEncoder passwordEncoder, NicknameGenerator nicknameGenerator
+		MemberCommandRepository memberCommandRepository,
+		MemberQueryRepository memberQueryRepository,
+		PasswordEncoder passwordEncoder,
+		NicknameGenerator nicknameGenerator
 		, SignUpConfirmer signUpConfirmer, EmailSender emailSender
 	) {
-		this.memberRepository = memberRepository;
+		this.memberCommandRepository = memberCommandRepository;
+		this.memberQueryRepository = memberQueryRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.nicknameGenerator = nicknameGenerator;
 		this.signUpConfirmer = signUpConfirmer;
@@ -49,7 +56,7 @@ public class MemberRegisterService implements MemberRegistration, AccountAdditio
 		Member newMember = Member.registerDefault(nicknameGenerator);
 		newMember.addAccount(request.email(), request.rawPassword(), passwordEncoder);
 
-		Member saved = memberRepository.save(newMember);
+		Member saved = memberCommandRepository.save(newMember);
 
 		String confirmToken = signUpConfirmer.generateAndStoreToken(
 			saved.getId(),
@@ -73,7 +80,7 @@ public class MemberRegisterService implements MemberRegistration, AccountAdditio
 			throw new DomainException(INVALID_ACTIVATION_TOKEN);
 		}
 
-		Member member = memberRepository.findById(tokenMemberId)
+		Member member = memberQueryRepository.findById(tokenMemberId)
 			.orElseThrow(() -> new DomainException(MEMBER_NOT_FOUND));
 
 		List<Account> accounts = member.getAccounts();
@@ -84,7 +91,7 @@ public class MemberRegisterService implements MemberRegistration, AccountAdditio
 		member.activate();
 		member.activateAccount(accounts.get(0).getId());
 
-		memberRepository.save(member);
+		memberCommandRepository.save(member);
 		signUpConfirmer.removeToken(request.token());
 	}
 }
