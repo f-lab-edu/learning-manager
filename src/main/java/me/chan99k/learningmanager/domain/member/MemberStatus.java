@@ -1,6 +1,7 @@
 package me.chan99k.learningmanager.domain.member;
 
 public enum MemberStatus {
+	PENDING("가입 대기"),
 	ACTIVE("활동 중"),
 	INACTIVE("휴면 중"),
 	BANNED("이용 정지"),
