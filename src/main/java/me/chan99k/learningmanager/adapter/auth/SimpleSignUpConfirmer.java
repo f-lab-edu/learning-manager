@@ -29,10 +29,12 @@ public class SimpleSignUpConfirmer implements SignUpConfirmer {
 	@Override
 	public boolean validateToken(String token) {
 		var data = tokenStore.get(token);
-		if (data != null && Instant.now().isBefore(data.expiresAt())) {
+
+		Instant now = Instant.now();
+		if (data != null && now.isBefore(data.expiresAt())) {
 			return true;
 		}
-		if (data != null && Instant.now().isAfter(data.expiresAt())) {
+		if (data != null && now.isAfter(data.expiresAt())) {
 			tokenStore.remove(token);
 		}
 
