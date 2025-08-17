@@ -231,6 +231,7 @@ public class MemberRegisterServiceTest {
 			Member pendingMember = createMemberWithPendingAccount();
 
 			given(signUpConfirmer.getMemberIdByToken(TEST_ACTIVATION_TOKEN)).willReturn(MEMBER_ID);
+			given(signUpConfirmer.validateToken(TEST_ACTIVATION_TOKEN)).willReturn(true);
 			given(memberQueryRepository.findById(MEMBER_ID)).willReturn(Optional.of(pendingMember));
 
 			memberRegisterService.activateSignUpMember(new SignUpConfirmation.Request(TEST_ACTIVATION_TOKEN));
@@ -244,6 +245,7 @@ public class MemberRegisterServiceTest {
 		@Test
 		@DisplayName("[Success] 회원 이메일 인증 과정이 성공적으로 끝났을 때, 회원과 계정 상태가 모두 활성화된다")
 		void activateSignUpMemberTest02() {
+			given(signUpConfirmer.validateToken(TEST_ACTIVATION_TOKEN)).willReturn(true);
 			given(signUpConfirmer.getMemberIdByToken(TEST_ACTIVATION_TOKEN)).willReturn(MEMBER_ID);
 			Member pendingMember = createMemberWithPendingAccount();
 			given(memberQueryRepository.findById(MEMBER_ID)).willReturn(Optional.of(pendingMember));
@@ -264,8 +266,11 @@ public class MemberRegisterServiceTest {
 
 		@Test
 		@DisplayName("[Failure] 회원 이메일 인증 과정에서 유효하지 않은 토큰일 경우, 즉시 예외를 던지고 중단한다")
+			// 유효하지 않은 토큰이 무엇인지 명확하지 않음
 		void activateSignUpMemberTest03() {
-			given(signUpConfirmer.getMemberIdByToken("invalid-token")).willReturn(null);
+			given(signUpConfirmer.validateToken("invalid-token")).willReturn(true);
+			given(signUpConfirmer.getMemberIdByToken("invalid-token")).willReturn(
+				null); // TODO :: NULL 반환을 로직의 일부로 취급하지 않도록 로직 변경 필요 -> Optional 반환으로 인터페이스 변경
 
 			assertThatThrownBy(
 				() -> memberRegisterService.activateSignUpMember(new SignUpConfirmation.Request("invalid-token")))
@@ -280,8 +285,8 @@ public class MemberRegisterServiceTest {
 		@Test
 		@DisplayName("[Failure] 회원 이메일 인증 과정에서 토큰이 만료된 경우, 즉시 예외를 던지고 중단한다")
 		void activateSignUpMemberTestTimeout() {
-			given(signUpConfirmer.validateToken("timeout-token"))
-				.willThrow(new DomainException(EXPIRED_ACTIVATION_TOKEN));
+			given(signUpConfirmer.validateToken("timeout-token")).willThrow(
+				new DomainException(EXPIRED_ACTIVATION_TOKEN));
 
 			assertThatThrownBy(
 				() -> memberRegisterService.activateSignUpMember(new SignUpConfirmation.Request("timeout-token")))
@@ -296,6 +301,7 @@ public class MemberRegisterServiceTest {
 		@Test
 		@DisplayName("[Failure] 회원 이메일 인증 과정에서 존재하지 않는 회원일 경우, 즉시 예외를 던지고 중단한다")
 		void activateSignUpMemberTest04() {
+			given(signUpConfirmer.validateToken(TEST_ACTIVATION_TOKEN)).willReturn(true);
 			given(signUpConfirmer.getMemberIdByToken(TEST_ACTIVATION_TOKEN)).willReturn(999L);
 			given(memberQueryRepository.findById(999L)).willReturn(Optional.empty());
 
