@@ -40,8 +40,9 @@ public class MemberRegisterService implements MemberRegistration, AccountAdditio
 		MemberCommandRepository memberCommandRepository,
 		MemberQueryRepository memberQueryRepository,
 		PasswordEncoder passwordEncoder,
-		NicknameGenerator nicknameGenerator
-		, SignUpConfirmer signUpConfirmer, EmailSender emailSender
+		NicknameGenerator nicknameGenerator,
+		SignUpConfirmer signUpConfirmer,
+		EmailSender emailSender
 	) {
 		this.memberCommandRepository = memberCommandRepository;
 		this.memberQueryRepository = memberQueryRepository;
