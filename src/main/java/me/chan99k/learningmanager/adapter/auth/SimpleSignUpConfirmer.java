@@ -59,7 +59,7 @@ public class SimpleSignUpConfirmer implements SignUpConfirmer {
 		tokenStore.remove(token);
 	}
 
-	@Scheduled(fixedRate = 600000)
+	@Scheduled(fixedRate = 600_000)
 	private void cleanupExpiredTokens() {
 		Instant now = Instant.now();
 		tokenStore.entrySet().removeIf(entry ->
