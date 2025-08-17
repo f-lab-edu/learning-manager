@@ -1,9 +1,7 @@
 package me.chan99k.learningmanager.common.config;
 
 import java.util.concurrent.Executor;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,16 +72,17 @@ public class AsyncConfig {
 
 		// 커스텀 스레드 팩토리: 스레드 생성 방식 커스터마이징
 		// 보다 더 세밀한 제어가 필요한 경우 사용
-		AtomicInteger threadNumber = new AtomicInteger(1);
-		executor.setThreadFactory(new ThreadFactory() {
-			@Override
-			public Thread newThread(Runnable r) {
-				Thread thread = new Thread(r, "member-pool-" + threadNumber.getAndIncrement());
-				thread.setDaemon(false);
-				thread.setPriority(Thread.NORM_PRIORITY);
-				return thread;
-			}
-		});
+		// ThreadFactory 설정 시 setThreadNamePrefix가 무시됨
+		// AtomicInteger threadNumber = new AtomicInteger(1);
+		// executor.setThreadFactory(new ThreadFactory() {
+		//	@Override
+		//	public Thread newThread(Runnable r) {
+		//		Thread thread = new Thread(r, "member-async-" + threadNumber.getAndIncrement());
+		//		thread.setDaemon(false);
+		//		thread.setPriority(Thread.NORM_PRIORITY);
+		//		return thread;
+		//	}
+		// });
 
 		/* ============== 거부 정책 설정  ============== */
 		// 거부 정책: 큐가 가득 차고 최대 스레드 수에 도달했을 때의 처리 방식
