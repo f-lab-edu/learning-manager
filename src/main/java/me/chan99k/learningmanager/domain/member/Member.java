@@ -102,7 +102,7 @@ public class Member extends AbstractEntity {
 	}
 
 	public void activate() {
-		state(this.status == MemberStatus.INACTIVE | this.status == MemberStatus.PENDING,
+		state(this.status == MemberStatus.INACTIVE || this.status == MemberStatus.PENDING,
 			MEMBER_NOT_PENDING_OR_INACTIVE.getMessage()
 		);
 		this.status = MemberStatus.ACTIVE;
