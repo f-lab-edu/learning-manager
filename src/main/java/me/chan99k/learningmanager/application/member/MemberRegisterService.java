@@ -72,11 +72,12 @@ public class MemberRegisterService implements MemberRegistration, AccountAdditio
 
 	@Override
 	public void activateSignUpMember(SignUpConfirmation.Request request) {
-		if (signUpConfirmer.validateToken(request.token())) {
-			throw new DomainException(EXPIRED_TEST_ACTIVATION_TOKEN);
+		if (!signUpConfirmer.validateToken(request.token())) {
+			throw new DomainException(EXPIRED_ACTIVATION_TOKEN);
 		}
-
+		// TODO : 토큰이 정확히 만료 시점에 호출되어 유효성 검증을 통과하면 잘못된 결과가 나오지 않을지 검토하기
 		Long tokenMemberId = signUpConfirmer.getMemberIdByToken(request.token());
+
 		if (tokenMemberId == null) {
 			throw new DomainException(INVALID_ACTIVATION_TOKEN);
 		}

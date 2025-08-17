@@ -43,15 +43,7 @@ public class SimpleSignUpConfirmer implements SignUpConfirmer {
 
 	@Override
 	public Long getMemberIdByToken(String token) {
-		var data = tokenStore.get(token);
-		if (data != null && Instant.now().isBefore(data.expiresAt())) {
-			return data.memberId();
-		}
-		if (data != null && Instant.now().isAfter(data.expiresAt())) {
-			tokenStore.remove(token);
-		}
-
-		return null;
+		return tokenStore.get(token).memberId;
 	}
 
 	@Override

@@ -281,12 +281,12 @@ public class MemberRegisterServiceTest {
 		@DisplayName("[Failure] 회원 이메일 인증 과정에서 토큰이 만료된 경우, 즉시 예외를 던지고 중단한다")
 		void activateSignUpMemberTestTimeout() {
 			given(signUpConfirmer.validateToken("timeout-token"))
-				.willThrow(new DomainException(EXPIRED_TEST_ACTIVATION_TOKEN));
+				.willThrow(new DomainException(EXPIRED_ACTIVATION_TOKEN));
 
 			assertThatThrownBy(
 				() -> memberRegisterService.activateSignUpMember(new SignUpConfirmation.Request("timeout-token")))
 				.isInstanceOf(DomainException.class)
-				.hasMessage(EXPIRED_TEST_ACTIVATION_TOKEN.getMessage());
+				.hasMessage(EXPIRED_ACTIVATION_TOKEN.getMessage());
 
 			verify(memberQueryRepository, never()).findById(anyLong());
 			verify(memberCommandRepository, never()).save(any(Member.class));

@@ -38,7 +38,7 @@ public enum MemberProblemCode implements ProblemCode {
 	MEMBER_REGISTRATION_FAILED("DML023", "[System] 회원 등록에 실패했습니다."),
 
 	INVALID_ACTIVATION_TOKEN("DML024", "[System] 유효하지 않은 회원 활성화 토큰입니다."),
-	EXPIRED_TEST_ACTIVATION_TOKEN("DML025", "[System] 회원 활성화 토큰이 만료되었습니다.");
+	EXPIRED_ACTIVATION_TOKEN("DML025", "[System] 회원 활성화 토큰이 만료되었습니다.");
 
 	private final String code;
 	private final String message;
