@@ -14,7 +14,7 @@ import jakarta.validation.Valid;
 import me.chan99k.learningmanager.application.member.provides.MemberLogin;
 
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/v1/members/auth")
 public class MemberLoginController {
 	private final MemberLogin memberLoginService;
 	private final Executor memberTaskExecutor;
@@ -24,7 +24,7 @@ public class MemberLoginController {
 		this.memberTaskExecutor = memberTaskExecutor;
 	}
 
-	@PostMapping("login")
+	@PostMapping("/token")
 	public CompletableFuture<ResponseEntity<MemberLogin.Response>> login(
 		@RequestBody @Valid MemberLogin.Request request
 	) {

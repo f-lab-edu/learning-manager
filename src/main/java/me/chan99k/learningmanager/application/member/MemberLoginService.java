@@ -4,6 +4,7 @@ import static me.chan99k.learningmanager.domain.member.MemberProblemCode.*;
 
 import org.springframework.stereotype.Service;
 
+import jakarta.transaction.Transactional;
 import me.chan99k.learningmanager.application.member.provides.MemberLogin;
 import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
 import me.chan99k.learningmanager.common.exception.DomainException;
@@ -14,6 +15,7 @@ import me.chan99k.learningmanager.domain.member.Password;
 import me.chan99k.learningmanager.domain.member.PasswordEncoder;
 
 @Service
+@Transactional
 public class MemberLoginService implements MemberLogin {
 	private final MemberQueryRepository memberQueryRepository;
 	private final PasswordEncoder passwordEncoder;
