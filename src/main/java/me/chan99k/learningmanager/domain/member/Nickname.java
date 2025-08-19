@@ -28,6 +28,15 @@ public record Nickname(String value) {
 		return new Nickname(nicknameGenerator.generate());
 	}
 
+	/**
+	 * 사용자 이름으로 닉네임을 생성하는 정적 팩터리 메서드
+	 * @param input 사용자 입력 닉네임 문자열
+	 * @return Nickname
+	 */
+	public static Nickname of(String input) {
+		return new Nickname(input);
+	}
+
 	private void validate(String value) {
 		if (value == null || value.isBlank()) {
 			throw new IllegalArgumentException(MEMBER_NICKNAME_REQUIRED.getMessage());
