@@ -9,8 +9,8 @@ public enum MemberProblemCode implements ProblemCode {
 	MEMBER_ALREADY_INACTIVE("DML003", "[System] 이미 휴면 상태의 회원입니다."),
 	MEMBER_NOT_PENDING_OR_INACTIVE("DML004", "[System] 가입 대기/휴면 상태의 회원만 활성화할 수 있습니다."),
 	MEMBER_ALREADY_WITHDRAWN("DML005", "[System] 이미 탈퇴한 회원입니다."),
-	MEMBER_NOT_ACTIVE("DML006", "[System] 활동 중인 회원만 이용 정지될 수 있습니다."),
-	MEMBER_NOT_BANNED("DML007", "[System] 이용 정지 상태의 회원만 해제될 수 있습니다."),
+	MEMBER_NOT_ACTIVE("DML006", "[System] 활동 중인 회원이 아닙니다"),
+	MEMBER_NOT_BANNED("DML007", "[System] 이용 정지 중인 회원이 아닙니다"),
 	MEMBER_NOT_FOUND("DML026", "[System] 해당 회원이 존재하지 않습니다.."),
 
 	ACCOUNT_MEMBER_REQUIRED("DML008", "[System] 계정은 반드시 멤버에 속해야 합니다."),
@@ -21,6 +21,7 @@ public enum MemberProblemCode implements ProblemCode {
 	ACCOUNT_NOT_FOUND("DML027", "[System] 해당 계정이 존재하지 않습니다"),
 	// TODO :: 예외 메시지들을 종류별로 묶어 놓았는데, 식별 코드를 +1 씩 증가 시켜서 사용 하다보니 계층 구조적으로 관리가 안됨 -> 정책 수정 필요 -> 애플리케이션 시작시 code를 generate 하는 방법?
 	INVALID_EMAIL_FORMAT("DML011", "[System] 유효하지 않은 이메일 형식입니다."),
+	INVALID_CREDENTIAL("DML028", "[System] 유효하지 않은 자격 증명 정보입니다."),
 
 	PASSWORD_LENGTH_INVALID("DML012", "[System] 비밀번호는 최소 8자 이상, 64자 이하여야 합니다."),
 	PASSWORD_NO_LOWERCASE("DML013", "[System] 비밀번호에는 소문자가 최소 1개 이상 포함되어야 합니다."),

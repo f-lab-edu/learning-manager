@@ -15,6 +15,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.OneToMany;
+import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.AbstractEntity;
 
 @Entity
@@ -69,12 +70,34 @@ public class Member extends AbstractEntity {
 		account.deactivate();
 	}
 
+	public boolean validateLogin(Email email, Password input) {
+		// 해당 이메일로 활성화 계정이 있는지
+		Account account = accounts.stream()
+			.filter(acc -> acc.getEmail().equals(email))
+			.filter(acc -> acc.getStatus() == AccountStatus.ACTIVE)
+			.findFirst()
+			.orElse(null);
+
+		if (account == null) {
+			throw new DomainException(ACCOUNT_NOT_FOUND);
+		}
+
+		// 2. 회원 상태 확인
+		if (this.status != MemberStatus.ACTIVE) {
+			throw new DomainException(MEMBER_NOT_ACTIVE);
+		}
+
+		// 3. 패스워드 검증
+		return account.getPassword().equals(input);
+	}
+
 	Account findAccountById(Long accountId) {
 		notNull(accountId, ACCOUNT_ID_REQUIRED.getMessage());
 		return accounts.stream()
 			.filter(account -> accountId.equals(account.getId()))
 			.findFirst()
-			.orElseThrow(() -> new IllegalArgumentException(CANNOT_FOUND_ACCOUNT.getMessage()));
+			.orElseThrow(() -> new IllegalArgumentException(
+				CANNOT_FOUND_ACCOUNT.getMessage())); // FIXME :: DomainException 으로 갈아끼우기?
 	}
 
 	public void changeNickname(Nickname nickname) {
