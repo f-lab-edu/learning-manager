@@ -4,6 +4,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import me.chan99k.learningmanager.application.member.provides.MemberProfileRetrieval;
+import me.chan99k.learningmanager.application.member.provides.MemberProfileUpdate;
+import me.chan99k.learningmanager.application.member.requires.MemberCommandRepository;
 import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
 import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.Member;
@@ -12,12 +14,15 @@ import me.chan99k.learningmanager.domain.member.Nickname;
 
 @Service
 @Transactional
-public class MemberProfileService implements MemberProfileRetrieval {
+public class MemberProfileService implements MemberProfileRetrieval, MemberProfileUpdate {
 
 	private final MemberQueryRepository memberQueryRepository;
+	private final MemberCommandRepository memberCommandRepository;
 
-	public MemberProfileService(MemberQueryRepository memberQueryRepository) {
+	public MemberProfileService(MemberQueryRepository memberQueryRepository,
+		MemberCommandRepository memberCommandRepository) {
 		this.memberQueryRepository = memberQueryRepository;
+		this.memberCommandRepository = memberCommandRepository;
 	}
 
 	@Override
@@ -46,5 +51,16 @@ public class MemberProfileService implements MemberProfileRetrieval {
 			member.getProfileImageUrl(),
 			member.getSelfIntroduction()
 		);
+	}
+
+	@Override
+	public MemberProfileUpdate.Response updateProfile(Long memberId, MemberProfileUpdate.Request request) {
+		Member member = memberQueryRepository.findById(memberId)
+			.orElseThrow(() -> new DomainException(MemberProblemCode.MEMBER_NOT_FOUND));
+
+		member.updateProfile(request.profileImageUrl(), request.selfIntroduction());
+		memberCommandRepository.save(member);
+
+		return new MemberProfileUpdate.Response(member.getId());
 	}
 }
