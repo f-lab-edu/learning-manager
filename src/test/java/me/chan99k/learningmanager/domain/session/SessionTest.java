@@ -10,14 +10,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.context.ActiveProfiles;
 
+@ActiveProfiles("test")
 class SessionTest {
 
 	private Instant now;
 
 	@BeforeEach
 	void setUp() {
-		now = Instant.now();
+		// 현재보다 충분히 미래 시간 사용
+		now = Instant.now().plus(10, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS).plus(9, ChronoUnit.HOURS);
 	}
 
 	@Nested
@@ -345,7 +348,9 @@ class SessionTest {
 		@Test
 		@DisplayName("[Failure] 이미 시작된 세션을 수정하려 하면 예외가 발생한다.")
 		void update_fail_if_session_already_started() {
-			Instant pastTime = now.minus(1, ChronoUnit.HOURS);
+			// 실제 현재 시간보다 과거로 설정
+			// TODO :: 세션 시작 플래그 등을 두어야 할 수 있음
+			Instant pastTime = Instant.now().minus(1, ChronoUnit.HOURS);
 			Session startedSession = Session.createStandaloneSession("이미 시작된 세션", pastTime,
 				pastTime.plus(2, ChronoUnit.HOURS),
 				SessionType.ONLINE, SessionLocation.ZOOM, null);
@@ -358,9 +363,11 @@ class SessionTest {
 		@Test
 		@DisplayName("[Failure] 루트 세션은 시작 3일 이내에는 수정할 수 없다.")
 		void update_fail_if_root_session_is_within_3_days_of_start() {
-			Instant soonTime = now.plus(2, ChronoUnit.DAYS); // 3일 이내
+			// 실제 현재 시간 기준으로 2일 후, 하지만 안전한 시간대로 설정
+			Instant soonTime = Instant.now().plus(2, ChronoUnit.DAYS)
+				.truncatedTo(ChronoUnit.DAYS).plus(10, ChronoUnit.HOURS); // 오전 10시
 			Session soonSession = Session.createStandaloneSession("곧 시작하는 세션", soonTime,
-				soonTime.plus(2, ChronoUnit.HOURS),
+				soonTime.plus(2, ChronoUnit.HOURS), // 오전 10시 ~ 12시
 				SessionType.ONLINE, SessionLocation.ZOOM, null);
 
 			assertThatThrownBy(() -> soonSession.changeInfo("수정 시도", SessionType.OFFLINE))
@@ -369,12 +376,29 @@ class SessionTest {
 		}
 
 		@Test
-		@DisplayName("[Failure] 하위 세션은 시작 1시간 이내에는 수정할 수 없다.")
+		@DisplayName("[Failure] 하위 세션은 시작 1시간 전부터는 수정할 수 없다.")
 		void update_fail_if_child_session_is_within_1_hour_of_start() {
-			Session root = Session.createStandaloneSession("부모 세션", now, now.plus(5, ChronoUnit.HOURS),
+			// 현재 시간 + 30분 (1시간 전 제한에 걸림)
+			Instant childStartTime = Instant.now().plus(30, ChronoUnit.MINUTES);
+
+			// 같은 날 안전한 시간으로 부모 세션 설정 (오전 10시 시작)
+			Instant today = Instant.now().truncatedTo(ChronoUnit.DAYS);
+			Instant parentStart = today.plus(10, ChronoUnit.HOURS); // 오전 10시
+			Instant parentEnd = parentStart.plus(2, ChronoUnit.HOURS); // 오전 12시
+
+			// 부모 세션이 하위 세션을 포함하도록 조정
+			if (childStartTime.isBefore(parentStart)) {
+				parentStart = childStartTime.minus(30, ChronoUnit.MINUTES);
+				parentEnd = parentStart.plus(2, ChronoUnit.HOURS);
+			}
+			if (childStartTime.plus(30, ChronoUnit.MINUTES).isAfter(parentEnd)) {
+				parentEnd = childStartTime.plus(1, ChronoUnit.HOURS);
+			}
+
+			Session root = Session.createStandaloneSession("부모 세션", parentStart, parentEnd,
 				SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null);
 
-			Instant childStartTime = now.plus(30, ChronoUnit.MINUTES); // 1시간 이내
+			// 하위 세션: 현재 + 30분 후 시작 (1시간 전 제한에 걸리므로 수정 불가)
 			Session child = root.createChildSession("곧 시작하는 하위 세션", childStartTime,
 				childStartTime.plus(30, ChronoUnit.MINUTES),
 				SessionType.OFFLINE, SessionLocation.SITE, "주기율 카페");
