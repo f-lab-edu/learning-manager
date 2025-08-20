@@ -10,6 +10,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.MemberProblemCode;
@@ -96,6 +97,20 @@ public class GlobalExceptionHandler {
 		problemDetail.setProperty("code", "INVALID JSON");
 
 		return ResponseEntity.badRequest().body(problemDetail);
+	}
+
+	@ExceptionHandler(ResponseStatusException.class)
+	public ResponseEntity<ProblemDetail> handleResponseStatusException(ResponseStatusException e) {
+		ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+			e.getStatusCode(),
+			e.getReason() != null ? e.getReason() : "Request processing failed"
+		);
+
+		problemDetail.setType(URI.create("https://api.lm.com/errors/" + e.getStatusCode().value()));
+		problemDetail.setTitle(e.getStatusCode().toString());
+		problemDetail.setProperty("code", e.getStatusCode().toString());
+
+		return ResponseEntity.status(e.getStatusCode()).body(problemDetail);
 	}
 
 	@ExceptionHandler(Exception.class)
