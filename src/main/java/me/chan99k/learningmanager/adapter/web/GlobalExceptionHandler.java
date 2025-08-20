@@ -3,7 +3,6 @@ package me.chan99k.learningmanager.adapter.web;
 import java.net.URI;
 
 import org.springframework.context.support.DefaultMessageSourceResolvable;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +10,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import me.chan99k.learningmanager.common.exception.AuthenticateException;
 import me.chan99k.learningmanager.common.exception.DomainException;
@@ -62,7 +62,7 @@ public class GlobalExceptionHandler {
 		problemDetail.setTitle("Authentication Error");
 		problemDetail.setProperty("code", e.getProblemCode().getCode());
 
-		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail);
+		return ResponseEntity.badRequest().body(problemDetail);
 	}
 
 	/**
@@ -120,35 +120,18 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.badRequest().body(problemDetail);
 	}
 
-	@ExceptionHandler(DataIntegrityViolationException.class)
-	public ResponseEntity<ProblemDetail> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
-		String message = e.getMessage();
-
-		// 중복 이메일 제약 조건 위반 검사
-		if (message != null && message.contains("Duplicate entry") && message.contains("UK_account_email")) {
-			ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-				HttpStatus.CONFLICT,
-				"[System] 이미 존재하는 이메일입니다."
-			);
-
-			problemDetail.setType(URI.create("https://api.lm.com/errors/DML003"));
-			problemDetail.setTitle("Duplicate Email");
-			problemDetail.setProperty("code", "DML003");
-
-			return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
-		}
-
-		// 기타 데이터 무결성 위반
+	@ExceptionHandler(ResponseStatusException.class)
+	public ResponseEntity<ProblemDetail> handleResponseStatusException(ResponseStatusException e) {
 		ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-			HttpStatus.CONFLICT,
-			"[System] 데이터 무결성 제약 조건에 위반됩니다."
+			e.getStatusCode(),
+			e.getReason() != null ? e.getReason() : "Request processing failed"
 		);
 
-		problemDetail.setType(URI.create("https://api.lm.com/errors/data-integrity-violation"));
-		problemDetail.setTitle("Data Integrity Violation");
-		problemDetail.setProperty("code", "DATA_INTEGRITY_VIOLATION");
+		problemDetail.setType(URI.create("https://api.lm.com/errors/" + e.getStatusCode().value()));
+		problemDetail.setTitle(e.getStatusCode().toString());
+		problemDetail.setProperty("code", e.getStatusCode().toString());
 
-		return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+		return ResponseEntity.status(e.getStatusCode()).body(problemDetail);
 	}
 
 	@ExceptionHandler(Exception.class)
