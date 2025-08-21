@@ -30,7 +30,7 @@ public class MemberLoginController {
 	) {
 		return CompletableFuture.supplyAsync(() -> {
 			MemberLogin.Response loginResponse = memberLoginService.login(request);
-			return ResponseEntity.status(HttpStatus.ACCEPTED).body(loginResponse);
+			return ResponseEntity.status(HttpStatus.OK).body(loginResponse);
 		}, memberTaskExecutor);
 	}
 }
