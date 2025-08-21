@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import me.chan99k.learningmanager.common.exception.DomainException;
+import me.chan99k.learningmanager.domain.member.MemberProblemCode;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -23,6 +24,12 @@ public class GlobalExceptionHandler {
 	 */
 	@ExceptionHandler(DomainException.class)
 	public ResponseEntity<ProblemDetail> handleDomainException(DomainException e) {
+		if (e.getProblemCode() == MemberProblemCode.ACCOUNT_NOT_FOUND) { // 계정 없음 예외의 경우
+			ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+			problem.setDetail(e.getMessage());
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
+		}
+
 		ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
 			HttpStatus.BAD_REQUEST,
 			e.getProblemCode().getMessage()

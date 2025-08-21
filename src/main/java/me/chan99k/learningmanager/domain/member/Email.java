@@ -16,4 +16,8 @@ public record Email(String address) {
 	public Email {
 		isTrue(PATTERN.matcher(address).matches(), INVALID_EMAIL_FORMAT.getMessage());
 	}
+
+	public static Email of(String input) {
+		return new Email(input);
+	}
 }
