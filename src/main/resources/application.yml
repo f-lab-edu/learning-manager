@@ -1,7 +1,6 @@
 spring:
   application:
     name: learning-manager
-
 server:
   port: 8080
 
@@ -9,8 +8,6 @@ jwt:
   secret: ${JWT_SECRET:}
   access-token:
     validity-in-seconds: ${JWT_ACCESS_TOKEN_VALIDITY:1800}
-    issuer: ${JWT_ISSUER:lxm-default-api}
-    audience: ${JWT_AUDIENCE:lxm-default-auth}
 
 ---
 spring:
@@ -39,8 +36,7 @@ jwt:
   secret: ${JWT_SECRET:learning-manager-dev-secret-key-for-development-only}
   access-token:
     validity-in-seconds: 3600  # 개발환경에서는 1시간
-    issuer: "lxm-dev-api"
-    audience: "lxm-dev-auth"
+
 
 ---
 
@@ -67,5 +63,4 @@ jwt:
   secret: ${JWT_SECRET:}
   access-token:
     validity-in-seconds: ${JWT_ACCESS_TOKEN_VALIDITY:1800}
-    issuer: "lxm-prod-api"
-    audience: "lxm-dev-auth"
+

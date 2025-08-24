@@ -28,7 +28,4 @@ jwt:
   secret: test-jwt-secret-key-for-testing-at-least-32-characters-long
   access-token:
     validity-in-seconds: 3600  # 테스트에서는 1시간
-    issuer: ${JWT_ISSUER:lxm-test-api}
-    audience: ${JWT_AUDIENCE:lxm-test-auth}
-
 
