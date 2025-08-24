@@ -19,9 +19,9 @@ public class JwtTokenProvider {
 	private final long tokenValidityInMilliseconds;
 
 	public JwtTokenProvider(
-		@Value("${jwt.secret:learning-manager-jwt-secret-key-for-development}")
+		@Value("${jwt.secret}")
 		String secretKey,
-		@Value("${jwt.token-validity-in-seconds:86400}")
+		@Value("${jwt.access-token.validity-in-seconds}")
 		long tokenValidityInSeconds
 	) {
 		this.secretKey = Keys.hmacShaKeyFor(secretKey.getBytes());

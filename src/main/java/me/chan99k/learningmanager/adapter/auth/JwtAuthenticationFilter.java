@@ -33,21 +33,32 @@ public class JwtAuthenticationFilter implements Filter {
 
 		try {
 			String token = resolveToken(httpRequest);
-			log.info("===== JWT FILTER DEBUG START =====");
-			log.info("Request URI : {}", httpRequest.getRequestURI());
-			log.info("Token: :{}", token);
+
+			if (log.isDebugEnabled()) {
+				log.debug("[System] Processing authentication for URI: {}", httpRequest.getRequestURI());
+			}
 
 			if (token != null && jwtTokenProvider.validateToken(token)) {
 				String memberId = jwtTokenProvider.getMemberIdFromToken(token);
-				log.info("Member ID from token: {}", memberId);
+				if (log.isDebugEnabled()) {
+					log.debug("[System] Member ID from token: {}", memberId);
+				}
 
 				// AuthenticationContextHolder에 Member ID 설정
 				AuthenticationContextHolder.setCurrentMemberId(Long.valueOf(memberId));
-				log.info("[System] Member ID {} 을 AuthenticationContext에 설정하였습니다.", memberId);
+
+				if (log.isDebugEnabled()) {
+					log.debug("[System] Authentication successful for member: {}", memberId);
+				}
+
 			} else {
-				log.debug("[System] 토큰 검증이 실패하였거나 토큰의 값이 null 입니다");
+				log.debug("[System] No valid token found for request: {}", httpRequest.getRequestURI());
 			}
-			log.info("===== JWT FILTER DEBUG ENDS =====");
+
+			filterChain.doFilter(request, response);
+		} catch (Exception e) {
+			log.error("[System] Authentication filter error for URI {}: {}",
+				httpRequest.getRequestURI(), e.getMessage());
 
 			filterChain.doFilter(request, response);
 		} finally {
@@ -61,6 +72,6 @@ public class JwtAuthenticationFilter implements Filter {
 		if (StringUtils.hasText(bearer) && bearer.startsWith(BEARER_PREFIX)) {
 			return bearer.substring(BEARER_PREFIX.length());
 		}
-		return null; // FIXME :: null 반환은 지양하도록 변경하기
+		return null;
 	}
 }
