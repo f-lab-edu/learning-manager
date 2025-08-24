@@ -1,26 +1,21 @@
 package me.chan99k.learningmanager.adapter.auth;
 
 import java.io.IOException;
-import java.util.Collections;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import org.springframework.web.filter.OncePerRequestFilter;
 
+import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 @Component
-@Profile("!test")
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
+public class JwtAuthenticationFilter implements Filter {
 	private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 	private static final String BEARER_PREFIX = "Bearer ";
 
@@ -31,31 +26,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	}
 
 	@Override
-	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-		FilterChain filterChain
-	) throws ServletException, IOException {
-		String token = resolveToken(request);
-		log.info("===== JWT FILTER DEBUG START =====");
-		log.info("Request URI : {}", request.getRequestURI());
-		log.info("Token: :{}", token);
+	public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain)
+		throws IOException, ServletException {
 
-		if (token != null && jwtTokenProvider.validateToken(token)) {
-			String memberId = jwtTokenProvider.getMemberIdFromToken(token);
-			log.info("Member ID from token: {}", memberId);
-			// TODO: 실제로는 Member 엔티티에서 권한 정보를 조회해야 함
-			var authorities = Collections.singletonList(new SimpleGrantedAuthority("MEMBER"));
-			// TODO: 실제로는 Password VO 가 필요함!!
-			var authentication = new UsernamePasswordAuthenticationToken(
-				memberId, null, authorities
-			);
+		HttpServletRequest httpRequest = (HttpServletRequest)request;
 
-			SecurityContextHolder.getContext().setAuthentication(authentication);
-			log.info("[System] Authentication set 을 SecurityContext 에 캐시 하였습니다.");
-		} else {
-			log.debug("[System] 토큰 검증이 실패하였거나 토큰의 값이 null 입니다");
+		try {
+			String token = resolveToken(httpRequest);
+			log.info("===== JWT FILTER DEBUG START =====");
+			log.info("Request URI : {}", httpRequest.getRequestURI());
+			log.info("Token: :{}", token);
+
+			if (token != null && jwtTokenProvider.validateToken(token)) {
+				String memberId = jwtTokenProvider.getMemberIdFromToken(token);
+				log.info("Member ID from token: {}", memberId);
+
+				// AuthenticationContextHolder에 Member ID 설정
+				AuthenticationContextHolder.setCurrentMemberId(Long.valueOf(memberId));
+				log.info("[System] Member ID {} 을 AuthenticationContext에 설정하였습니다.", memberId);
+			} else {
+				log.debug("[System] 토큰 검증이 실패하였거나 토큰의 값이 null 입니다");
+			}
+			log.info("===== JWT FILTER DEBUG ENDS =====");
+
+			filterChain.doFilter(request, response);
+		} finally {
+			// 요청 처리 완료 후 컨텍스트 정리
+			AuthenticationContextHolder.clear();
 		}
-		log.info("===== JWT FILTER DEBUG ENDS =====");
-		filterChain.doFilter(request, response);
 	}
 
 	private String resolveToken(HttpServletRequest request) {

@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import me.chan99k.learningmanager.adapter.auth.AuthenticationContextTaskDecorator;
+
 @Configuration
 @EnableAsync
 public class AsyncConfig {
@@ -58,31 +60,20 @@ public class AsyncConfig {
 		// 태스크 데코레이터: 각 태스크 실행 전/후 공통 처리 로직 추가 가능
 		// 예: Mapped Diagnostic Context 복사, 메트릭 수집 등
 		executor.setTaskDecorator(runnable -> {
+			Runnable authDecoratedTask = new AuthenticationContextTaskDecorator().decorate(runnable);
+
 			String currentThreadName = Thread.currentThread().getName();
+
 			return () -> {
 				try {
 					log.debug("Task started by thread: {} -> executing in: {}",
 						currentThreadName, Thread.currentThread().getName());
-					runnable.run();
+					authDecoratedTask.run();
 				} finally {
 					log.debug("Task completed in thread: {}", Thread.currentThread().getName());
 				}
 			};
 		});
-
-		// 커스텀 스레드 팩토리: 스레드 생성 방식 커스터마이징
-		// 보다 더 세밀한 제어가 필요한 경우 사용
-		// ThreadFactory 설정 시 setThreadNamePrefix가 무시됨
-		// AtomicInteger threadNumber = new AtomicInteger(1);
-		// executor.setThreadFactory(new ThreadFactory() {
-		//	@Override
-		//	public Thread newThread(Runnable r) {
-		//		Thread thread = new Thread(r, "member-async-" + threadNumber.getAndIncrement());
-		//		thread.setDaemon(false);
-		//		thread.setPriority(Thread.NORM_PRIORITY);
-		//		return thread;
-		//	}
-		// });
 
 		/* ============== 거부 정책 설정  ============== */
 		// 거부 정책: 큐가 가득 차고 최대 스레드 수에 도달했을 때의 처리 방식
@@ -144,6 +135,7 @@ public class AsyncConfig {
 		executor.setAllowCoreThreadTimeOut(true);
 		executor.setKeepAliveSeconds(120);
 		executor.setBeanName("emailTaskExecutor");
+		executor.setTaskDecorator(new AuthenticationContextTaskDecorator());
 		executor.initialize();
 
 		log.info(
