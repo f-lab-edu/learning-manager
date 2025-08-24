@@ -12,8 +12,8 @@ import me.chan99k.learningmanager.common.exception.UnauthenticatedException;
 
 @Aspect
 @Component
-public class AuthAspect {
-	public static final Logger log = LoggerFactory.getLogger(AuthAspect.class);
+public class AuthenticationAspect {
+	public static final Logger log = LoggerFactory.getLogger(AuthenticationAspect.class);
 
 	@Around("@within(RequireAuthentication) || @annotation(RequireAuthentication)")
 	public Object checkAuthentication(ProceedingJoinPoint joinPoint) throws Throwable {
