@@ -3,32 +3,32 @@ package me.chan99k.learningmanager.adapter.web.member;
 import static me.chan99k.learningmanager.domain.member.MemberProblemCode.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
-import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
+import java.util.concurrent.Executor;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import me.chan99k.learningmanager.adapter.auth.JwtAuthenticationFilter;
+import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
 import me.chan99k.learningmanager.adapter.auth.JwtTokenProvider;
 import me.chan99k.learningmanager.application.member.provides.MemberProfileRetrieval;
 import me.chan99k.learningmanager.application.member.provides.MemberProfileUpdate;
 import me.chan99k.learningmanager.common.exception.DomainException;
 
 @WebMvcTest(controllers = MemberProfileController.class)
-@AutoConfigureMockMvc(addFilters = false) // Spring Security 필터, CORS 필터, 인코딩 필터 등 모든 서블릿 필터들을 테스트에서 제외
+@Import(JwtTokenProvider.class)
 class MemberProfileControllerTest {
 
 	@Autowired
@@ -36,15 +36,12 @@ class MemberProfileControllerTest {
 
 	@MockBean
 	MemberProfileUpdate memberProfileUpdate;
+
 	@MockBean
 	MemberProfileRetrieval memberProfileRetrieval;
-	@MockBean
-	JwtTokenProvider jwtTokenProvider;
-	@MockBean
-	JwtAuthenticationFilter jwtAuthenticationFilter;
 
 	@MockBean(name = "memberTaskExecutor")
-	AsyncTaskExecutor memberTaskExecutor;
+	Executor memberTaskExecutor;
 
 	@BeforeEach
 	void setupExecutor() {
@@ -53,6 +50,11 @@ class MemberProfileControllerTest {
 			task.run();
 			return null;
 		}).given(memberTaskExecutor).execute(any(Runnable.class));
+	}
+
+	@AfterEach
+	void clearAuthContext() {
+		AuthenticationContextHolder.clear();
 	}
 
 	@Test
@@ -94,9 +96,9 @@ class MemberProfileControllerTest {
 
 	@Test
 	@DisplayName("내 프로필 조회시, 인증 성공하여 200을 반환")
-	@WithMockUser(username = "1")
 	void test03() throws Exception {
-		given(memberProfileRetrieval.getProfile(1L))
+		setAuthenticatedUser(5L);
+		given(memberProfileRetrieval.getProfile(5L))
 			.willReturn(new MemberProfileRetrieval.Response("img", "intro"));
 
 		MvcResult mvcResult = mockMvc.perform(get("/api/v1/members/profile"))
@@ -108,7 +110,7 @@ class MemberProfileControllerTest {
 			.andExpect(jsonPath("$.profileImageUrl").value("img"));
 
 		// Mock 검증 강화 - 정확한 memberId로 호출되었는지 확인
-		verify(memberProfileRetrieval).getProfile(1L);
+		verify(memberProfileRetrieval).getProfile(5L);
 	}
 
 	@Test
@@ -121,7 +123,6 @@ class MemberProfileControllerTest {
 
 	@Test
 	@DisplayName("프로필 수정 - 잘못된 principal(문자) 401")
-	@WithMockUser(username = "abc")
 	void test05() throws Exception {
 		// NumberFormatException 발생시 Controller에서 401 ResponseStatusException 발생
 		mockMvc.perform(
@@ -134,10 +135,10 @@ class MemberProfileControllerTest {
 
 	@Test
 	@DisplayName("프로필 수정 - 인증 성공 200")
-	@WithMockUser(username = "1")
 	void test06() throws Exception {
-		given(memberProfileUpdate.updateProfile(eq(1L), any(MemberProfileUpdate.Request.class)))
-			.willReturn(new MemberProfileUpdate.Response(1L));
+		setAuthenticatedUser(5L);
+		given(memberProfileUpdate.updateProfile(eq(5L), any(MemberProfileUpdate.Request.class)))
+			.willReturn(new MemberProfileUpdate.Response(5L));
 
 		MvcResult mvcResult = mockMvc.perform(post("/api/v1/members/profile")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -147,13 +148,16 @@ class MemberProfileControllerTest {
 
 		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.memberId").value(1));
+			.andExpect(jsonPath("$.memberId").value(5));
 
-		// Mock 검증 강화 - 정확한 파라미터로 호출되었는지 확인
-		verify(memberProfileUpdate).updateProfile(eq(1L), argThat(req ->
+		verify(memberProfileUpdate).updateProfile(eq(5L), argThat(req ->
 			"img".equals(req.profileImageUrl()) &&
 				"intro".equals(req.selfIntroduction())
 		));
+	}
+
+	private void setAuthenticatedUser(Long memberId) {
+		AuthenticationContextHolder.setCurrentMemberId(memberId);
 	}
 
 }
