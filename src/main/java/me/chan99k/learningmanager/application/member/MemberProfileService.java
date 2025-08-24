@@ -44,7 +44,7 @@ public class MemberProfileService implements MemberProfileRetrieval, MemberProfi
 	public MemberProfileRetrieval.Response getPublicProfile(String input) {
 		var nickname = Nickname.of(input);
 
-		Member member = memberQueryRepository.findByNickname(nickname)
+		Member member = memberQueryRepository.findByNickName(nickname)
 			.orElseThrow(() -> new DomainException(MemberProblemCode.MEMBER_NOT_FOUND));
 
 		return new MemberProfileRetrieval.Response(
