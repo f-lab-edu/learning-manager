@@ -23,3 +23,9 @@ logging:
   level:
     web: trace
     sql: trace
+  # JWT 테스트 설정 추가
+jwt:
+  secret: test-jwt-secret-key-for-testing-at-least-32-characters-long
+  access-token:
+    validity-in-seconds: 3600  # 테스트에서는 1시간
+

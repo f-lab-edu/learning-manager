@@ -3,6 +3,12 @@ spring:
     name: learning-manager
 server:
   port: 8080
+
+jwt:
+  secret: ${JWT_SECRET:}
+  access-token:
+    validity-in-seconds: ${JWT_ACCESS_TOKEN_VALIDITY:1800}
+
 ---
 spring:
   config:
@@ -26,6 +32,12 @@ logging:
     org.hibernate.sql: debug
     org.springframework.web: debug
 
+jwt:
+  secret: ${JWT_SECRET:learning-manager-dev-secret-key-for-development-only}
+  access-token:
+    validity-in-seconds: 3600  # 개발환경에서는 1시간
+
+
 ---
 
 spring:
@@ -46,3 +58,9 @@ logging:
   level:
     web: error
     sql: error
+
+jwt:
+  secret: ${JWT_SECRET:}
+  access-token:
+    validity-in-seconds: ${JWT_ACCESS_TOKEN_VALIDITY:1800}
+
