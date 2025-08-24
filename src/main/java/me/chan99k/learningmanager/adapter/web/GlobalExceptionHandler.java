@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
 import me.chan99k.learningmanager.common.exception.DomainException;
+import me.chan99k.learningmanager.common.exception.UnauthenticatedException;
 import me.chan99k.learningmanager.domain.member.MemberProblemCode;
 
 @RestControllerAdvice
@@ -112,6 +113,21 @@ public class GlobalExceptionHandler {
 
 		return ResponseEntity.status(e.getStatusCode()).body(problemDetail);
 	}
+
+	@ExceptionHandler(UnauthenticatedException.class) //  TODO :: ResponseStatusException 과 비교하여 어떤 예외를 사용할 것인지 결정하여야 함
+	public ResponseEntity<ProblemDetail> handleUnauthenticatedException(UnauthenticatedException e) {
+		ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+			HttpStatus.UNAUTHORIZED,
+			e.getMessage()
+		);
+
+		problemDetail.setType(URI.create("https://api.lm.com/errors/authentication"));
+		problemDetail.setTitle("Unauthorized");
+		problemDetail.setProperty("code", "UNAUTHORIZED"); // TODO :: ProblemCode 만들어 넣기
+
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail);
+	}
+
 
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ProblemDetail> handleGeneralException(Exception e) {
