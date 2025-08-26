@@ -24,7 +24,7 @@ public class JwtTokenProvider {
 	public JwtTokenProvider(
 		@Value("${jwt.access-token.issuer}")
 		String tokenIssuer,
-		@Value(("${jwt.access-token.audience}"))
+		@Value("${jwt.access-token.audience}")
 		String tokenAudience,
 		@Value("${jwt.secret}")
 		String secretKey,
