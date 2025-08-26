@@ -7,8 +7,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
 import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
-import me.chan99k.learningmanager.common.exception.UnauthenticatedException;
+import me.chan99k.learningmanager.common.exception.AuthenticateException;
 
 @Aspect
 @Component
@@ -22,7 +23,7 @@ public class AuthenticationAspect {
 				joinPoint.getTarget().getClass().getSimpleName(),
 				joinPoint.getSignature().getName()
 			);
-			throw new UnauthenticatedException("[System] 인증이 필요한 요청입니다");
+			throw new AuthenticateException(AuthProblemCode.AUTHENTICATION_REQUIRED);
 		}
 		log.debug("Authentication check passed for user : {}",
 			AuthenticationContextHolder.getCurrentMemberId().orElse(null));

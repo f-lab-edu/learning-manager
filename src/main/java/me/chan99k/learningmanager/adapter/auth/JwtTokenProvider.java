@@ -80,6 +80,9 @@ public class JwtTokenProvider {
 			}
 
 			return payload.getSubject();
+		} catch (AuthenticateException e) {
+			// AuthenticateException은 그대로 다시 던짐
+			throw e;
 		} catch (Exception e) {
 			throw new AuthenticateException(AuthProblemCode.FAILED_TO_AUTHENTICATE, e);
 		}
