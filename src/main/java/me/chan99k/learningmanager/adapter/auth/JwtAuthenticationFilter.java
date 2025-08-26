@@ -13,6 +13,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import me.chan99k.learningmanager.common.exception.AuthenticateException;
 
 @Component
 public class JwtAuthenticationFilter implements Filter {
@@ -34,33 +35,29 @@ public class JwtAuthenticationFilter implements Filter {
 		try {
 			String token = resolveToken(httpRequest);
 
-			if (log.isDebugEnabled()) {
-				log.debug("[System] Processing authentication for URI: {}", httpRequest.getRequestURI());
-			}
+			log.debug("[System] Processing authentication for URI: {}", httpRequest.getRequestURI());
 
-			if (token != null && jwtTokenProvider.validateToken(token)) {
+			if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
 				String memberId = jwtTokenProvider.getMemberIdFromToken(token);
-				if (log.isDebugEnabled()) {
-					log.debug("[System] Member ID from token: {}", memberId);
-				}
+
+				log.debug("[System] Member ID from token: {}", memberId);
 
 				// AuthenticationContextHolder에 Member ID 설정
 				AuthenticationContextHolder.setCurrentMemberId(Long.valueOf(memberId));
 
-				if (log.isDebugEnabled()) {
-					log.debug("[System] Authentication successful for member: {}", memberId);
-				}
+				log.debug("[System] Authentication successful for member: {}", memberId);
 
 			} else {
 				log.debug("[System] No valid token found for request: {}", httpRequest.getRequestURI());
 			}
 
 			filterChain.doFilter(request, response);
-		} catch (Exception e) {
+		} catch (AuthenticateException e) {
 			log.error("[System] Authentication filter error for URI {}: {}",
 				httpRequest.getRequestURI(), e.getMessage());
-
-			filterChain.doFilter(request, response);
+			throw new AuthenticateException(AuthProblemCode.FAILED_TO_AUTHENTICATE, e);
+		} catch (NumberFormatException e) {
+			throw new AuthenticateException(AuthProblemCode.INVALID_TOKEN_SUBJECT, e);
 		} finally {
 			// 요청 처리 완료 후 컨텍스트 정리
 			AuthenticationContextHolder.clear();
