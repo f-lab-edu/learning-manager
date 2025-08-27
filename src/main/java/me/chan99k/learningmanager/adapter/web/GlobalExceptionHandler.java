@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
+import me.chan99k.learningmanager.common.exception.AuthenticateException;
 import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.common.exception.UnauthenticatedException;
 import me.chan99k.learningmanager.domain.member.MemberProblemCode;
@@ -40,6 +41,26 @@ public class GlobalExceptionHandler {
 		// TODO :: 에러에 대한 문서로 연결 되면 좋음
 		problemDetail.setType(URI.create("https://api.lm.com/errors/" + e.getProblemCode().getCode()));
 		problemDetail.setTitle("Domain Error");
+		problemDetail.setProperty("code", e.getProblemCode().getCode());
+
+		return ResponseEntity.badRequest().body(problemDetail);
+	}
+
+	/**
+	 * AuthenticateException 을 가로챈다.
+	 * @param e AuthenticateException
+	 * @return 401, ResponseEntity
+	 */
+	@ExceptionHandler(AuthenticateException.class)
+	public ResponseEntity<ProblemDetail> handleAuthenticationException(AuthenticateException e) {
+
+		ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+			HttpStatus.UNAUTHORIZED,
+			e.getProblemCode().getMessage()
+		);
+
+		problemDetail.setType(URI.create("https://api.lm.com/errors/" + e.getProblemCode().getCode()));
+		problemDetail.setTitle("Authentication Error");
 		problemDetail.setProperty("code", e.getProblemCode().getCode());
 
 		return ResponseEntity.badRequest().body(problemDetail);
