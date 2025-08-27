@@ -14,22 +14,23 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import me.chan99k.learningmanager.adapter.auth.JwtTokenProvider;
 import me.chan99k.learningmanager.adapter.web.member.MemberRegisterController;
 import me.chan99k.learningmanager.application.member.MemberRegisterService;
 import me.chan99k.learningmanager.application.member.provides.MemberRegistration;
 import me.chan99k.learningmanager.application.member.provides.SignUpConfirmation;
 
 @WebMvcTest(value = MemberRegisterController.class)
-@AutoConfigureMockMvc(addFilters = false)
+@Import({JwtTokenProvider.class})
 public class MemberRegisterControllerTest {
 
 	private static final String TEST_EMAIL = "test@example.com";

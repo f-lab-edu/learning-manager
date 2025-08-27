@@ -13,20 +13,24 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import me.chan99k.learningmanager.adapter.auth.JwtTokenProvider;
 import me.chan99k.learningmanager.application.member.provides.MemberLogin;
 
 @WebMvcTest(MemberLoginController.class)
-class MemberLoginServiceControllerTest {
+@Import({JwtTokenProvider.class})
+class MemberLoginControllerTest {
 
 	@Autowired
 	private MockMvc mockMvc;
 
 	@MockBean
 	private Executor memberTaskExecutor;
+
 	@MockBean
 	private MemberLogin memberLogin;
 
@@ -61,7 +65,7 @@ class MemberLoginServiceControllerTest {
 			.andReturn();
 
 		mockMvc.perform(asyncDispatch(mvcResult))
-			.andExpect(status().isAccepted())
+			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.accessToken").value("jwt_token_123"));
 	}
 
