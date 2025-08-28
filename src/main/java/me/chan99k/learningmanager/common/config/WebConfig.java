@@ -20,8 +20,8 @@ public class WebConfig implements WebMvcConfigurer {
 	public FilterRegistrationBean<JwtAuthenticationFilter> jwtFilterRegistration() {
 		FilterRegistrationBean<JwtAuthenticationFilter> registration = new FilterRegistrationBean<>();
 		registration.setFilter(jwtAuthenticationFilter);
-		// 인증이 필요한 경로만 지정 (인증 불필요: /register, /auth/*, /activate)
-		registration.addUrlPatterns("/api/v1/members/profile/*");
+
+		registration.addUrlPatterns("/api/v1/members/profile");
 		registration.addUrlPatterns("/api/v1/admin/*");
 		registration.setOrder(1);
 
