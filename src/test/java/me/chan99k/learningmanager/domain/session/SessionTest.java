@@ -19,8 +19,7 @@ class SessionTest {
 
 	@BeforeEach
 	void setUp() {
-		// 현재보다 충분히 미래 시간 사용
-		now = Instant.now().plus(10, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS).plus(9, ChronoUnit.HOURS);
+		now = Instant.parse("2030-01-01T09:00:00Z");
 	}
 
 	@Nested
