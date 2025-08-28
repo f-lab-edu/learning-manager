@@ -13,7 +13,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import me.chan99k.learningmanager.common.exception.AuthenticateException;
+import me.chan99k.learningmanager.common.exception.ProblemCode;
 
 @Component
 public class JwtAuthenticationFilter implements Filter {
@@ -31,6 +33,7 @@ public class JwtAuthenticationFilter implements Filter {
 		throws IOException, ServletException {
 
 		HttpServletRequest httpRequest = (HttpServletRequest)request;
+		HttpServletResponse httpResponse = (HttpServletResponse)response;
 
 		try {
 			String token = resolveToken(httpRequest);
@@ -40,7 +43,8 @@ public class JwtAuthenticationFilter implements Filter {
 			// 토큰 검증 실패 시 접근 차단
 			if (!jwtTokenProvider.validateToken(token)) {
 				log.error("[System] Invalid token for protected resource: {}", httpRequest.getRequestURI());
-				throw new AuthenticateException(AuthProblemCode.FAILED_TO_VALIDATE_TOKEN);
+				writeErrorResponse(httpResponse, AuthProblemCode.FAILED_TO_VALIDATE_TOKEN);
+				return;
 			}
 
 			String memberId = jwtTokenProvider.getMemberIdFromToken(token);
@@ -56,15 +60,15 @@ public class JwtAuthenticationFilter implements Filter {
 		} catch (AuthenticateException e) {
 			log.error("[System] Authentication filter error for URI {}: {}",
 				httpRequest.getRequestURI(), e.getMessage());
-			throw e;
+			writeErrorResponse(httpResponse, e.getProblemCode());
 		} catch (NumberFormatException e) {
-			throw new AuthenticateException(AuthProblemCode.INVALID_TOKEN_SUBJECT, e);
+			writeErrorResponse(httpResponse, AuthProblemCode.INVALID_TOKEN_SUBJECT);
 		} finally {
 			AuthenticationContextHolder.clear();    // 요청 처리 완료 후 컨텍스트 정리
 		}
 	}
 
-	private String resolveToken(HttpServletRequest request) {
+	private String resolveToken(HttpServletRequest request) throws AuthenticateException {
 		var bearer = request.getHeader("Authorization");
 		if (!StringUtils.hasText(bearer)) {
 			log.error("[System] No Authorization header found for protected resource: {}",
@@ -86,6 +90,30 @@ public class JwtAuthenticationFilter implements Filter {
 		}
 
 		return token;
+	}
+
+	private void writeErrorResponse(HttpServletResponse response, ProblemCode problemCode) throws IOException {
+		response.setStatus(401);
+		response.setContentType("application/problem+json");
+		response.setCharacterEncoding("UTF-8");
+
+		StringBuilder json = new StringBuilder();
+		json.append("{");
+		json.append("\"type\":\"https://api.lm.com/errors/").append(problemCode.getCode()).append("\",");
+		json.append("\"title\":\"Authentication Error\",");
+		json.append("\"status\":401,");
+		json.append("\"detail\":\"").append(escapeJsonString(problemCode.getMessage())).append("\",");
+		json.append("\"code\":\"").append(problemCode.getCode()).append("\"");
+		json.append("}");
+
+		response.getWriter().write(json.toString());
+	}
+
+	private String escapeJsonString(String str) {
+		return str.replace("\"", "\\\"")
+			.replace("\n", "\\n")
+			.replace("\r", "\\r")
+			.replace("\t", "\\t");
 	}
 
 }
