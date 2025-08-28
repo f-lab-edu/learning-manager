@@ -23,12 +23,13 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
 import me.chan99k.learningmanager.adapter.auth.JwtTokenProvider;
+import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
 import me.chan99k.learningmanager.application.member.provides.MemberProfileRetrieval;
 import me.chan99k.learningmanager.application.member.provides.MemberProfileUpdate;
 import me.chan99k.learningmanager.common.exception.DomainException;
 
 @WebMvcTest(controllers = MemberProfileController.class)
-@Import(JwtTokenProvider.class)
+@Import(GlobalExceptionHandler.class)
 class MemberProfileControllerTest {
 
 	@Autowired
@@ -39,6 +40,9 @@ class MemberProfileControllerTest {
 
 	@MockBean
 	MemberProfileRetrieval memberProfileRetrieval;
+
+	@MockBean
+	JwtTokenProvider jwtTokenProvider;
 
 	@MockBean(name = "memberTaskExecutor")
 	Executor memberTaskExecutor;
@@ -77,7 +81,7 @@ class MemberProfileControllerTest {
 	}
 
 	@Test
-	@DisplayName("공개 프로필 조회시 해당 회원이 없다면 400과 Problem code 확인")
+	@DisplayName("공개 프로필 조회시 해당 회원이 없다면 400과 Problem code 반환")
 	void test02() throws Exception {
 		given(memberProfileRetrieval.getPublicProfile("ghost"))
 			.willThrow(new DomainException(MEMBER_NOT_FOUND));
@@ -97,11 +101,19 @@ class MemberProfileControllerTest {
 	@Test
 	@DisplayName("내 프로필 조회시, 인증 성공하여 200을 반환")
 	void test03() throws Exception {
+		// JWT 토큰 검증 모킹 - 이 테스트에서만 성공하도록 설정
+		given(jwtTokenProvider.validateToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1In0.test")).willReturn(
+			true);
+		given(jwtTokenProvider.getMemberIdFromToken(
+			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1In0.test")).willReturn("5");
+		
 		setAuthenticatedUser(5L);
 		given(memberProfileRetrieval.getProfile(5L))
 			.willReturn(new MemberProfileRetrieval.Response("img", "intro"));
 
-		MvcResult mvcResult = mockMvc.perform(get("/api/v1/members/profile"))
+		MvcResult mvcResult = mockMvc.perform(get("/api/v1/members/profile")
+				.header("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1In0.test")
+			)
 			.andExpect(request().asyncStarted())
 			.andReturn();
 
@@ -116,15 +128,15 @@ class MemberProfileControllerTest {
 	@Test
 	@DisplayName("내 프로필 조회 - 미인증 시 401 반환")
 	void test04() throws Exception {
-		// 인증 실패 시 Controller 진입 전 예외 발생으로 비동기 처리 시작 안됨
+
 		mockMvc.perform(get("/api/v1/members/profile"))
 			.andExpect(status().isUnauthorized());
 	}
 
 	@Test
-	@DisplayName("프로필 수정 - 잘못된 principal(문자) 401")
+	@DisplayName("프로필 수정 - Authorization 헤더 없을 때 401")
 	void test05() throws Exception {
-		// NumberFormatException 발생시 Controller에서 401 ResponseStatusException 발생
+
 		mockMvc.perform(
 				post("/api/v1/members/profile")
 					.contentType(MediaType.APPLICATION_JSON)
@@ -136,11 +148,17 @@ class MemberProfileControllerTest {
 	@Test
 	@DisplayName("프로필 수정 - 인증 성공 200")
 	void test06() throws Exception {
+		// JWT 토큰 검증 모킹 - 이 테스트에서만 성공하도록 설정
+		String token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1In0.validToken";
+		given(jwtTokenProvider.validateToken(token)).willReturn(true);
+		given(jwtTokenProvider.getMemberIdFromToken(token)).willReturn("5");
+		
 		setAuthenticatedUser(5L);
 		given(memberProfileUpdate.updateProfile(eq(5L), any(MemberProfileUpdate.Request.class)))
 			.willReturn(new MemberProfileUpdate.Response(5L));
 
 		MvcResult mvcResult = mockMvc.perform(post("/api/v1/members/profile")
+				.header("Authorization", "Bearer " + token)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("{\"profileImageUrl\":\"img\",\"selfIntroduction\":\"intro\"}"))
 			.andExpect(request().asyncStarted())

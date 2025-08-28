@@ -324,7 +324,7 @@ public class MemberRegisterServiceTest {
 				}
 
 				@Override
-				public boolean match(String rawString, String encoded) {
+				public boolean matches(String rawString, String encoded) {
 					return rawString.equals(ENCODED_PASSWORD);
 				}
 			});
