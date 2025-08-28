@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
 import me.chan99k.learningmanager.domain.member.Email;
 import me.chan99k.learningmanager.domain.member.Member;
+import me.chan99k.learningmanager.domain.member.Nickname;
 
 @Repository
 public class MemberQueryAdapter implements MemberQueryRepository {
@@ -24,5 +25,10 @@ public class MemberQueryAdapter implements MemberQueryRepository {
 	@Override
 	public Optional<Member> findByEmail(Email email) {
 		return jpaMemberRepository.findByAccountsEmail(email);
+	}
+
+	@Override
+	public Optional<Member> findByNickName(Nickname nickname) {
+		return jpaMemberRepository.findByNickname(nickname);
 	}
 }

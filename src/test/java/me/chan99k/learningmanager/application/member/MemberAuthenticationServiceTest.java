@@ -19,7 +19,6 @@ import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.CredentialProvider;
 import me.chan99k.learningmanager.domain.member.Email;
 import me.chan99k.learningmanager.domain.member.Member;
-import me.chan99k.learningmanager.domain.member.Password;
 import me.chan99k.learningmanager.domain.member.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,10 +41,9 @@ class MemberAuthenticationServiceTest {
 	void loginSuccess() {
 		MemberLogin.Request request = new MemberLogin.Request(testEmail, testPassword);
 		var inputEmail = Email.of(testEmail);
-		var inputPassword = Password.generatePassword(testPassword, passwordEncoder);
 
 		when(memberQueryRepository.findByEmail(any(Email.class))).thenReturn(Optional.of(member));
-		when(member.validateLogin(eq(inputEmail), eq(inputPassword))).thenReturn(true);
+		when(member.validateLogin(eq(inputEmail), eq(testPassword), eq(passwordEncoder))).thenReturn(true);
 		String testToken = "jwt_token_123";
 		when(credentialProvider.issueCredential(member)).thenReturn(testToken);
 
@@ -53,7 +51,7 @@ class MemberAuthenticationServiceTest {
 
 		assertThat(response.accessToken()).isEqualTo(testToken);
 		verify(memberQueryRepository).findByEmail(any(Email.class));
-		verify(member).validateLogin(inputEmail, inputPassword);
+		verify(member).validateLogin(inputEmail, testPassword, passwordEncoder);
 		verify(credentialProvider).issueCredential(member);
 	}
 
@@ -76,17 +74,16 @@ class MemberAuthenticationServiceTest {
 	void loginFailWithInvalidCredentials() {
 		MemberLogin.Request request = new MemberLogin.Request(testEmail, testPassword);
 		var inputEmail = Email.of(testEmail);
-		var inputPassword = Password.generatePassword(testPassword, passwordEncoder);
 
 		when(memberQueryRepository.findByEmail(any(Email.class))).thenReturn(Optional.of(member));
-		when(member.validateLogin(eq(inputEmail), eq(inputPassword))).thenReturn(false);
+		when(member.validateLogin(eq(inputEmail), eq(testPassword), eq(passwordEncoder))).thenReturn(false);
 
 		assertThrows(DomainException.class, () -> {
 			memberAuthenticationService.login(request);
 		});
 
 		verify(memberQueryRepository).findByEmail(any(Email.class));
-		verify(member).validateLogin(inputEmail, inputPassword);
+		verify(member).validateLogin(inputEmail, testPassword, passwordEncoder);
 		verifyNoInteractions(credentialProvider); // 그 이전에 실패하여 자격 증명 제공자 호출이 없음을 검증
 	}
 

@@ -36,7 +36,7 @@ class MemberTest {
 			}
 
 			@Override
-			public boolean match(String rawString, String encoded) {
+			public boolean matches(String rawString, String encoded) {
 				return encoded.equals(encode(rawString));
 			}
 		};
@@ -248,7 +248,7 @@ class MemberTest {
 			Account updatedAccount = member.findAccountById(accountId);
 
 			assertThat(updatedAccount.getPassword().encoded()).isNotEqualTo(oldEncodedPassword);
-			assertThat(passwordEncoder.match(newRawPassword, updatedAccount.getPassword().encoded())).isTrue();
+			assertThat(passwordEncoder.matches(newRawPassword, updatedAccount.getPassword().encoded())).isTrue();
 		}
 
 		@Test

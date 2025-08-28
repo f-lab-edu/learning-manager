@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import jakarta.persistence.QueryHint;
 import me.chan99k.learningmanager.domain.member.Email;
 import me.chan99k.learningmanager.domain.member.Member;
+import me.chan99k.learningmanager.domain.member.Nickname;
 
 @Repository
 public interface JpaMemberRepository extends JpaRepository<Member, Long> {
@@ -23,5 +24,7 @@ public interface JpaMemberRepository extends JpaRepository<Member, Long> {
 		@QueryHint(name = "org.hibernate.fetchSize", value = "10")
 	})
 	Optional<Member> findByAccountsEmail(@Param("email") Email email);
+
+	Optional<Member> findByNickname(Nickname nickname);
 }
 
