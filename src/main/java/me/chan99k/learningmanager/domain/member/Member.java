@@ -57,6 +57,11 @@ public class Member extends AbstractEntity {
 
 	public void changeAccountPassword(Long accountId, String newRawPassword, PasswordEncoder encoder) {
 		Account account = findAccountById(accountId);
+
+		if (account.getPassword().matches(newRawPassword, encoder)) {
+			throw new DomainException(NEW_PASSWORD_SAME_AS_CURRENT);
+		}
+
 		account.changePassword(newRawPassword, encoder);
 	}
 
@@ -91,13 +96,20 @@ public class Member extends AbstractEntity {
 		return account.getPassword().matches(plainPassword, encoder);
 	}
 
-	Account findAccountById(Long accountId) {
+	public Account findAccountByEmail(Email email) {
+		return accounts.stream()
+			.filter(account -> account.getEmail().equals(email))
+			.findFirst()
+			.orElseThrow(() -> new DomainException(ACCOUNT_NOT_FOUND));
+	}
+
+	public Account findAccountById(Long accountId) {
 		notNull(accountId, ACCOUNT_ID_REQUIRED.getMessage());
 		return accounts.stream()
 			.filter(account -> accountId.equals(account.getId()))
 			.findFirst()
-			.orElseThrow(() -> new IllegalArgumentException(
-				CANNOT_FOUND_ACCOUNT.getMessage())); // FIXME :: DomainException 으로 갈아끼우기?
+			.orElseThrow(() ->
+				new IllegalArgumentException(CANNOT_FOUND_ACCOUNT.getMessage()));
 	}
 
 	public void changeNickname(Nickname nickname) {
