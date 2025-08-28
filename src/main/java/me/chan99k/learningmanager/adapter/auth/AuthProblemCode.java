@@ -10,7 +10,8 @@ public enum AuthProblemCode implements ProblemCode {
 	AUTHENTICATION_REQUIRED("DAL004", "[System] 인증이 필요한 요청입니다"),
 	MISSING_AUTHORIZATION_HEADER("DAL005", "[System] Authorization 헤더가 없습니다"),
 	INVALID_AUTHORIZATION_HEADER("DAL006", "[System] Authorization 헤더 형식이 올바르지 않습니다"),
-	EMPTY_BEARER_TOKEN("DAL007", "[System] Bearer 토큰이 비어있습니다");
+	EMPTY_BEARER_TOKEN("DAL007", "[System] Bearer 토큰이 비어있습니다"),
+	AUTHENTICATION_CONTEXT_NOT_FOUND("AUTH007", "[System] 인증 컨텍스트를 찾을 수 없습니다.");
 
 	private final String code;
 	private final String message;

@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
-import me.chan99k.learningmanager.adapter.web.auth.RequireAuthentication;
 import me.chan99k.learningmanager.application.member.provides.MemberProfileRetrieval;
 import me.chan99k.learningmanager.application.member.provides.MemberProfileUpdate;
 import me.chan99k.learningmanager.common.exception.UnauthenticatedException;
@@ -36,7 +35,6 @@ public class MemberProfileController {
 	}
 
 	@PostMapping("/profile")
-	@RequireAuthentication
 	public CompletableFuture<ResponseEntity<MemberProfileUpdate.Response>> updateProfile(
 		@RequestBody MemberProfileUpdate.Request request
 	) {
@@ -49,7 +47,6 @@ public class MemberProfileController {
 	}
 
 	@GetMapping("/profile")
-	@RequireAuthentication
 	public CompletableFuture<ResponseEntity<MemberProfileRetrieval.Response>> getMemberProfile() {
 		final Long memberId = extractMemberIdFromAuthentication();
 

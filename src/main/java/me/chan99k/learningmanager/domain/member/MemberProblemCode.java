@@ -29,6 +29,7 @@ public enum MemberProblemCode implements ProblemCode {
 	PASSWORD_NO_DIGIT("DML015", "[System] 비밀번호에는 숫자가 최소 1개 이상 포함되어야 합니다."),
 	PASSWORD_NO_SPECIAL_CHAR("DML016", "[System] 비밀번호에는 특수문자가 최소 1개 이상 포함되어야 합니다."),
 	PASSWORD_CONTAINS_WHITESPACE("DML017", "[System] 비밀번호에 공백을 포함할 수 없습니다."),
+	NEW_PASSWORD_SAME_AS_CURRENT("DML029", "[System] 새 비밀번호는 현재 비밀번호와 달라야 합니다."),
 	CANNOT_FOUND_ACCOUNT("DML018", "[System] 유효한 계정 정보를 찾을 수 없습니다."),
 
 	MEMBER_NICKNAME_REQUIRED("DML019", "[System] 닉네임은 비어 있을 수 없습니다."),
