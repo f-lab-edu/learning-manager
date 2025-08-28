@@ -13,9 +13,11 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
+
 import jakarta.servlet.http.HttpServletResponse;
 import me.chan99k.learningmanager.common.exception.AuthenticateException;
 import me.chan99k.learningmanager.common.exception.ProblemCode;
+
 
 @Component
 public class JwtAuthenticationFilter implements Filter {
@@ -34,6 +36,7 @@ public class JwtAuthenticationFilter implements Filter {
 
 		HttpServletRequest httpRequest = (HttpServletRequest)request;
 		HttpServletResponse httpResponse = (HttpServletResponse)response;
+
 
 		try {
 			String token = resolveToken(httpRequest);

@@ -1,6 +1,7 @@
 package me.chan99k.learningmanager.adapter.auth;
 
 import static org.assertj.core.api.Assertions.*;
+
 import static org.mockito.BDDMockito.*;
 
 import java.io.IOException;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
@@ -88,6 +90,7 @@ class JwtAuthenticationFilterTest {
 	void doFilter_WithNonBearerAuthorizationHeader_ThrowsAuthenticationException()
 		throws IOException, ServletException {
 		request.addHeader("Authorization", "Basic dXNlcjpwYXNzd29yZA==");
+
 		request.setRequestURI("/api/v1/members/profile");
 
 		filter.doFilter(request, response, filterChain);
@@ -138,7 +141,6 @@ class JwtAuthenticationFilterTest {
 			AuthProblemCode.FAILED_TO_VALIDATE_TOKEN
 		);
 		when(jwtTokenProvider.validateToken(problematicToken)).thenThrow(originalException);
-
 		filter.doFilter(request, response, filterChain);
 
 		assertThat(response.getStatus()).isEqualTo(401);
@@ -147,6 +149,7 @@ class JwtAuthenticationFilterTest {
 		String responseContent = response.getContentAsString();
 		assertThat(responseContent).contains("\"code\":\"DAL002\"");
 		assertThat(responseContent).contains("토큰 유효성 검증에 실패하였습니다");
+
 
 		verify(filterChain, never()).doFilter(request, response);
 		assertThat(AuthenticationContextHolder.getCurrentMemberId()).isEmpty();
@@ -188,7 +191,7 @@ class JwtAuthenticationFilterTest {
 
 		when(jwtTokenProvider.validateToken(validToken)).thenReturn(true);
 		when(jwtTokenProvider.getMemberIdFromToken(validToken)).thenReturn("not-a-number");
-
+    
 		filter.doFilter(request, response, filterChain);
 
 		assertThat(response.getStatus()).isEqualTo(401);
