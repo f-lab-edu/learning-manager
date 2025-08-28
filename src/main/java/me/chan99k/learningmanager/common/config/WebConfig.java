@@ -22,6 +22,7 @@ public class WebConfig implements WebMvcConfigurer {
 		registration.setFilter(jwtAuthenticationFilter);
 
 		registration.addUrlPatterns("/api/v1/members/profile");
+		registration.addUrlPatterns("/api/v1/members/password");
 		registration.addUrlPatterns("/api/v1/admin/*");
 		registration.setOrder(1);
 

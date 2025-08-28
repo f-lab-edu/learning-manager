@@ -38,11 +38,15 @@ class MemberPasswordControllerTest {
 	void test01() throws Exception {
 		var request = new AccountPasswordChange.Request("test@example.com", "NewSecurePass456@");
 
+		given(jwtTokenProvider.validateToken(anyString())).willReturn(true);
+		given(jwtTokenProvider.getMemberIdFromToken(anyString())).willReturn(String.valueOf(1L));
+
 		given(passwordChangeService.changePassword(any(AccountPasswordChange.Request.class)))
 			.willReturn(new AccountPasswordChange.Response());
 
 		mockMvc.perform(put("/api/v1/members/password")
 				.contentType(MediaType.APPLICATION_JSON)
+				.header("Authorization", "Bearer mock-token")
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk());
 	}

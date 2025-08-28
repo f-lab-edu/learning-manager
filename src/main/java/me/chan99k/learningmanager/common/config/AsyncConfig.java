@@ -113,7 +113,8 @@ public class AsyncConfig {
 			executor.getQueueCapacity(),
 			executor.getKeepAliveSeconds(),
 			executor.getThreadPriority(),
-			executor.isDaemon());
+			executor.isDaemon()
+		);
 
 		return executor;
 	}
