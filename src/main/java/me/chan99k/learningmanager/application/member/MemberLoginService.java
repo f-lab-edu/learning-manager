@@ -11,7 +11,6 @@ import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.CredentialProvider;
 import me.chan99k.learningmanager.domain.member.Email;
 import me.chan99k.learningmanager.domain.member.Member;
-import me.chan99k.learningmanager.domain.member.Password;
 import me.chan99k.learningmanager.domain.member.PasswordEncoder;
 
 @Service
@@ -33,12 +32,11 @@ public class MemberLoginService implements MemberLogin {
 		MemberLogin.Request request
 	) {
 		var email = Email.of(request.email());
-		var password = Password.generatePassword(request.password(), passwordEncoder);
 
 		Member member = memberQueryRepository.findByEmail(email)
 			.orElseThrow(() -> new DomainException(ACCOUNT_NOT_FOUND));
 
-		if (!member.validateLogin(email, password)) {
+		if (!member.validateLogin(email, request.password(), passwordEncoder)) {
 			throw new DomainException(INVALID_CREDENTIAL);
 		}
 

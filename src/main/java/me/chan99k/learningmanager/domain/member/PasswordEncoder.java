@@ -6,5 +6,5 @@ package me.chan99k.learningmanager.domain.member;
 public interface PasswordEncoder {
 	String encode(String rawString);
 
-	boolean match(String rawString, String encoded);
+	boolean matches(String rawString, String encoded);
 }

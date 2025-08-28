@@ -70,7 +70,7 @@ public class Member extends AbstractEntity {
 		account.deactivate();
 	}
 
-	public boolean validateLogin(Email email, Password input) {
+	public boolean validateLogin(Email email, String plainPassword, PasswordEncoder encoder) {
 		// 해당 이메일로 활성화 계정이 있는지
 		Account account = accounts.stream()
 			.filter(acc -> acc.getEmail().equals(email))
@@ -88,7 +88,7 @@ public class Member extends AbstractEntity {
 		}
 
 		// 3. 패스워드 검증
-		return account.getPassword().equals(input);
+		return account.getPassword().matches(plainPassword, encoder);
 	}
 
 	Account findAccountById(Long accountId) {

@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 import jakarta.persistence.Embeddable;
 
 @Embeddable
-public record Password(String encoded) {
+public record Password(String encoded) { // TODO :: 다중 인코더 알고리즘 시나리오에서는 알고리즘 이름을 가지고 있으면 좋을 수 있을 것 같다
 
 	private static final int MIN_LENGTH = 8;
 	private static final int MAX_LENGTH = 64;
@@ -24,8 +24,8 @@ public record Password(String encoded) {
 		return new Password(encoder.encode(password));
 	}
 
-	public boolean verify(String password, PasswordEncoder encoder) {
-		return encoder.match(password, this.encoded);
+	public boolean matches(String plainPassword, PasswordEncoder encoder) {
+		return encoder.matches(plainPassword, this.encoded);
 	}
 
 	private static void validatePattern(String password) {
