@@ -227,6 +227,7 @@ class MemberTest {
 		private Long accountId;
 
 		@BeforeEach
+		@SuppressWarnings("unchecked")
 		void setUp() {
 			member.addAccount("chan99k@example.com", "deprecatingPassword123!", passwordEncoder);
 

@@ -97,16 +97,15 @@ public class JwtAuthenticationFilter implements Filter {
 		response.setContentType("application/problem+json");
 		response.setCharacterEncoding("UTF-8");
 
-		StringBuilder json = new StringBuilder();
-		json.append("{");
-		json.append("\"type\":\"https://api.lm.com/errors/").append(problemCode.getCode()).append("\",");
-		json.append("\"title\":\"Authentication Error\",");
-		json.append("\"status\":401,");
-		json.append("\"detail\":\"").append(escapeJsonString(problemCode.getMessage())).append("\",");
-		json.append("\"code\":\"").append(problemCode.getCode()).append("\"");
-		json.append("}");
+		String json = "{"
+			+ "\"type\":\"https://api.lm.com/errors/" + problemCode.getCode() + "\","
+			+ "\"title\":\"Authentication Error\","
+			+ "\"status\":401,"
+			+ "\"detail\":\"" + escapeJsonString(problemCode.getMessage()) + "\","
+			+ "\"code\":\"" + problemCode.getCode() + "\""
+			+ "}";
 
-		response.getWriter().write(json.toString());
+		response.getWriter().write(json);
 	}
 
 	private String escapeJsonString(String str) {
