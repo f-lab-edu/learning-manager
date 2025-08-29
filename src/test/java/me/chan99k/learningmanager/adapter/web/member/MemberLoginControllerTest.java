@@ -18,11 +18,19 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import me.chan99k.learningmanager.adapter.auth.JwtTokenProvider;
+import me.chan99k.learningmanager.adapter.auth.BcryptPasswordEncoder;
+import me.chan99k.learningmanager.adapter.auth.JwtCredentialProvider;
+import me.chan99k.learningmanager.adapter.auth.jwt.AccessJwtTokenProvider;
+import me.chan99k.learningmanager.adapter.auth.jwt.InMemoryJwtTokenRevocationProvider;
 import me.chan99k.learningmanager.application.member.provides.MemberLogin;
 
 @WebMvcTest(MemberLoginController.class)
-@Import({JwtTokenProvider.class})
+@Import({
+	JwtCredentialProvider.class,
+	AccessJwtTokenProvider.class,
+	InMemoryJwtTokenRevocationProvider.class,
+	BcryptPasswordEncoder.class
+})
 class MemberLoginControllerTest {
 
 	@Autowired

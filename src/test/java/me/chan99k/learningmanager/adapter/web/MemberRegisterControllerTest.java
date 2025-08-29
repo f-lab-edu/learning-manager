@@ -23,14 +23,22 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.adapter.auth.JwtTokenProvider;
+import me.chan99k.learningmanager.adapter.auth.BcryptPasswordEncoder;
+import me.chan99k.learningmanager.adapter.auth.JwtCredentialProvider;
+import me.chan99k.learningmanager.adapter.auth.jwt.AccessJwtTokenProvider;
+import me.chan99k.learningmanager.adapter.auth.jwt.InMemoryJwtTokenRevocationProvider;
 import me.chan99k.learningmanager.adapter.web.member.MemberRegisterController;
 import me.chan99k.learningmanager.application.member.MemberRegisterService;
 import me.chan99k.learningmanager.application.member.provides.MemberRegistration;
 import me.chan99k.learningmanager.application.member.provides.SignUpConfirmation;
 
 @WebMvcTest(value = MemberRegisterController.class)
-@Import({JwtTokenProvider.class})
+@Import({
+	JwtCredentialProvider.class,
+	AccessJwtTokenProvider.class,
+	InMemoryJwtTokenRevocationProvider.class,
+	BcryptPasswordEncoder.class
+})
 public class MemberRegisterControllerTest {
 
 	private static final String TEST_EMAIL = "test@example.com";

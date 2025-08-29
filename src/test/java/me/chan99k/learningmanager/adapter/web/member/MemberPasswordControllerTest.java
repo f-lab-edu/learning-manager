@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.adapter.auth.JwtTokenProvider;
+import me.chan99k.learningmanager.adapter.auth.AccessTokenProvider;
 import me.chan99k.learningmanager.application.member.provides.AccountPasswordChange;
 import me.chan99k.learningmanager.application.member.provides.AccountPasswordReset;
 import me.chan99k.learningmanager.common.exception.DomainException;
@@ -38,7 +38,7 @@ class MemberPasswordControllerTest {
 	private ObjectMapper objectMapper;
 
 	@MockBean
-	private JwtTokenProvider jwtTokenProvider;
+	private AccessTokenProvider<Long> accessTokenProvider;
 
 	@MockBean
 	private AccountPasswordChange passwordChangeService;
@@ -69,8 +69,8 @@ class MemberPasswordControllerTest {
 		void test01() throws Exception {
 			var request = new AccountPasswordChange.Request("test@example.com", "NewSecurePass456@");
 
-			given(jwtTokenProvider.validateToken(anyString())).willReturn(true);
-			given(jwtTokenProvider.getMemberIdFromToken(anyString())).willReturn(String.valueOf(1L));
+			given(accessTokenProvider.validateAccessToken(anyString())).willReturn(true);
+			given(accessTokenProvider.getIdFromAccessToken(anyString())).willReturn(1L);
 
 			given(passwordChangeService.changePassword(any(AccountPasswordChange.Request.class)))
 				.willReturn(new AccountPasswordChange.Response());
@@ -143,7 +143,7 @@ class MemberPasswordControllerTest {
 			// 비동기 완료 후 리다이렉트 검증
 			mockMvc.perform(asyncDispatch(result))
 				.andExpect(status().isFound())
-				.andExpect(header().string("Location", "/reset-password-form"));
+				.andExpect(header().string("Location", "/reset-password-form?token=" + token));
 		}
 
 		@Test
@@ -166,16 +166,15 @@ class MemberPasswordControllerTest {
 		}
 
 		@Test
-		@DisplayName("[Success] 비밀번호 재설정 확인 성공 - 세션 기반")
+		@DisplayName("[Success] 비밀번호 재설정 확인 성공")
 		void confirmReset_Success() throws Exception {
 			AccountPasswordReset.ConfirmResetRequest request =
-				new AccountPasswordReset.ConfirmResetRequest("NewSecurePass123!");
+				new AccountPasswordReset.ConfirmResetRequest("valid-token-123", "NewSecurePass123!");
 
-			given(passwordResetService.confirmReset(anyString(), anyString()))
+			given(passwordResetService.confirmReset(any(AccountPasswordReset.ConfirmResetRequest.class)))
 				.willReturn(new AccountPasswordReset.ConfirmResetResponse());
 
 			MvcResult result = mockMvc.perform(post("/api/v1/members/confirm-reset-password")
-					.sessionAttr("verified_reset_token", "valid-token-123")
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(request)))
 				.andExpect(request().asyncStarted())
@@ -187,38 +186,28 @@ class MemberPasswordControllerTest {
 		}
 
 		@Test
-		@DisplayName("[Failure] 비밀번호 재설정 확인 실패 - 세션에 토큰 없음")
-		void confirmReset_Failure_NoSessionToken() throws Exception {
+		@DisplayName("[Failure] 비밀번호 재설정 확인 실패 - 요청에 토큰 없음")
+		void confirmReset_Failure_NoToken() throws Exception {
+			// token is null
 			AccountPasswordReset.ConfirmResetRequest request =
-				new AccountPasswordReset.ConfirmResetRequest("NewSecurePass123!");
+				new AccountPasswordReset.ConfirmResetRequest(null, "NewSecurePass123!");
 
-			// 세션에 토큰이 없는 상태로 테스트 (validation은 통과하도록 올바른 요청)
-			MvcResult result = mockMvc.perform(post("/api/v1/members/confirm-reset-password")
+			mockMvc.perform(post("/api/v1/members/confirm-reset-password")
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(request)))
-				.andDo(print()) // 응답 내용을 출력하여 디버그
-				.andExpect(request().asyncStarted())
-				.andReturn();
-
-			// 비동기 완료 후 세션 토큰 없음으로 인한 예외 검증
-			mockMvc.perform(asyncDispatch(result))
-				.andDo(print()) // 비동기 응답도 출력
-				.andExpect(status().isBadRequest()) // 400 상태 코드 (DomainException → 400 by GlobalExceptionHandler)
-				.andExpect(jsonPath("$.code").value("DML031")) // 에러 코드 검증
-				.andExpect(jsonPath("$.detail").value("[System] 유효하지 않은 비밀번호 재설정 토큰입니다."));
+				.andExpect(status().isBadRequest());
 		}
 
 		@Test
 		@DisplayName("[Failure] 비밀번호 재설정 확인 실패 - 서비스 에러")
 		void confirmReset_Failure_ServiceError() throws Exception {
 			AccountPasswordReset.ConfirmResetRequest request =
-				new AccountPasswordReset.ConfirmResetRequest("NewSecurePass123!");
+				new AccountPasswordReset.ConfirmResetRequest("valid-token-123", "NewSecurePass123!");
 
-			given(passwordResetService.confirmReset(anyString(), anyString()))
+			given(passwordResetService.confirmReset(any(AccountPasswordReset.ConfirmResetRequest.class)))
 				.willThrow(new DomainException(MemberProblemCode.NEW_PASSWORD_SAME_AS_CURRENT));
 
 			mockMvc.perform(post("/api/v1/members/confirm-reset-password")
-					.sessionAttr("verified_reset_token", "valid-token-123")
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(request)))
 				.andExpect(request().asyncStarted())
@@ -240,7 +229,6 @@ class MemberPasswordControllerTest {
 		@DisplayName("[Failure] 빈 요청 본문에 400 응답")
 		void confirmReset_EmptyBody() throws Exception {
 			mockMvc.perform(post("/api/v1/members/confirm-reset-password")
-					.sessionAttr("verified_reset_token", "valid-token-123")
 					.contentType(MediaType.APPLICATION_JSON)
 					.content("{}"))
 				.andExpect(status().isBadRequest());

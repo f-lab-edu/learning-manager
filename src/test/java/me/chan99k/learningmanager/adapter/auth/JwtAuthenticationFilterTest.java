@@ -1,7 +1,6 @@
 package me.chan99k.learningmanager.adapter.auth;
 
 import static org.assertj.core.api.Assertions.*;
-
 import static org.mockito.BDDMockito.*;
 
 import java.io.IOException;
@@ -13,7 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
-
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
@@ -25,7 +23,7 @@ import me.chan99k.learningmanager.common.exception.AuthenticateException;
 class JwtAuthenticationFilterTest {
 
 	@Mock
-	private JwtTokenProvider jwtTokenProvider;
+	private AccessTokenProvider<Long> accessTokenProvider;
 
 	@Mock
 	private FilterChain filterChain;
@@ -37,7 +35,7 @@ class JwtAuthenticationFilterTest {
 
 	@BeforeEach
 	void setUp() {
-		filter = new JwtAuthenticationFilter(jwtTokenProvider);
+		filter = new JwtAuthenticationFilter(accessTokenProvider);
 		request = new MockHttpServletRequest();
 		response = new MockHttpServletResponse();
 	}
@@ -46,17 +44,17 @@ class JwtAuthenticationFilterTest {
 	@DisplayName("[Success] 유효한 JWT 토큰이 있으면 인증 컨텍스트에 회원 ID를 설정하고 다음 필터로 진행한다")
 	void doFilter_WithValidToken_SetsAuthenticationContext() throws IOException, ServletException {
 		String validToken = "valid.jwt.token";
-		String memberId = "12345";
+		Long memberId = 12345L;
 		request.addHeader("Authorization", "Bearer " + validToken);
 		request.setRequestURI("/api/v1/members/profile/123");
 
-		when(jwtTokenProvider.validateToken(validToken)).thenReturn(true);
-		when(jwtTokenProvider.getMemberIdFromToken(validToken)).thenReturn(memberId);
+		when(accessTokenProvider.validateAccessToken(validToken)).thenReturn(true);
+		when(accessTokenProvider.getIdFromAccessToken(validToken)).thenReturn(memberId);
 
 		filter.doFilter(request, response, filterChain);
 
-		verify(jwtTokenProvider).validateToken(validToken);
-		verify(jwtTokenProvider).getMemberIdFromToken(validToken);
+		verify(accessTokenProvider).validateAccessToken(validToken);
+		verify(accessTokenProvider).getIdFromAccessToken(validToken);
 		verify(filterChain).doFilter(request, response);
 
 		assertThat(AuthenticationContextHolder.getCurrentMemberId()).isEmpty();
@@ -114,7 +112,7 @@ class JwtAuthenticationFilterTest {
 		request.addHeader("Authorization", "Bearer " + invalidToken);
 		request.setRequestURI("/api/v1/members/profile");
 
-		given(jwtTokenProvider.validateToken(invalidToken))
+		given(accessTokenProvider.validateAccessToken(invalidToken))
 			.willThrow(new AuthenticateException(AuthProblemCode.FAILED_TO_VALIDATE_TOKEN));
 
 		// when
@@ -140,7 +138,7 @@ class JwtAuthenticationFilterTest {
 		AuthenticateException originalException = new AuthenticateException(
 			AuthProblemCode.FAILED_TO_VALIDATE_TOKEN
 		);
-		when(jwtTokenProvider.validateToken(problematicToken)).thenThrow(originalException);
+		when(accessTokenProvider.validateAccessToken(problematicToken)).thenThrow(originalException);
 		filter.doFilter(request, response, filterChain);
 
 		assertThat(response.getStatus()).isEqualTo(401);
@@ -162,12 +160,12 @@ class JwtAuthenticationFilterTest {
 		request.addHeader("Authorization", "Bearer " + validToken);
 		request.setRequestURI("/api/v1/member/profile");
 
-		when(jwtTokenProvider.validateToken(validToken)).thenReturn(true);
+		when(accessTokenProvider.validateAccessToken(validToken)).thenReturn(true);
 
 		AuthenticateException originalException = new AuthenticateException(
 			AuthProblemCode.INVALID_TOKEN_SUBJECT
 		);
-		when(jwtTokenProvider.getMemberIdFromToken(validToken)).thenThrow(originalException);
+		when(accessTokenProvider.getIdFromAccessToken(validToken)).thenThrow(originalException);
 
 		filter.doFilter(request, response, filterChain);
 
@@ -178,29 +176,6 @@ class JwtAuthenticationFilterTest {
 		assertThat(responseContent).contains("\"code\":\"DAL003\"");
 		assertThat(responseContent).contains("토큰의 subject 가 유효하지 않습니다");
 
-		verify(filterChain, never()).doFilter(request, response);
-		assertThat(AuthenticationContextHolder.getCurrentMemberId()).isEmpty();
-	}
-
-	@Test
-	@DisplayName("[Failure] 회원 ID를 Long으로 변환할 수 없으면 401 응답을 반환한다")
-	void doFilter_WhenMemberIdIsNotNumeric_Returns401Response() throws IOException, ServletException {
-		String validToken = "valid.jwt.token";
-		request.addHeader("Authorization", "Bearer " + validToken);
-		request.setRequestURI("/api/v1/members/profile");
-
-		when(jwtTokenProvider.validateToken(validToken)).thenReturn(true);
-		when(jwtTokenProvider.getMemberIdFromToken(validToken)).thenReturn("not-a-number");
-    
-		filter.doFilter(request, response, filterChain);
-
-		assertThat(response.getStatus()).isEqualTo(401);
-		assertThat(response.getContentType()).isEqualTo("application/problem+json;charset=UTF-8");
-
-		String responseContent = response.getContentAsString();
-		assertThat(responseContent).contains("\"code\":\"DAL003\"");
-		assertThat(responseContent).contains("토큰의 subject 가 유효하지 않습니다");
-		
 		verify(filterChain, never()).doFilter(request, response);
 		assertThat(AuthenticationContextHolder.getCurrentMemberId()).isEmpty();
 	}
@@ -212,13 +187,13 @@ class JwtAuthenticationFilterTest {
 		request.addHeader("Authorization", "Bearer " + validTokenWithSpaces);
 		request.setRequestURI("/api/v1/member/profile");
 
-		when(jwtTokenProvider.validateToken(validTokenWithSpaces)).thenReturn(true);
-		when(jwtTokenProvider.getMemberIdFromToken(validTokenWithSpaces)).thenReturn("12345");
+		when(accessTokenProvider.validateAccessToken(validTokenWithSpaces)).thenReturn(true);
+		when(accessTokenProvider.getIdFromAccessToken(validTokenWithSpaces)).thenReturn(12345L);
 
 		filter.doFilter(request, response, filterChain);
 
-		verify(jwtTokenProvider).validateToken(validTokenWithSpaces);
-		verify(jwtTokenProvider).getMemberIdFromToken(validTokenWithSpaces);
+		verify(accessTokenProvider).validateAccessToken(validTokenWithSpaces);
+		verify(accessTokenProvider).getIdFromAccessToken(validTokenWithSpaces);
 		verify(filterChain).doFilter(request, response);
 	}
 
