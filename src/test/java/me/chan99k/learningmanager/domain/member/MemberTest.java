@@ -23,7 +23,7 @@ class MemberTest {
 		ReflectionTestUtils.setField(testMember, "nickname", new Nickname("testuser"));
 		ReflectionTestUtils.setField(testMember, "role", SystemRole.MEMBER);
 		ReflectionTestUtils.setField(testMember, "status", MemberStatus.ACTIVE);
-		ReflectionTestUtils.setField(testMember, "accounts", new ArrayList<>());
+		ReflectionTestUtils.setField(testMember, "accounts", new ArrayList<Account>());
 		return testMember;
 	}
 
