@@ -29,10 +29,7 @@ dependencies {
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-mysql'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    // implementation 'org.springframework.boot:spring-boot-starter-security'
-    // testImplementation 'org.springframework.security:spring-security-test'
 
-    // BCrypt for password hashing (Spring Security 독립적)
     implementation 'org.mindrot:jbcrypt:0.4'
 
     // JWT
