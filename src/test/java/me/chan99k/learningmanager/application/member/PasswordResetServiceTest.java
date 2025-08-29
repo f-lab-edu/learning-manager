@@ -1,11 +1,12 @@
 package me.chan99k.learningmanager.application.member;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,10 +14,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.core.task.AsyncTaskExecutor;
 
-import me.chan99k.learningmanager.adapter.auth.PasswordResetTokenManager;
-import me.chan99k.learningmanager.application.member.provides.AccountPasswordReset;
+import me.chan99k.learningmanager.adapter.auth.PasswordResetTokenProvider;
+import me.chan99k.learningmanager.application.member.provides.AccountPasswordReset.ConfirmResetRequest;
+import me.chan99k.learningmanager.application.member.provides.AccountPasswordReset.RequestResetRequest;
+import me.chan99k.learningmanager.application.member.provides.AccountPasswordReset.RequestResetResponse;
 import me.chan99k.learningmanager.application.member.requires.MemberCommandRepository;
 import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
 import me.chan99k.learningmanager.common.exception.DomainException;
@@ -30,157 +32,138 @@ import me.chan99k.learningmanager.domain.member.PasswordEncoder;
 @ExtendWith(MockitoExtension.class)
 class PasswordResetServiceTest {
 
-	private final String email = "test@example.com";
-	private final String token = "reset-token-123";
-	private final String newPassword = "NewSecurePass123!";
-	@Mock
-	private MemberQueryRepository memberQueryRepository;
-	@Mock
-	private MemberCommandRepository memberCommandRepository;
-	@Mock
-	private PasswordResetTokenManager passwordResetTokenManager;
-	@Mock
-	private EmailSender emailSender;
-	@Mock
-	private PasswordEncoder passwordEncoder;
-	@Mock
-	private AsyncTaskExecutor emailTaskExecutor;
-	@Mock
-	private Member member;
-	@Mock
-	private Account account;
-	@InjectMocks
-	private PasswordResetService passwordResetService;
+    private final String emailString = "test@example.com";
+    private final Email email = new Email(emailString);
+    private final String token = "reset-token-123";
+    private final String newPassword = "NewSecurePass123!";
 
-	@Test
-	@DisplayName("[Success] 재설정 요청 성공 - 가입된 이메일")
-	void requestReset_Success_ExistingEmail() {
-		// given
-		given(memberQueryRepository.findByEmail(any(Email.class))).willReturn(Optional.of(member));
-		given(passwordResetTokenManager.generateAndStoreToken(eq(email), any(Duration.class))).willReturn(token);
+    @InjectMocks
+    private PasswordResetService passwordResetService;
 
-		AccountPasswordReset.RequestResetRequest request = new AccountPasswordReset.RequestResetRequest(email);
+    @Mock
+    private MemberQueryRepository memberQueryRepository;
+    @Mock
+    private MemberCommandRepository memberCommandRepository;
+    @Mock
+    private PasswordResetTokenProvider passwordResetTokenProvider;
+    @Mock
+    private EmailSender emailSender;
+    @Mock
+    private PasswordEncoder passwordEncoder;
+    @Mock
+    private Executor emailTaskExecutor;
+    @Mock
+    private Member member;
+    @Mock
+    private Account account;
 
-		// when
-		AccountPasswordReset.RequestResetResponse response = passwordResetService.requestReset(request);
+    @Test
+    @DisplayName("[Success] 재설정 요청 성공 - 가입된 이메일")
+    void requestReset_Success_ExistingEmail() {
+        // given
+        given(memberQueryRepository.findByEmail(email)).willReturn(Optional.of(member));
+        given(passwordResetTokenProvider.createResetToken(emailString)).willReturn(token);
+        RequestResetRequest request = new RequestResetRequest(emailString);
 
-		// then
-		assertThat(response.message()).contains(email);
-		assertThat(response.message()).contains("비밀번호 재설정 메일을 발송했습니다");
+        // when
+        RequestResetResponse response = passwordResetService.requestReset(request);
 
-		verify(passwordResetTokenManager).generateAndStoreToken(eq(email), any(Duration.class));
-		verify(emailTaskExecutor).execute(any(Runnable.class));
-	}
+        // then
+        assertThat(response.message()).contains(emailString);
+        verify(passwordResetTokenProvider).createResetToken(emailString);
+        verify(emailTaskExecutor).execute(any(Runnable.class));
+    }
 
-	@Test
-	@DisplayName("[Failure] 재설정 요청 실패 - 가입되지 않은 이메일")
-	void requestReset_Failure_NonExistentEmail() {
-		// given
-		given(memberQueryRepository.findByEmail(any(Email.class))).willReturn(Optional.empty());
+    @Test
+    @DisplayName("[Failure] 재설정 요청 실패 - 가입되지 않은 이메일")
+    void requestReset_Failure_NonExistentEmail() {
+        // given
+        given(memberQueryRepository.findByEmail(email)).willReturn(Optional.empty());
+        RequestResetRequest request = new RequestResetRequest(emailString);
 
-		AccountPasswordReset.RequestResetRequest request = new AccountPasswordReset.RequestResetRequest(email);
+        // when & then
+        assertThatThrownBy(() -> passwordResetService.requestReset(request))
+            .isInstanceOf(DomainException.class)
+            .hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.PASSWORD_RESET_EMAIL_NOT_FOUND);
+        verify(passwordResetTokenProvider, never()).createResetToken(anyString());
+    }
 
-		// when & then
-		assertThatThrownBy(() -> passwordResetService.requestReset(request))
-			.isInstanceOf(DomainException.class)
-			.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.PASSWORD_RESET_EMAIL_NOT_FOUND);
+    @Test
+    @DisplayName("[Success] 비밀번호 재설정 확인 성공")
+    void confirmReset_Success() {
+        // given
+        ConfirmResetRequest request = new ConfirmResetRequest(token, newPassword);
+        given(passwordResetTokenProvider.validateResetToken(token)).willReturn(true);
+        given(passwordResetTokenProvider.getEmailFromResetToken(token)).willReturn(email);
+        given(memberQueryRepository.findByEmail(email)).willReturn(Optional.of(member));
+        given(member.getAccounts()).willReturn(List.of(account));
+        given(account.getId()).willReturn(1L);
 
-		verify(passwordResetTokenManager, never()).generateAndStoreToken(anyString(), any(Duration.class));
-		verify(emailTaskExecutor, never()).execute(any(Runnable.class));
-	}
+        // when
+        passwordResetService.confirmReset(request);
 
-	@Test
-	@DisplayName("[Success] 비밀번호 재설정 확인 성공")
-	void confirmReset_Success() {
-		// given
-		given(passwordResetTokenManager.getEmailByToken(token)).willReturn(email);
-		given(memberQueryRepository.findByEmail(any(Email.class))).willReturn(Optional.of(member));
-		given(member.getAccounts()).willReturn(List.of(account));
-		given(account.getId()).willReturn(1L);
+        // then
+        verify(passwordResetTokenProvider).validateResetToken(token);
+        verify(passwordResetTokenProvider).getEmailFromResetToken(token);
+        verify(member).changeAccountPassword(1L, newPassword, passwordEncoder);
+        verify(memberCommandRepository).save(member);
+        verify(passwordResetTokenProvider).invalidateAfterUse(token);
+    }
 
-		// when
-		AccountPasswordReset.ConfirmResetResponse response = passwordResetService.confirmReset(token, newPassword);
+    @Test
+    @DisplayName("[Failure] 비밀번호 재설정 확인 실패 - 유효하지 않은 토큰")
+    void confirmReset_Failure_InvalidToken() {
+        // given
+        ConfirmResetRequest request = new ConfirmResetRequest(token, newPassword);
+        given(passwordResetTokenProvider.validateResetToken(token)).willReturn(false);
 
-		// then
-		assertThat(response).isNotNull();
+        // when & then
+        assertThatThrownBy(() -> passwordResetService.confirmReset(request))
+            .isInstanceOf(DomainException.class)
+            .hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.INVALID_PASSWORD_RESET_TOKEN);
+        verify(passwordResetTokenProvider, never()).getEmailFromResetToken(anyString());
+        verify(memberCommandRepository, never()).save(any(Member.class));
+        verify(passwordResetTokenProvider, never()).invalidateAfterUse(anyString());
+    }
 
-		verify(member).changeAccountPassword(1L, newPassword, passwordEncoder);
-		verify(passwordResetTokenManager).removeToken(token);
-		verify(memberCommandRepository).save(member);
-	}
+    @Test
+    @DisplayName("[Failure] 비밀번호 재설정 확인 실패 - 회원 존재하지 않음")
+    void confirmReset_Failure_MemberNotFound() {
+        // given
+        ConfirmResetRequest request = new ConfirmResetRequest(token, newPassword);
+        given(passwordResetTokenProvider.validateResetToken(token)).willReturn(true);
+        given(passwordResetTokenProvider.getEmailFromResetToken(token)).willReturn(email);
+        given(memberQueryRepository.findByEmail(email)).willReturn(Optional.empty());
 
-	@Test
-	@DisplayName("[Failure] 비밀번호 재설정 확인 실패 - 토큰에서 이메일 추출 불가")
-	void confirmReset_Failure_InvalidToken() {
-		// given
-		given(passwordResetTokenManager.getEmailByToken(token)).willReturn(null);
+        // when & then
+        assertThatThrownBy(() -> passwordResetService.confirmReset(request))
+            .isInstanceOf(DomainException.class)
+            .hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.PASSWORD_RESET_EMAIL_NOT_FOUND);
+        verify(passwordResetTokenProvider, never()).invalidateAfterUse(anyString());
+    }
 
-		// when & then
-		assertThatThrownBy(() -> passwordResetService.confirmReset(token, newPassword))
-			.isInstanceOf(DomainException.class)
-			.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.INVALID_PASSWORD_RESET_TOKEN);
+    @Test
+    @DisplayName("[Success] 토큰 검증 성공")
+    void validateToken_Success() {
+        // given
+        given(passwordResetTokenProvider.validateResetToken(token)).willReturn(true);
 
-		verify(passwordResetTokenManager, never()).removeToken(anyString());
-		verify(memberCommandRepository, never()).save(any(Member.class));
-	}
+        // when
+        boolean result = passwordResetService.validatePasswordResetToken(token);
 
-	@Test
-	@DisplayName("[Failure] 비밀번호 재설정 확인 실패 - 토큰에서 이메일 추출 불가")
-	void confirmReset_Failure_NoEmailFromToken() {
-		given(passwordResetTokenManager.getEmailByToken(token)).willReturn(null);
+        // then
+        assertThat(result).isTrue();
+    }
 
-		assertThatThrownBy(() -> passwordResetService.confirmReset(token, newPassword))
-			.isInstanceOf(DomainException.class)
-			.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.INVALID_PASSWORD_RESET_TOKEN);
-	}
+    @Test
+    @DisplayName("[Failure] 토큰 검증 실패")
+    void validateToken_Failure() {
+        // given
+        given(passwordResetTokenProvider.validateResetToken(token)).willReturn(false);
 
-	@Test
-	@DisplayName("[Failure] 비밀번호 재설정 확인 실패 - 회원 존재하지 않음")
-	void confirmReset_Failure_MemberNotFound() {
-		given(passwordResetTokenManager.getEmailByToken(token)).willReturn(email);
-		given(memberQueryRepository.findByEmail(any(Email.class))).willReturn(Optional.empty());
-
-		assertThatThrownBy(() -> passwordResetService.confirmReset(token, newPassword))
-			.isInstanceOf(DomainException.class)
-			.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.PASSWORD_RESET_EMAIL_NOT_FOUND);
-	}
-
-	@Test
-	@DisplayName("[Failure] 비밀번호 재설정 확인 실패 - 계정 존재하지 않음")
-	void confirmReset_Failure_NoAccounts() {
-		given(passwordResetTokenManager.getEmailByToken(token)).willReturn(email);
-		given(memberQueryRepository.findByEmail(any(Email.class))).willReturn(Optional.of(member));
-		given(member.getAccounts()).willReturn(List.of()); // 빈 리스트
-
-		// when & then
-		assertThatThrownBy(() -> passwordResetService.confirmReset(token, newPassword))
-			.isInstanceOf(DomainException.class)
-			.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.ACCOUNT_NOT_FOUND);
-	}
-
-	@Test
-	@DisplayName("[Success] 토큰 검증 성공")
-	void validateToken_Success() {
-		// given
-		given(passwordResetTokenManager.validateToken(token)).willReturn(true);
-
-		// when
-		boolean result = passwordResetService.validatePasswordResetToken(token);
-
-		// then
-		assertThat(result).isTrue();
-	}
-
-	@Test
-	@DisplayName("[Failure] 토큰 검증 실패")
-	void validateToken_Failure() {
-		// given
-		given(passwordResetTokenManager.validateToken(token)).willReturn(false);
-
-		// when & then
-		assertThatThrownBy(() -> passwordResetService.validatePasswordResetToken(token))
-			.isInstanceOf(DomainException.class)
-			.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.INVALID_PASSWORD_RESET_TOKEN);
-	}
-
+        // when & then
+        assertThatThrownBy(() -> passwordResetService.validatePasswordResetToken(token))
+            .isInstanceOf(DomainException.class)
+            .hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.INVALID_PASSWORD_RESET_TOKEN);
+    }
 }

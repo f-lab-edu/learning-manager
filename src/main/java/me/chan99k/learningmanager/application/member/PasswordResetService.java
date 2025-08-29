@@ -1,12 +1,11 @@
 package me.chan99k.learningmanager.application.member;
 
-import java.time.Duration;
 import java.util.concurrent.Executor;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.chan99k.learningmanager.adapter.auth.PasswordResetTokenManager;
+import me.chan99k.learningmanager.adapter.auth.PasswordResetTokenProvider;
 import me.chan99k.learningmanager.application.member.provides.AccountPasswordReset;
 import me.chan99k.learningmanager.application.member.requires.MemberCommandRepository;
 import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
@@ -20,21 +19,19 @@ import me.chan99k.learningmanager.domain.member.PasswordEncoder;
 @Service
 @Transactional
 public class PasswordResetService implements AccountPasswordReset {
-	private static final Duration TOKEN_EXPIRATION = Duration.ofHours(1); // 1시간 만료 TODO :: .yml 로 토큰 만료 시간 관리
-
 	private final MemberQueryRepository memberQueryRepository;
 	private final MemberCommandRepository memberCommandRepository;
-	private final PasswordResetTokenManager passwordResetTokenManager;
+	private final PasswordResetTokenProvider passwordResetTokenProvider;
 	private final EmailSender emailSender;
 	private final PasswordEncoder passwordEncoder;
 	private final Executor emailTaskExecutor;
 
 	public PasswordResetService(MemberQueryRepository memberQueryRepository,
-		MemberCommandRepository memberCommandRepository, PasswordResetTokenManager passwordResetTokenManager,
+		MemberCommandRepository memberCommandRepository, PasswordResetTokenProvider passwordResetTokenProvider,
 		EmailSender emailSender, PasswordEncoder passwordEncoder, Executor emailTaskExecutor) {
 		this.memberQueryRepository = memberQueryRepository;
 		this.memberCommandRepository = memberCommandRepository;
-		this.passwordResetTokenManager = passwordResetTokenManager;
+		this.passwordResetTokenProvider = passwordResetTokenProvider;
 		this.emailSender = emailSender;
 		this.passwordEncoder = passwordEncoder;
 		this.emailTaskExecutor = emailTaskExecutor;
@@ -46,7 +43,7 @@ public class PasswordResetService implements AccountPasswordReset {
 		boolean isEmailExists = memberQueryRepository.findByEmail(email).isPresent();
 
 		if (isEmailExists) {
-			String token = passwordResetTokenManager.generateAndStoreToken(request.email(), TOKEN_EXPIRATION);
+			String token = passwordResetTokenProvider.createResetToken(request.email());
 
 			// 이메일 발송은 비동기로 처리
 			emailTaskExecutor.execute(() -> {
@@ -62,14 +59,13 @@ public class PasswordResetService implements AccountPasswordReset {
 	}
 
 	@Override
-	public ConfirmResetResponse confirmReset(String token, String newPassword) {
-		// 토큰으로부터 이메일 추출
-		String emailString = passwordResetTokenManager.getEmailByToken(token);
-		if (emailString == null) {
-			throw new DomainException(MemberProblemCode.INVALID_PASSWORD_RESET_TOKEN);
-		}
+	public ConfirmResetResponse confirmReset(ConfirmResetRequest request) {
+		String token = request.token();
+		String newPassword = request.newPassword();
 
-		Email email = Email.of(emailString);
+		validatePasswordResetToken(token);
+
+		Email email = passwordResetTokenProvider.getEmailFromResetToken(token);
 
 		Member member = memberQueryRepository.findByEmail(email)
 			.orElseThrow(() -> new DomainException(MemberProblemCode.PASSWORD_RESET_EMAIL_NOT_FOUND));
@@ -78,21 +74,21 @@ public class PasswordResetService implements AccountPasswordReset {
 			throw new DomainException(MemberProblemCode.ACCOUNT_NOT_FOUND);
 		}
 
-		Long accountId = member.getAccounts().get(0).getId();
+		Long accountId = member.getAccounts().get(0).getId(); // TODO 리팩터링 필요
 
 		member.changeAccountPassword(accountId, newPassword, passwordEncoder);
 
-		// 토큰 사용 후 즉시 삭제 (일회용)
-		passwordResetTokenManager.removeToken(token);
-
 		memberCommandRepository.save(member);
+
+		// 토큰 사용 후 즉시 삭제 (일회용)
+		passwordResetTokenProvider.invalidateAfterUse(token);
 
 		return new ConfirmResetResponse();
 	}
 
 	public boolean validatePasswordResetToken(String token) {
 		// 토큰 유효성 검증
-		if (!passwordResetTokenManager.validateToken(token)) {
+		if (!passwordResetTokenProvider.validateResetToken(token)) {
 			throw new DomainException(MemberProblemCode.INVALID_PASSWORD_RESET_TOKEN);
 		}
 		return true;

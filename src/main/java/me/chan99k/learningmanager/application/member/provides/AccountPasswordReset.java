@@ -26,7 +26,7 @@ import jakarta.validation.constraints.NotBlank;
 public interface AccountPasswordReset {
 	RequestResetResponse requestReset(RequestResetRequest request);
 
-	ConfirmResetResponse confirmReset(String token, String newPassword);
+	ConfirmResetResponse confirmReset(ConfirmResetRequest request);
 
 	boolean validatePasswordResetToken(@Valid String token);
 
@@ -46,6 +46,8 @@ public interface AccountPasswordReset {
 
 	// 새 비밀번호 설정
 	record ConfirmResetRequest(
+		@NotBlank(message = "유효한 토큰은 필수입니다")
+		String token,
 		@NotBlank(message = "변경할 새 비밀번호 값은 필수입니다")
 		String newPassword
 	) {

@@ -17,18 +17,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import me.chan99k.learningmanager.application.member.provides.AccountPasswordChange;
 import me.chan99k.learningmanager.application.member.provides.AccountPasswordReset;
 import me.chan99k.learningmanager.common.exception.DomainException;
-import me.chan99k.learningmanager.domain.member.MemberProblemCode;
 
 @RestController
 @RequestMapping("/api/v1/members")
 public class MemberPasswordController {
 	private static final Logger log = LoggerFactory.getLogger(MemberPasswordController.class);
-	
+
 	private final AccountPasswordChange passwordChangeService;
 	private final AccountPasswordReset passwordResetService;
 	private final Executor memberTaskExecutor;
@@ -64,7 +62,7 @@ public class MemberPasswordController {
 			AccountPasswordReset.RequestResetResponse response = passwordResetService.requestReset(request);
 
 			return ResponseEntity.ok(response);
-		}, memberTaskExecutor).exceptionally(ex -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
+		}, memberTaskExecutor);
 	}
 
 	@GetMapping("/reset-password")
@@ -75,22 +73,15 @@ public class MemberPasswordController {
 		return CompletableFuture.supplyAsync(() -> {
 			try {
 				log.info("Password reset token validation started. Token: {}", token);
-				
+
 				// 1. 토큰 유효성 검증
 				passwordResetService.validatePasswordResetToken(token);
 				log.info("Token validation successful. Token: {}", token);
 
-				// 2. 세션에 검증된 토큰 저장
-				HttpSession session = request.getSession();
-				session.setAttribute("verified_reset_token", token);
-				session.setMaxInactiveInterval(300); // 5분 만료
-
-				log.info("Token stored in session successfully. Session ID: {}, Token: {}", session.getId(), token);
-
-				// 3. 새 비밀번호 입력 페이지로 리다이렉트
+				// 2. 새 비밀번호 입력 페이지로 토큰과 함께 리다이렉트
 				// TODO: 프론트엔드 분리 시 JSON 응답으로 변경 필요
 				return ResponseEntity.status(HttpStatus.FOUND)
-					.location(URI.create("/reset-password-form"))
+					.location(URI.create("/reset-password-form?token=" + token))
 					.build();
 			} catch (DomainException e) {
 				log.warn("Token validation failed. Token: {}, Error: {}", token, e.getProblemCode().getMessage());
@@ -105,7 +96,6 @@ public class MemberPasswordController {
 
 	@PostMapping("/confirm-reset-password")
 	public CompletableFuture<ResponseEntity<Void>> confirmReset(
-		HttpServletRequest httpRequest,
 		@Valid @RequestBody AccountPasswordReset.ConfirmResetRequest request
 	) {
 		// TODO: 프론트엔드 분리 시 응답 구조 변경 필요
@@ -114,16 +104,7 @@ public class MemberPasswordController {
 		 * 변경 예정: 성공 정보를 포함한 JSON 응답, 세션 기반 -> JWT 기반
 		 */
 		return CompletableFuture.supplyAsync(() -> {
-			// 세션에서 검증된 토큰 가져오기
-			String token = (String)httpRequest.getSession().getAttribute("verified_reset_token");
-			if (token == null) {
-				throw new DomainException(MemberProblemCode.INVALID_PASSWORD_RESET_TOKEN);
-			}
-
-			passwordResetService.confirmReset(token, request.newPassword());
-
-			// 세션 정리
-			httpRequest.getSession().removeAttribute("verified_reset_token");
+			passwordResetService.confirmReset(request);
 
 			return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 		}, memberTaskExecutor);
