@@ -31,6 +31,9 @@ public enum MemberProblemCode implements ProblemCode {
 	PASSWORD_CONTAINS_WHITESPACE("DML017", "[System] 비밀번호에 공백을 포함할 수 없습니다."),
 	NEW_PASSWORD_SAME_AS_CURRENT("DML029", "[System] 새 비밀번호는 현재 비밀번호와 달라야 합니다."),
 	CANNOT_FOUND_ACCOUNT("DML018", "[System] 유효한 계정 정보를 찾을 수 없습니다."),
+	PASSWORD_RESET_EMAIL_NOT_FOUND("DML030", "[System] 가입되지 않은 이메일입니다."),
+	INVALID_PASSWORD_RESET_TOKEN("DML031", "[System] 유효하지 않은 비밀번호 재설정 토큰입니다."),
+	EXPIRED_PASSWORD_RESET_TOKEN("DML032", "[System] 비밀번호 재설정 토큰이 만료되었습니다."),
 
 	MEMBER_NICKNAME_REQUIRED("DML019", "[System] 닉네임은 비어 있을 수 없습니다."),
 	MEMBER_NICKNAME_CONSTRAINTS_FOR_LENGTH("DML020", "[System] 닉네임은 %d자 이상 %d자 이하여야 합니다."),

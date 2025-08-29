@@ -58,8 +58,13 @@ public class Member extends AbstractEntity {
 	public void changeAccountPassword(Long accountId, String newRawPassword, PasswordEncoder encoder) {
 		Account account = findAccountById(accountId);
 
-		if (account.getPassword().matches(newRawPassword, encoder)) {
-			throw new DomainException(NEW_PASSWORD_SAME_AS_CURRENT);
+		try {
+			if (account.getPassword().matches(newRawPassword, encoder)) {
+				throw new DomainException(NEW_PASSWORD_SAME_AS_CURRENT);
+			}
+		} catch (Exception e) {
+			// 인코딩 방식이 다를 때 발생하는 예외는 무시하고 새로운 비밀번호로 변경
+			// TODO : 멀티 인코딩 환경을 가정한 리팩터링 하기 - 비밀번호에 알고리즘 명시, 핸들러매핑
 		}
 
 		account.changePassword(newRawPassword, encoder);
