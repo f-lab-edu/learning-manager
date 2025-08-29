@@ -22,7 +22,7 @@ public class MemberQueryAdapter implements MemberQueryRepository {
 		return jpaMemberRepository.findById(memberId);
 	}
 
-	@Override
+	@Override // TODO : 비밀번호 재설정을 목적으로 사용하는 경우, 스칼라 프로젝션으로 네트워크 트래픽과 메모리 사용량을 줄일 수 있을 것임
 	public Optional<Member> findByEmail(Email email) {
 		return jpaMemberRepository.findByAccountsEmail(email);
 	}
