@@ -7,6 +7,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -20,6 +23,9 @@ import me.chan99k.learningmanager.domain.AbstractEntity;
 
 @Entity
 public class Member extends AbstractEntity {
+
+	private static final Logger log = LoggerFactory.getLogger(Member.class);
+
 	@OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Account> accounts = new ArrayList<>();
 
@@ -65,6 +71,7 @@ public class Member extends AbstractEntity {
 		} catch (Exception e) {
 			// 인코딩 방식이 다를 때 발생하는 예외는 무시하고 새로운 비밀번호로 변경
 			// TODO : 멀티 인코딩 환경을 가정한 리팩터링 하기 - 비밀번호에 알고리즘 명시, 핸들러매핑
+			log.debug("[System] 기존 인코딩이 현 시점 인코딩과 일치하지 않음 -> 새로운 인코딩으로 비밀번호 생성");
 		}
 
 		account.changePassword(newRawPassword, encoder);
