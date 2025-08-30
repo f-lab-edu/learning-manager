@@ -74,7 +74,7 @@ public class PasswordResetService implements AccountPasswordReset {
 			throw new DomainException(MemberProblemCode.ACCOUNT_NOT_FOUND);
 		}
 
-		Long accountId = member.getAccounts().get(0).getId(); // TODO 리팩터링 필요
+		Long accountId = member.findAccountByEmail(email).getId();
 
 		member.changeAccountPassword(accountId, newPassword, passwordEncoder);
 
