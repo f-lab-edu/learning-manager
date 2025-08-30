@@ -33,7 +33,7 @@ public class InMemoryJwtTokenRevocationProvider implements TokenRevocationProvid
 					.verifyWith(validator)
 					.build()
 					.parseSignedClaims(token);
-				return false; // 아직 유효함 - 무효화 리스트에 유지
+				return false; // 아직 유효함 - 무효화 리스트에 유지 TODO :: cleanup 메서드에서 모든 무효화된 토큰에 대해 JWT 파싱을 수행하는 것은 비효율적. 토큰 수가 많아질 경우 성능 문제가 발생할 수 있으므로 별도의 클린업 로직을 고민해볼 필요가 있음
 			} catch (Exception e) {
 				return true; // 만료됨 - 무효화 리스트에서 제거
 			}
