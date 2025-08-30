@@ -21,8 +21,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import me.chan99k.learningmanager.adapter.auth.AccessTokenProvider;
 import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
-import me.chan99k.learningmanager.adapter.auth.JwtTokenProvider;
 import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
 import me.chan99k.learningmanager.application.member.provides.MemberProfileRetrieval;
 import me.chan99k.learningmanager.application.member.provides.MemberProfileUpdate;
@@ -42,7 +42,7 @@ class MemberProfileControllerTest {
 	MemberProfileRetrieval memberProfileRetrieval;
 
 	@MockBean
-	JwtTokenProvider jwtTokenProvider;
+	AccessTokenProvider<Long> accessTokenProvider;
 
 	@MockBean(name = "memberTaskExecutor")
 	Executor memberTaskExecutor;
@@ -102,10 +102,11 @@ class MemberProfileControllerTest {
 	@DisplayName("내 프로필 조회시, 인증 성공하여 200을 반환")
 	void test03() throws Exception {
 		// JWT 토큰 검증 모킹 - 이 테스트에서만 성공하도록 설정
-		given(jwtTokenProvider.validateToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1In0.test")).willReturn(
+		given(accessTokenProvider.validateAccessToken(
+			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1In0.test")).willReturn(
 			true);
-		given(jwtTokenProvider.getMemberIdFromToken(
-			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1In0.test")).willReturn("5");
+		given(accessTokenProvider.getIdFromAccessToken(
+			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1In0.test")).willReturn(5L);
 		
 		setAuthenticatedUser(5L);
 		given(memberProfileRetrieval.getProfile(5L))
@@ -150,8 +151,8 @@ class MemberProfileControllerTest {
 	void test06() throws Exception {
 		// JWT 토큰 검증 모킹 - 이 테스트에서만 성공하도록 설정
 		String token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1In0.validToken";
-		given(jwtTokenProvider.validateToken(token)).willReturn(true);
-		given(jwtTokenProvider.getMemberIdFromToken(token)).willReturn("5");
+		given(accessTokenProvider.validateAccessToken(token)).willReturn(true);
+		given(accessTokenProvider.getIdFromAccessToken(token)).willReturn(5L);
 		
 		setAuthenticatedUser(5L);
 		given(memberProfileUpdate.updateProfile(eq(5L), any(MemberProfileUpdate.Request.class)))

@@ -30,5 +30,8 @@ jwt:
     validity-in-seconds: 3600  # 테스트에서는 1시간
     issuer: ${JWT_ISSUER:lxm-test-api}
     audience: ${JWT_AUDIENCE:lxm-test-auth}
-
+  password-reset-token:
+    issuer: ${JWT_ISSUER:lxm-test-api}
+    audience: ${JWT_AUDIENCE:lxm-test-auth}
+    validity-in-seconds: ${JWT_PASSWORD_RESET_TOKEN_VALIDITY:1800}
 

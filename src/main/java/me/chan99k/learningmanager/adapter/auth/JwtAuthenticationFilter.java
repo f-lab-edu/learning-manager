@@ -22,10 +22,10 @@ public class JwtAuthenticationFilter implements Filter {
 	private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 	private static final String BEARER_PREFIX = "Bearer ";
 
-	private final JwtTokenProvider jwtTokenProvider;
+	private final AccessTokenProvider<Long> accessTokenProvider;
 
-	public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider) {
-		this.jwtTokenProvider = jwtTokenProvider;
+	public JwtAuthenticationFilter(AccessTokenProvider<Long> accessTokenProvider) {
+		this.accessTokenProvider = accessTokenProvider;
 	}
 
 	@Override
@@ -41,17 +41,17 @@ public class JwtAuthenticationFilter implements Filter {
 			log.debug("[System] Processing authentication for protected resource: {}", httpRequest.getRequestURI());
 
 			// 토큰 검증 실패 시 접근 차단
-			if (!jwtTokenProvider.validateToken(token)) {
+			if (!accessTokenProvider.validateAccessToken(token)) {
 				log.error("[System] Invalid token for protected resource: {}", httpRequest.getRequestURI());
 				writeErrorResponse(httpResponse, AuthProblemCode.FAILED_TO_VALIDATE_TOKEN);
 				return;
 			}
 
-			String memberId = jwtTokenProvider.getMemberIdFromToken(token);
+			Long memberId = accessTokenProvider.getIdFromAccessToken(token);
 			log.debug("[System] Member ID from token: {}", memberId);
 
 			// AuthenticationContextHolder에 Member ID 설정
-			AuthenticationContextHolder.setCurrentMemberId(Long.valueOf(memberId));
+			AuthenticationContextHolder.setCurrentMemberId(memberId);
 
 			log.debug("[System] Authentication successful for member: {}", memberId);
 
@@ -97,16 +97,15 @@ public class JwtAuthenticationFilter implements Filter {
 		response.setContentType("application/problem+json");
 		response.setCharacterEncoding("UTF-8");
 
-		StringBuilder json = new StringBuilder();
-		json.append("{");
-		json.append("\"type\":\"https://api.lm.com/errors/").append(problemCode.getCode()).append("\",");
-		json.append("\"title\":\"Authentication Error\",");
-		json.append("\"status\":401,");
-		json.append("\"detail\":\"").append(escapeJsonString(problemCode.getMessage())).append("\",");
-		json.append("\"code\":\"").append(problemCode.getCode()).append("\"");
-		json.append("}");
+		String json = "{"
+			+ "\"type\":\"https://api.lm.com/errors/" + problemCode.getCode() + "\","
+			+ "\"title\":\"Authentication Error\","
+			+ "\"status\":401,"
+			+ "\"detail\":\"" + escapeJsonString(problemCode.getMessage()) + "\","
+			+ "\"code\":\"" + problemCode.getCode() + "\""
+			+ "}";
 
-		response.getWriter().write(json.toString());
+		response.getWriter().write(json);
 	}
 
 	private String escapeJsonString(String str) {

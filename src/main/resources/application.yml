@@ -11,6 +11,10 @@ jwt:
     validity-in-seconds: ${JWT_ACCESS_TOKEN_VALIDITY:1800}
     issuer: ${JWT_ISSUER:lxm-default-api}
     audience: ${JWT_AUDIENCE:lxm-default-auth}
+  password-reset-token:
+    issuer: ${JWT_ISSUER:lxm-password-api}
+    audience: ${JWT_AUDIENCE:lxm-password-auth}
+    validity-in-seconds: ${JWT_PASSWORD_RESET_TOKEN_VALIDITY:300}
 
 ---
 spring:
@@ -41,6 +45,10 @@ jwt:
     validity-in-seconds: 3600  # 개발환경에서는 1시간
     issuer: "lxm-dev-api"
     audience: "lxm-dev-auth"
+  password-reset-token:
+    issuer: "lxm-dev-api"
+    audience: "lxm-dev-auth"
+    validity-in-seconds: 300
 
 ---
 
@@ -68,4 +76,8 @@ jwt:
   access-token:
     validity-in-seconds: ${JWT_ACCESS_TOKEN_VALIDITY:1800}
     issuer: "lxm-prod-api"
-    audience: "lxm-dev-auth"
+    audience: "lxm-prod-auth"
+  password-reset-token:
+    issuer: "lxm-prod-api"
+    audience: "lxm-prod-auth"
+    validity-in-seconds: 300

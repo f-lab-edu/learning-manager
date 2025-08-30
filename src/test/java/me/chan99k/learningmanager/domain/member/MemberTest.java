@@ -23,7 +23,7 @@ class MemberTest {
 		ReflectionTestUtils.setField(testMember, "nickname", new Nickname("testuser"));
 		ReflectionTestUtils.setField(testMember, "role", SystemRole.MEMBER);
 		ReflectionTestUtils.setField(testMember, "status", MemberStatus.ACTIVE);
-		ReflectionTestUtils.setField(testMember, "accounts", new ArrayList<>());
+		ReflectionTestUtils.setField(testMember, "accounts", new ArrayList<Account>());
 		return testMember;
 	}
 
@@ -227,6 +227,7 @@ class MemberTest {
 		private Long accountId;
 
 		@BeforeEach
+		@SuppressWarnings("unchecked")
 		void setUp() {
 			member.addAccount("chan99k@example.com", "deprecatingPassword123!", passwordEncoder);
 

@@ -1,30 +1,44 @@
 package me.chan99k.learningmanager.adapter.web.member;
 
+import java.net.URI;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import me.chan99k.learningmanager.application.member.provides.AccountPasswordChange;
+import me.chan99k.learningmanager.application.member.provides.AccountPasswordReset;
+import me.chan99k.learningmanager.common.exception.DomainException;
 
 @RestController
 @RequestMapping("/api/v1/members")
 public class MemberPasswordController {
+	private static final Logger log = LoggerFactory.getLogger(MemberPasswordController.class);
+
 	private final AccountPasswordChange passwordChangeService;
+	private final AccountPasswordReset passwordResetService;
 	private final Executor memberTaskExecutor;
 
-	public MemberPasswordController(AccountPasswordChange passwordChangeService, Executor memberTaskExecutor) {
+	public MemberPasswordController(AccountPasswordChange passwordChangeService,
+		AccountPasswordReset passwordResetService, Executor memberTaskExecutor) {
 		this.passwordChangeService = passwordChangeService;
+		this.passwordResetService = passwordResetService;
 		this.memberTaskExecutor = memberTaskExecutor;
 	}
 
-	@PutMapping("/password")
+	@PutMapping("/change-password")
 	public CompletableFuture<ResponseEntity<Void>> changePassword(
 		@Valid @RequestBody AccountPasswordChange.Request request
 	) {
@@ -34,4 +48,66 @@ public class MemberPasswordController {
 			return ResponseEntity.status(HttpStatus.OK).build();
 		}, memberTaskExecutor);
 	}
+
+	@PostMapping("/reset-password")
+	public CompletableFuture<ResponseEntity<AccountPasswordReset.RequestResetResponse>> resetPassword(
+		@Valid @RequestBody AccountPasswordReset.RequestResetRequest request
+	) {
+		// TODO: 프론트엔드 분리 시 응답 구조 표준화
+		/*
+		 * 현재: 도메인별 응답 객체 사용
+		 * 변경 예정: 표준 API 응답 구조
+		 */
+		return CompletableFuture.supplyAsync(() -> {
+			AccountPasswordReset.RequestResetResponse response = passwordResetService.requestReset(request);
+
+			return ResponseEntity.ok(response);
+		}, memberTaskExecutor);
+	}
+
+	@GetMapping("/reset-password")
+	public CompletableFuture<ResponseEntity<Void>> getRedirectPage(
+		HttpServletRequest request,
+		@Valid @RequestParam String token
+	) {
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				log.info("Password reset token validation started. Token: {}", token);
+
+				// 1. 토큰 유효성 검증
+				passwordResetService.validatePasswordResetToken(token);
+				log.info("Token validation successful. Token: {}", token);
+
+				// 2. 새 비밀번호 입력 페이지로 토큰과 함께 리다이렉트
+				// TODO: 프론트엔드 분리 시 JSON 응답으로 변경 필요
+				return ResponseEntity.status(HttpStatus.FOUND)
+					.location(URI.create("/reset-password-form?token=" + token))
+					.build();
+			} catch (DomainException e) {
+				log.warn("Token validation failed. Token: {}, Error: {}", token, e.getProblemCode().getMessage());
+				// 토큰 유효성 검증 실패 시 에러 페이지로 리다이렉트
+				// TODO: 프론트엔드 분리 시 JSON 에러 응답으로 변경
+				return ResponseEntity.status(HttpStatus.FOUND)
+					.location(URI.create("/error?message=invalid_token"))
+					.build();
+			}
+		}, memberTaskExecutor);
+	}
+
+	@PostMapping("/confirm-reset-password")
+	public CompletableFuture<ResponseEntity<Void>> confirmReset(
+		@Valid @RequestBody AccountPasswordReset.ConfirmResetRequest request
+	) {
+		// TODO: 프론트엔드 분리 시 응답 구조 변경 필요
+		/*
+		 * 현재: 204 No Content (성공 시 빈 응답)
+		 * 변경 예정: 성공 정보를 포함한 JSON 응답, 세션 기반 -> JWT 기반
+		 */
+		return CompletableFuture.supplyAsync(() -> {
+			passwordResetService.confirmReset(request);
+
+			return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+		}, memberTaskExecutor);
+	}
+
 }

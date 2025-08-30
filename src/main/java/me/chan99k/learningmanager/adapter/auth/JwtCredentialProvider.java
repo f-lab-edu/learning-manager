@@ -9,14 +9,14 @@ import me.chan99k.learningmanager.domain.member.Member;
 @Component
 @Primary
 public class JwtCredentialProvider implements CredentialProvider {
-	private final JwtTokenProvider jwtTokenProvider;
+	private final AccessTokenProvider<Long> accessTokenProvider;
 
-	public JwtCredentialProvider(JwtTokenProvider jwtTokenProvider) {
-		this.jwtTokenProvider = jwtTokenProvider;
+	public JwtCredentialProvider(AccessTokenProvider<Long> accessTokenProvider) {
+		this.accessTokenProvider = accessTokenProvider;
 	}
 
 	@Override
 	public String issueCredential(Member member) {
-		return jwtTokenProvider.createToken(member.getId());
+		return accessTokenProvider.createAccessToken(member.getId());
 	}
 }
