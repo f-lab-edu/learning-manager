@@ -14,7 +14,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import me.chan99k.learningmanager.common.exception.AuthException;
+import me.chan99k.learningmanager.common.exception.AuthenticationException;
 import me.chan99k.learningmanager.common.exception.ProblemCode;
 
 @Component
@@ -57,7 +57,7 @@ public class JwtAuthenticationFilter implements Filter {
 
 			// 인증 성공 시에만 다음 필터로 진행
 			filterChain.doFilter(request, response);
-		} catch (AuthException e) {
+		} catch (AuthenticationException e) {
 			log.error("[System] Authentication filter error for URI {}: {}",
 				httpRequest.getRequestURI(), e.getMessage());
 			writeErrorResponse(httpResponse, e.getProblemCode());
@@ -68,25 +68,25 @@ public class JwtAuthenticationFilter implements Filter {
 		}
 	}
 
-	private String resolveToken(HttpServletRequest request) throws AuthException {
+	private String resolveToken(HttpServletRequest request) throws AuthenticationException {
 		var bearer = request.getHeader("Authorization");
 		if (!StringUtils.hasText(bearer)) {
 			log.error("[System] No Authorization header found for protected resource: {}",
 				request.getRequestURI());
-			throw new AuthException(AuthProblemCode.MISSING_AUTHORIZATION_HEADER);
+			throw new AuthenticationException(AuthProblemCode.MISSING_AUTHORIZATION_HEADER);
 		}
 
 		if (!bearer.startsWith(BEARER_PREFIX)) {
 			log.error("[System] Authorization header does not start with Bearer for protected resource: {}",
 				request.getRequestURI());
-			throw new AuthException(AuthProblemCode.INVALID_AUTHORIZATION_HEADER);
+			throw new AuthenticationException(AuthProblemCode.INVALID_AUTHORIZATION_HEADER);
 		}
 
 		String token = bearer.substring(BEARER_PREFIX.length());
 		if (!StringUtils.hasText(token)) {
 			log.error("[System] Empty Bearer token found for protected resource: {}",
 				request.getRequestURI());
-			throw new AuthException(AuthProblemCode.EMPTY_BEARER_TOKEN);
+			throw new AuthenticationException(AuthProblemCode.EMPTY_BEARER_TOKEN);
 		}
 
 		return token;

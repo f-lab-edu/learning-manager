@@ -15,7 +15,7 @@ import io.jsonwebtoken.security.Keys;
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
 import me.chan99k.learningmanager.adapter.auth.PasswordResetTokenProvider;
 import me.chan99k.learningmanager.adapter.auth.TokenRevocationProvider;
-import me.chan99k.learningmanager.common.exception.AuthException;
+import me.chan99k.learningmanager.common.exception.AuthenticationException;
 import me.chan99k.learningmanager.domain.member.Email;
 
 @Component
@@ -75,7 +75,7 @@ public class PasswordResetJwtTokenProvider extends AbstractJwtTokenProvider<Secr
 
 			return TOKEN_PURPOSE.equals(claims.get("purpose", String.class));
 		} catch (Exception e) {
-			throw new AuthException(AuthProblemCode.FAILED_TO_VALIDATE_TOKEN, e);
+			throw new AuthenticationException(AuthProblemCode.FAILED_TO_VALIDATE_TOKEN, e);
 		}
 	}
 
@@ -90,7 +90,7 @@ public class PasswordResetJwtTokenProvider extends AbstractJwtTokenProvider<Secr
 
 			return Email.of(claims.getSubject());
 		} catch (Exception e) {
-			throw new AuthException(AuthProblemCode.FAILED_TO_AUTHENTICATE, e);
+			throw new AuthenticationException(AuthProblemCode.FAILED_TO_AUTHENTICATE, e);
 		}
 	}
 

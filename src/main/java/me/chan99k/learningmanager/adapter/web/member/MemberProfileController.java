@@ -17,7 +17,7 @@ import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
 import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
 import me.chan99k.learningmanager.application.member.provides.MemberProfileRetrieval;
 import me.chan99k.learningmanager.application.member.provides.MemberProfileUpdate;
-import me.chan99k.learningmanager.common.exception.AuthException;
+import me.chan99k.learningmanager.common.exception.AuthenticationException;
 
 @RestController
 @RequestMapping("/api/v1/members")
@@ -69,7 +69,7 @@ public class MemberProfileController {
 
 	private Long extractMemberIdFromAuthentication() {
 		return AuthenticationContextHolder.getCurrentMemberId()
-			.orElseThrow(() -> new AuthException(AuthProblemCode.AUTHENTICATION_REQUIRED));
+			.orElseThrow(() -> new AuthenticationException(AuthProblemCode.AUTHENTICATION_REQUIRED));
 	}
 
 }
