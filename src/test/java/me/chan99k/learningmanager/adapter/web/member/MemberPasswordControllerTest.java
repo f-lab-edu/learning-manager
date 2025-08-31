@@ -129,29 +129,42 @@ class MemberPasswordControllerTest {
 		}
 
 		@Test
-		@DisplayName("[Success] 사용자가 전달받은 url 로 접급하여 토큰 검증 및 리다이렉트에 성공한다")
-		void getRedirectPage_Success() throws Exception {
+		@DisplayName("[Success] 사용자가 전달받은 토큰으로 검증에 성공하고 JSON 응답을 반환한다")
+		void verifyResetToken_Success() throws Exception {
 			String token = "valid-token-123";
+			String email = "test@example.com";
 
-			given(passwordResetService.validatePasswordResetToken(token)).willReturn(true);
+			AccountPasswordReset.TokenVerificationResponse response =
+				new AccountPasswordReset.TokenVerificationResponse(
+					true,
+					email,
+					token,
+					"토큰이 유효합니다. 새 비밀번호를 설정하세요."
+				);
+
+			given(passwordResetService.verifyResetToken(token)).willReturn(response);
 
 			MvcResult result = mockMvc.perform(get("/api/v1/members/reset-password")
 					.param("token", token))
 				.andExpect(request().asyncStarted())
 				.andReturn();
 
-			// 비동기 완료 후 리다이렉트 검증
+			// 비동기 완료 후 JSON 응답 검증
 			mockMvc.perform(asyncDispatch(result))
-				.andExpect(status().isFound())
-				.andExpect(header().string("Location", "/reset-password-form?token=" + token));
+				.andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.tokenValid").value(true))
+				.andExpect(jsonPath("$.userEmail").value(email))
+				.andExpect(jsonPath("$.token").value(token))
+				.andExpect(jsonPath("$.message").value("토큰이 유효합니다. 새 비밀번호를 설정하세요."));
 		}
 
 		@Test
-		@DisplayName("[Failure] 토큰 검증에 실패하면 에러 페이지로 리다이렉트한다")
-		void getRedirectPage_Failure_InvalidToken() throws Exception {
+		@DisplayName("[Failure] 토큰 검증에 실패하면 400 Bad Request와 JSON 에러 응답을 반환한다")
+		void verifyResetToken_Failure_InvalidToken() throws Exception {
 			String invalidToken = "invalid-token";
 
-			given(passwordResetService.validatePasswordResetToken(invalidToken))
+			given(passwordResetService.verifyResetToken(invalidToken))
 				.willThrow(new DomainException(MemberProblemCode.INVALID_PASSWORD_RESET_TOKEN));
 
 			MvcResult result = mockMvc.perform(get("/api/v1/members/reset-password")
@@ -159,10 +172,13 @@ class MemberPasswordControllerTest {
 				.andExpect(request().asyncStarted())
 				.andReturn();
 
-			// 비동기 완료 후 에러 페이지 리다이렉트 검증
+			// 비동기 완료 후 JSON 에러 응답 검증
 			mockMvc.perform(asyncDispatch(result))
-				.andExpect(status().isFound())
-				.andExpect(header().string("Location", "/error?message=invalid_token"));
+				.andExpect(status().isBadRequest())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.tokenValid").value(false))
+				.andExpect(jsonPath("$.userEmail").isEmpty())
+				.andExpect(jsonPath("$.token").value(invalidToken));
 		}
 
 		@Test

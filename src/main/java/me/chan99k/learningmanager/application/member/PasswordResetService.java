@@ -93,4 +93,24 @@ public class PasswordResetService implements AccountPasswordReset {
 		}
 		return true;
 	}
+
+	@Override
+	public TokenVerificationResponse verifyResetToken(String token) {
+		// 토큰 유효성 검증
+		validatePasswordResetToken(token);
+
+		// 토큰에서 이메일 추출
+		Email email = passwordResetTokenProvider.getEmailFromResetToken(token);
+
+		// 해당 이메일의 회원이 존재하는지 확인
+		Member member = memberQueryRepository.findByEmail(email)
+			.orElseThrow(() -> new DomainException(MemberProblemCode.PASSWORD_RESET_EMAIL_NOT_FOUND));
+
+		return new TokenVerificationResponse(
+			true,
+			email.address(),
+			token,
+			"토큰이 유효합니다. 새 비밀번호를 설정하세요."
+		);
+	}
 }
