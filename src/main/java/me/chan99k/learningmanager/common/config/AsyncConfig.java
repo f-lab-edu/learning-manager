@@ -1,6 +1,5 @@
 package me.chan99k.learningmanager.common.config;
 
-import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.slf4j.Logger;
@@ -60,21 +59,7 @@ public class AsyncConfig {
 
 		// 태스크 데코레이터: 각 태스크 실행 전/후 공통 처리 로직 추가 가능
 		// 예: Mapped Diagnostic Context 복사, 메트릭 수집 등
-		executor.setTaskDecorator(runnable -> {
-			Runnable authDecoratedTask = new AuthenticationContextTaskDecorator().decorate(runnable);
-
-			String currentThreadName = Thread.currentThread().getName();
-
-			return () -> {
-				try {
-					log.debug("Task started by thread: {} -> executing in: {}",
-						currentThreadName, Thread.currentThread().getName());
-					authDecoratedTask.run();
-				} finally {
-					log.debug("Task completed in thread: {}", Thread.currentThread().getName());
-				}
-			};
-		});
+		addAuthenticationContextTaskDecorator(executor);
 
 		/* ============== 거부 정책 설정  ============== */
 		// 거부 정책: 큐가 가득 차고 최대 스레드 수에 도달했을 때의 처리 방식
@@ -120,7 +105,7 @@ public class AsyncConfig {
 	}
 
 	@Bean(name = "emailTaskExecutor")
-	public Executor emailTaskExecutor() {
+	public AsyncTaskExecutor emailTaskExecutor() {
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 
 		executor.setCorePoolSize(2);
@@ -151,4 +136,52 @@ public class AsyncConfig {
 		return executor;
 	}
 
+	@Bean(name = "courseTaskExecutor")
+	public AsyncTaskExecutor courseTaskExecutor() {
+		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+
+		executor.setCorePoolSize(5);
+		executor.setMaxPoolSize(20);
+		executor.setQueueCapacity(20);
+		executor.setThreadNamePrefix("course-async-");
+		executor.setWaitForTasksToCompleteOnShutdown(true);
+		executor.setAwaitTerminationSeconds(30);
+		executor.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
+
+		addAuthenticationContextTaskDecorator(executor);
+
+		executor.setAllowCoreThreadTimeOut(true);
+		executor.setKeepAliveSeconds(120);
+		executor.setBeanName("courseTaskExecutor");
+		executor.setTaskDecorator(new AuthenticationContextTaskDecorator());
+		executor.initialize();
+
+		log.info(
+			"[System] Course Task Executor initialized - Core: {}, Max: {}, Queue: {}, Priority: {}, KeepAlive: {}s",
+			executor.getCorePoolSize(),
+			executor.getMaxPoolSize(),
+			executor.getQueueCapacity(),
+			executor.getThreadPriority(),
+			executor.getKeepAliveSeconds());
+
+		return executor;
+	}
+
+	private void addAuthenticationContextTaskDecorator(ThreadPoolTaskExecutor executor) {
+		executor.setTaskDecorator(runnable -> {
+			Runnable authDecoratedTask = new AuthenticationContextTaskDecorator().decorate(runnable);
+
+			String currentThreadName = Thread.currentThread().getName();
+
+			return () -> {
+				try {
+					log.debug("Task started by thread: {} -> executing in: {}",
+						currentThreadName, Thread.currentThread().getName());
+					authDecoratedTask.run();
+				} finally {
+					log.debug("Task completed in thread: {}", Thread.currentThread().getName());
+				}
+			};
+		});
+	}
 }
