@@ -19,7 +19,8 @@ import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
 import me.chan99k.learningmanager.application.course.provides.CourseCreation;
 import me.chan99k.learningmanager.application.course.requires.CourseCommandRepository;
 import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
-import me.chan99k.learningmanager.common.exception.AuthException;
+import me.chan99k.learningmanager.common.exception.AuthenticationException;
+import me.chan99k.learningmanager.common.exception.AuthorizationException;
 import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.course.Course;
 import me.chan99k.learningmanager.domain.member.Member;
@@ -68,7 +69,6 @@ class CourseCreationServiceTest {
 	@Test
 	@DisplayName("[Failure] 일반 회원 권한으로는 과정 생성에 실패한다")
 	void test02() {
-		// given
 		Long memberId = 1L;
 		Member member = mock(Member.class);
 		when(member.getRole()).thenReturn(SystemRole.MEMBER);
@@ -76,14 +76,13 @@ class CourseCreationServiceTest {
 
 		CourseCreation.Request request = new CourseCreation.Request("Test Course", "Test Description");
 
-		// when & then
 		try (MockedStatic<AuthenticationContextHolder> mockedContextHolder = mockStatic(
 			AuthenticationContextHolder.class)) {
 			mockedContextHolder.when(AuthenticationContextHolder::getCurrentMemberId)
 				.thenReturn(Optional.of(memberId));
 
 			assertThatThrownBy(() -> courseCreationService.createCourse(request))
-				.isInstanceOf(AuthException.class)
+				.isInstanceOf(AuthorizationException.class)
 				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
 		}
 	}
@@ -101,7 +100,7 @@ class CourseCreationServiceTest {
 				.thenReturn(Optional.empty());
 
 			assertThatThrownBy(() -> courseCreationService.createCourse(request))
-				.isInstanceOf(AuthException.class)
+				.isInstanceOf(AuthenticationException.class)
 				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND);
 		}
 	}
