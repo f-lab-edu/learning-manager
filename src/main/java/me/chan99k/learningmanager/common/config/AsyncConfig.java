@@ -153,7 +153,6 @@ public class AsyncConfig {
 		executor.setAllowCoreThreadTimeOut(true);
 		executor.setKeepAliveSeconds(120);
 		executor.setBeanName("courseTaskExecutor");
-		executor.setTaskDecorator(new AuthenticationContextTaskDecorator());
 		executor.initialize();
 
 		log.info(
