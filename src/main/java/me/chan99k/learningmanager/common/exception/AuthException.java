@@ -1,14 +1,14 @@
 package me.chan99k.learningmanager.common.exception;
 
-public class AuthenticateException extends RuntimeException {
+public class AuthException extends RuntimeException {
 	private final ProblemCode problemCode;
 
-	public AuthenticateException(ProblemCode problemCode) {
+	public AuthException(ProblemCode problemCode) {
 		super(problemCode.getMessage());
 		this.problemCode = problemCode;
 	}
 
-	public AuthenticateException(ProblemCode problemCode, Throwable cause) {
+	public AuthException(ProblemCode problemCode, Throwable cause) {
 		super(problemCode.getMessage(), cause);
 		this.problemCode = problemCode;
 	}
