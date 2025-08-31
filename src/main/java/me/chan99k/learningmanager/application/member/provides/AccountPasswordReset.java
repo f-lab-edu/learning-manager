@@ -30,6 +30,8 @@ public interface AccountPasswordReset {
 
 	boolean validatePasswordResetToken(@Valid String token);
 
+	TokenVerificationResponse verifyResetToken(@Valid String token);
+
 	// 재설정 요청
 	record RequestResetRequest(
 		@NotBlank(message = "가입시 사용한 이메일 값은 필수입니다")
@@ -54,6 +56,15 @@ public interface AccountPasswordReset {
 	}
 
 	record ConfirmResetResponse() {
+	}
+
+	// 토큰 검증 응답
+	record TokenVerificationResponse(
+		boolean tokenValid,
+		String userEmail,
+		String token,
+		String message
+	) {
 	}
 }
 
