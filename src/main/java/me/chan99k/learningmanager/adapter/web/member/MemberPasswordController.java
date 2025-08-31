@@ -79,11 +79,7 @@ public class MemberPasswordController {
 			} catch (DomainException e) {
 				log.warn("Token validation failed. Token: {}, Error: {}", token, e.getProblemCode().getMessage());
 
-				// 실패 시에도 JSON 응답으로 반환
-				AccountPasswordReset.TokenVerificationResponse errorResponse =
-					new AccountPasswordReset.TokenVerificationResponse(
-						false,
-						null,
+						"",
 						token,
 						e.getProblemCode().getMessage()
 					);
