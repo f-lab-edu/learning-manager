@@ -11,7 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import me.chan99k.learningmanager.common.exception.AuthenticateException;
+import me.chan99k.learningmanager.common.exception.AuthException;
 import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.MemberProblemCode;
 
@@ -45,12 +45,12 @@ public class GlobalExceptionHandler {
 	}
 
 	/**
-	 * AuthenticateException 을 가로챈다.
-	 * @param e AuthenticateException
+	 * AuthException 을 가로챈다.
+	 * @param e AuthException
 	 * @return 401, ResponseEntity
 	 */
-	@ExceptionHandler(AuthenticateException.class)
-	public ResponseEntity<ProblemDetail> handleAuthenticationException(AuthenticateException e) {
+	@ExceptionHandler(AuthException.class)
+	public ResponseEntity<ProblemDetail> handleAuthenticationException(AuthException e) {
 
 		ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
 			HttpStatus.UNAUTHORIZED,

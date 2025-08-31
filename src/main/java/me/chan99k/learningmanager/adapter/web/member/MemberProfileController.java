@@ -13,10 +13,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
 import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
 import me.chan99k.learningmanager.application.member.provides.MemberProfileRetrieval;
 import me.chan99k.learningmanager.application.member.provides.MemberProfileUpdate;
-import me.chan99k.learningmanager.common.exception.UnauthenticatedException;
+import me.chan99k.learningmanager.common.exception.AuthException;
 
 @RestController
 @RequestMapping("/api/v1/members")
@@ -68,7 +69,7 @@ public class MemberProfileController {
 
 	private Long extractMemberIdFromAuthentication() {
 		return AuthenticationContextHolder.getCurrentMemberId()
-			.orElseThrow(() -> new UnauthenticatedException("[System] 사용자 인증이 필요합니다"));
+			.orElseThrow(() -> new AuthException(AuthProblemCode.AUTHENTICATION_REQUIRED));
 	}
 
 }
