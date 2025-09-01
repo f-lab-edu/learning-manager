@@ -10,6 +10,7 @@ public enum CourseProblemCode implements ProblemCode {
 	COURSE_MEMBER_NOT_REGISTERED("DCL004", "[System] 과정에 등록되지 않은 멤버입니다."),
 	CURRICULUM_NULL("DCL005", "[System] 제거할 커리큘럼은 null일 수 없습니다."),
 	CURRICULUM_NOT_FOUND_IN_COURSE("DCL006", "[System] 해당 과정에 존재하지 않는 커리큘럼입니다."),
+	COURSE_NOT_FOUND("DCL014", "[System] 해당 과정을 찾을 수 없습니다"),
 
 	// CourseMember related
 	COURSE_REQUIRED("DCL007", "[System] 코스는 필수입니다."),

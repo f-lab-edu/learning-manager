@@ -32,7 +32,8 @@ import me.chan99k.learningmanager.adapter.auth.jwt.AccessJwtTokenProvider;
 import me.chan99k.learningmanager.adapter.auth.jwt.InMemoryJwtTokenRevocationProvider;
 import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
 import me.chan99k.learningmanager.application.course.provides.CourseCreation;
-import me.chan99k.learningmanager.common.exception.AuthException;
+import me.chan99k.learningmanager.common.exception.AuthenticationException;
+import me.chan99k.learningmanager.common.exception.AuthorizationException;
 
 @WebMvcTest(controllers = CourseCreateController.class)
 @Import({
@@ -161,7 +162,8 @@ class CourseCreateControllerTest {
 
 		given(courseCreationService.createCourse(any(CourseCreation.Request.class)))
 			.willThrow(
-				new AuthException(me.chan99k.learningmanager.adapter.auth.AuthProblemCode.AUTHORIZATION_REQUIRED));
+				new AuthorizationException(
+					me.chan99k.learningmanager.adapter.auth.AuthProblemCode.AUTHORIZATION_REQUIRED));
 
 		// when & then
 		MvcResult mvcResult = mockMvc.perform(post("/api/v1/courses")
@@ -174,7 +176,7 @@ class CourseCreateControllerTest {
 
 		mockMvc.perform(asyncDispatch(mvcResult))
 			.andDo(print())
-			.andExpect(status().isBadRequest())
+			.andExpect(status().isForbidden())
 			.andExpect(content().contentType("application/problem+json"));
 	}
 
@@ -185,7 +187,7 @@ class CourseCreateControllerTest {
 		CourseCreation.Request request = new CourseCreation.Request("Spring Boot 스터디", "Spring Boot 심화 과정");
 
 		given(courseCreation.createCourse(any(CourseCreation.Request.class)))
-			.willThrow(new AuthException(
+			.willThrow(new AuthenticationException(
 				me.chan99k.learningmanager.adapter.auth.AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
 
 		mockMvc.perform(post("/api/v1/courses")

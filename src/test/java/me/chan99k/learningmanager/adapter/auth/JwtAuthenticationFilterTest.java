@@ -17,7 +17,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import me.chan99k.learningmanager.common.exception.AuthException;
+import me.chan99k.learningmanager.common.exception.AuthenticationException;
 
 @ExtendWith(MockitoExtension.class)
 class JwtAuthenticationFilterTest {
@@ -113,7 +113,7 @@ class JwtAuthenticationFilterTest {
 		request.setRequestURI("/api/v1/members/profile");
 
 		given(accessTokenProvider.validateAccessToken(invalidToken))
-			.willThrow(new AuthException(AuthProblemCode.FAILED_TO_VALIDATE_TOKEN));
+			.willThrow(new AuthenticationException(AuthProblemCode.FAILED_TO_VALIDATE_TOKEN));
 
 		// when
 		filter.doFilter(request, response, filterChain);
@@ -135,7 +135,7 @@ class JwtAuthenticationFilterTest {
 		request.addHeader("Authorization", "Bearer " + problematicToken);
 		request.setRequestURI("/api/v1/member/profile");
 
-		AuthException originalException = new AuthException(
+		AuthenticationException originalException = new AuthenticationException(
 			AuthProblemCode.FAILED_TO_VALIDATE_TOKEN
 		);
 		when(accessTokenProvider.validateAccessToken(problematicToken)).thenThrow(originalException);
@@ -162,7 +162,7 @@ class JwtAuthenticationFilterTest {
 
 		when(accessTokenProvider.validateAccessToken(validToken)).thenReturn(true);
 
-		AuthException originalException = new AuthException(
+		AuthenticationException originalException = new AuthenticationException(
 			AuthProblemCode.INVALID_TOKEN_SUBJECT
 		);
 		when(accessTokenProvider.getIdFromAccessToken(validToken)).thenThrow(originalException);
@@ -237,7 +237,7 @@ class JwtAuthenticationFilterTest {
 		resolveTokenMethod.setAccessible(true);
 
 		assertThatThrownBy(() -> resolveTokenMethod.invoke(filter, request))
-			.hasCauseInstanceOf(AuthException.class)
+			.hasCauseInstanceOf(AuthenticationException.class)
 			.hasRootCauseMessage("[System] Authorization 헤더가 없습니다");
 	}
 }

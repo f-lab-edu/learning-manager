@@ -17,4 +17,9 @@ public class CourseCommandAdapter implements CourseCommandRepository {
 	public Course create(Course course) {
 		return jpaCourseRepository.save(course);
 	}
+
+	@Override
+	public Course save(Course course) {
+		return jpaCourseRepository.save(course);
+	}
 }

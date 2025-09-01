@@ -11,7 +11,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import me.chan99k.learningmanager.common.exception.AuthException;
+import me.chan99k.learningmanager.common.exception.AuthenticationException;
+import me.chan99k.learningmanager.common.exception.AuthorizationException;
 import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.MemberProblemCode;
 
@@ -44,13 +45,14 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.badRequest().body(problemDetail);
 	}
 
+
 	/**
-	 * AuthException 을 가로챈다.
-	 * @param e AuthException
+	 * AuthenticationException 을 가로챈다.
+	 * @param e AuthenticationException
 	 * @return 401, ResponseEntity
 	 */
-	@ExceptionHandler(AuthException.class)
-	public ResponseEntity<ProblemDetail> handleAuthenticationException(AuthException e) {
+	@ExceptionHandler(AuthenticationException.class)
+	public ResponseEntity<ProblemDetail> handleAuthenticationException(AuthenticationException e) {
 
 		ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
 			HttpStatus.UNAUTHORIZED,
@@ -61,7 +63,27 @@ public class GlobalExceptionHandler {
 		problemDetail.setTitle("Authentication Error");
 		problemDetail.setProperty("code", e.getProblemCode().getCode());
 
-		return ResponseEntity.badRequest().body(problemDetail);
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail);
+	}
+
+	/**
+	 * AuthorizationException 을 가로챈다.
+	 * @param e AuthorizationException
+	 * @return 403, ResponseEntity
+	 */
+	@ExceptionHandler(AuthorizationException.class)
+	public ResponseEntity<ProblemDetail> handleAuthorizationException(AuthorizationException e) {
+
+		ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+			HttpStatus.FORBIDDEN,
+			e.getProblemCode().getMessage()
+		);
+
+		problemDetail.setType(URI.create("https://api.lm.com/errors/" + e.getProblemCode().getCode()));
+		problemDetail.setTitle("Authorization Error");
+		problemDetail.setProperty("code", e.getProblemCode().getCode());
+
+		return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problemDetail);
 	}
 
 	/**

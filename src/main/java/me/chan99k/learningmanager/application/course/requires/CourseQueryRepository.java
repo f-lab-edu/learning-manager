@@ -9,4 +9,6 @@ public interface CourseQueryRepository {
 
 	Optional<Course> findByTitle(String title);
 
+	boolean isCourseManager(Long courseId, Long memberId);
+
 }
