@@ -40,7 +40,7 @@ public class CourseMemberController {
 
 				CourseMemberAddition.Response response = new CourseMemberAddition.Response(
 					1, 1, 0,
-					List.of(new CourseMemberAddition.MemberResult(item.email(), item.role(), "SUCCESS", "과정 멤버 추가에 성공"))
+					List.of(new CourseMemberAddition.MemberResult(item.email(), item.role(), "SUCCESS", "과정 멤버 추가 성공"))
 				);
 
 				return ResponseEntity.ok(response);
