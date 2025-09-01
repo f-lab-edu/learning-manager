@@ -116,30 +116,46 @@ class CurriculumUpdateControllerTest {
 	}
 
 	@Test
-	@DisplayName("[Failure] 제목이 null이면 400 Bad Request를 반환한다")
-	void updateCurriculum_Fail_NullTitle() throws Exception {
+	@DisplayName("[Failure] 제목과 설명이 모두 null이면 400 Bad Request를 반환한다")
+	void updateCurriculum_Fail_BothFieldsNull() throws Exception {
 		// given
-		CurriculumInfoUpdate.Request request = new CurriculumInfoUpdate.Request(null, "Description");
+		CurriculumInfoUpdate.Request request = new CurriculumInfoUpdate.Request(null, null);
+		doThrow(new IllegalArgumentException("제목 또는 설명 중 하나 이상을 입력해주세요"))
+			.when(curriculumInfoUpdate)
+			.updateCurriculumInfo(anyLong(), anyLong(), any(CurriculumInfoUpdate.Request.class));
 
-		// when & then
-		mockMvc.perform(put("/api/v1/courses/{courseId}/curriculums/{curriculumId}", 1L, 10L)
+		// when
+		MvcResult mvcResult = mockMvc.perform(put("/api/v1/courses/{courseId}/curriculums/{curriculumId}", 1L, 10L)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.title").value("Validation Error"))
-			.andExpect(jsonPath("$.detail").value("제목을 입력해주세요"));
+			.andExpect(request().asyncStarted())
+			.andReturn();
+
+		// then
+		mockMvc.perform(asyncDispatch(mvcResult))
+			.andExpect(status().isBadRequest());
 	}
 
 	@Test
-	@DisplayName("[Failure] 요청 본문이 비어있으면 400 Bad Request를 반환한다")
-	void updateCurriculum_Fail_EmptyBody() throws Exception {
-		// when & then
-		mockMvc.perform(put("/api/v1/courses/{courseId}/curriculums/{curriculumId}", 1L, 10L)
+	@DisplayName("[Success] 설명만 수정 요청이 성공하면 200 OK를 반환한다")
+	void updateCurriculum_DescriptionOnly_Success() throws Exception {
+		// given
+		CurriculumInfoUpdate.Request request = new CurriculumInfoUpdate.Request(null, "Updated Description");
+		doNothing().when(curriculumInfoUpdate)
+			.updateCurriculumInfo(anyLong(), anyLong(), any(CurriculumInfoUpdate.Request.class));
+
+		// when
+		MvcResult mvcResult = mockMvc.perform(put("/api/v1/courses/{courseId}/curriculums/{curriculumId}", 1L, 10L)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
-				.content("{}"))
-			.andExpect(status().isBadRequest());
+				.content(objectMapper.writeValueAsString(request)))
+			.andExpect(request().asyncStarted())
+			.andReturn();
+
+		// then
+		mockMvc.perform(asyncDispatch(mvcResult))
+			.andExpect(status().isOk());
 	}
 
 	@Test

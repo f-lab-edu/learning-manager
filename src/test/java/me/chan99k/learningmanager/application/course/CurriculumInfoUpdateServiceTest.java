@@ -164,6 +164,18 @@ class CurriculumInfoUpdateServiceTest {
 	}
 
 	@Test
+	@DisplayName("[Failure] 제목과 설명이 모두 null이면 IllegalArgumentException이 발생한다")
+	void updateCurriculumInfo_Fail_BothFieldsNull() {
+		// given
+		CurriculumInfoUpdate.Request request = new CurriculumInfoUpdate.Request(null, null);
+
+		// when & then
+		assertThatThrownBy(() -> service.updateCurriculumInfo(courseId, curriculumId, request))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessageContaining("제목 또는 설명 중 하나 이상을 입력해주세요");
+	}
+
+	@Test
 	@DisplayName("[Failure] 제목이 유효하지 않으면 도메인 예외가 발생한다")
 	void updateCurriculumInfo_Fail_InvalidTitle() {
 		// given
