@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
+import java.util.List;
 import java.util.concurrent.Executor;
 
 import org.junit.jupiter.api.AfterEach;
@@ -75,26 +76,37 @@ class CourseMemberControllerTest {
 	}
 
 	@Test
-	@DisplayName("[Success] 유효한 요청으로 멤버 추가에 성공하면 200 OK를 반환한다")
-	void addMember_Success() throws Exception {
+	@DisplayName("[Success] 단일 멤버 추가 요청이 성공하면 200 OK를 반환한다")
+	void addSingleMember_Success() throws Exception {
 		// given
-		CourseMemberAddition.Request request = new CourseMemberAddition.Request("add@example.com", CourseRole.MENTEE);
-		when(courseMemberService.addMemberToCourse(anyLong(), any(CourseMemberAddition.Request.class)))
-			.thenReturn(new CourseMemberAddition.Response());
+		CourseMemberAddition.Request request = new CourseMemberAddition.Request(List.of(
+			new CourseMemberAddition.MemberAdditionItem("add@example.com", CourseRole.MENTEE)
+		));
+		// 단일 요청이므로 addSingleMember 메서드가 호출됨 (void 반환)
+		doNothing().when(courseMemberService)
+			.addSingleMember(anyLong(), any(CourseMemberAddition.MemberAdditionItem.class));
 
-		// when & then
-		mockMvc.perform(post("/api/v1/courses/{courseId}/members", 1L)
+		// when
+		MvcResult mvcResult = mockMvc.perform(post("/api/v1/courses/{courseId}/members", 1L)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(status().isOk());
+			.andExpect(request().asyncStarted())
+			.andReturn();
+
+		// then
+		mockMvc.perform(asyncDispatch(mvcResult))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.totalCount").value(1))
+			.andExpect(jsonPath("$.successCount").value(1))
+			.andExpect(jsonPath("$.failureCount").value(0));
 	}
 
 	@Test
 	@DisplayName("[Failure] 요청 본문이 유효하지 않으면 400 Bad Request를 반환한다")
 	void addMember_Fail_InvalidRequest() throws Exception {
 		// given
-		CourseMemberAddition.Request request = new CourseMemberAddition.Request(null, CourseRole.MENTEE);
+		CourseMemberAddition.Request request = new CourseMemberAddition.Request(List.of());
 
 		// when & then
 		mockMvc.perform(post("/api/v1/courses/{courseId}/members", 1L)
@@ -106,12 +118,49 @@ class CourseMemberControllerTest {
 	}
 
 	@Test
-	@DisplayName("[Failure] 서비스에서 권한 없음 예외 발생 시 401 Unauthorized를 반환한다")
-	void addMember_Fail_Authorization() throws Exception {
+	@DisplayName("[Success] 벌크 멤버 추가 요청이 성공하면 207 Multi-Status를 반환한다")
+	void addBulkMembers_Success() throws Exception {
 		// given
-		CourseMemberAddition.Request request = new CourseMemberAddition.Request("add@example.com", CourseRole.MENTEE);
+		CourseMemberAddition.Request request = new CourseMemberAddition.Request(List.of(
+			new CourseMemberAddition.MemberAdditionItem("member1@example.com", CourseRole.MENTEE),
+			new CourseMemberAddition.MemberAdditionItem("member2@example.com", CourseRole.MENTEE)
+		));
+		CourseMemberAddition.Response response = new CourseMemberAddition.Response(
+			2, 2, 0,
+			List.of(
+				new CourseMemberAddition.MemberResult("member1@example.com", CourseRole.MENTEE, "SUCCESS",
+					"과정 멤버 추가 성공"),
+				new CourseMemberAddition.MemberResult("member2@example.com", CourseRole.MENTEE, "SUCCESS",
+					"과정 멤버 추가 성공")
+			)
+		);
+		when(courseMemberService.addMultipleMembers(anyLong(), anyList())).thenReturn(response);
+
+		// when
+		MvcResult mvcResult = mockMvc.perform(post("/api/v1/courses/{courseId}/members", 1L)
+				.header("Authorization", "Bearer valid-token")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andExpect(request().asyncStarted())
+			.andReturn();
+
+		// then
+		mockMvc.perform(asyncDispatch(mvcResult))
+			.andExpect(status().isMultiStatus())
+			.andExpect(jsonPath("$.totalCount").value(2))
+			.andExpect(jsonPath("$.successCount").value(2))
+			.andExpect(jsonPath("$.failureCount").value(0));
+	}
+
+	@Test
+	@DisplayName("[Failure] 단일 멤버 추가에서 권한 없음 예외 발생 시 403 Forbidden을 반환한다")
+	void addSingleMember_Fail_Authorization() throws Exception {
+		// given
+		CourseMemberAddition.Request request = new CourseMemberAddition.Request(List.of(
+			new CourseMemberAddition.MemberAdditionItem("add@example.com", CourseRole.MENTEE)
+		));
 		doThrow(new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED))
-			.when(courseMemberService).addMemberToCourse(anyLong(), any(CourseMemberAddition.Request.class));
+			.when(courseMemberService).addSingleMember(anyLong(), any(CourseMemberAddition.MemberAdditionItem.class));
 
 		// when
 		MvcResult mvcResult = mockMvc.perform(post("/api/v1/courses/{courseId}/members", 1L)
@@ -128,12 +177,14 @@ class CourseMemberControllerTest {
 	}
 
 	@Test
-	@DisplayName("[Failure] 서비스에서 도메인 예외(과정 없음) 발생 시 400 Bad Request를 반환한다")
-	void addMember_Fail_CourseNotFound() throws Exception {
+	@DisplayName("[Failure] 단일 멤버 추가에서 도메인 예외(과정 없음) 발생 시 400 Bad Request를 반환한다")
+	void addSingleMember_Fail_CourseNotFound() throws Exception {
 		// given
-		CourseMemberAddition.Request request = new CourseMemberAddition.Request("add@example.com", CourseRole.MENTEE);
+		CourseMemberAddition.Request request = new CourseMemberAddition.Request(List.of(
+			new CourseMemberAddition.MemberAdditionItem("add@example.com", CourseRole.MENTEE)
+		));
 		doThrow(new DomainException(CourseProblemCode.COURSE_NOT_FOUND))
-			.when(courseMemberService).addMemberToCourse(anyLong(), any(CourseMemberAddition.Request.class));
+			.when(courseMemberService).addSingleMember(anyLong(), any(CourseMemberAddition.MemberAdditionItem.class));
 
 		// when
 		MvcResult mvcResult = mockMvc.perform(post("/api/v1/courses/{courseId}/members", 999L)

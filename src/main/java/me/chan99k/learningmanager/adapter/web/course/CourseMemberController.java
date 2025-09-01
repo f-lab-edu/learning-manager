@@ -1,8 +1,10 @@
 package me.chan99k.learningmanager.adapter.web.course;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,12 +28,30 @@ public class CourseMemberController {
 	}
 
 	@PostMapping("/{courseId}/members")
-	public CompletableFuture<ResponseEntity<Void>> addMemberToCourse(
+	public CompletableFuture<ResponseEntity<CourseMemberAddition.Response>> addMembersToCourse(
 		@PathVariable Long courseId,
 		@Valid @RequestBody CourseMemberAddition.Request request
 	) {
-		return CompletableFuture.runAsync(() -> {
-			courseMemberService.addMemberToCourse(courseId, request);
-		}, courseTaskExecutor).thenApply(v -> ResponseEntity.ok().build());
+		return CompletableFuture.supplyAsync(() -> {
+			if (request.members().size() == 1) {    // 단일 요청: 예외 발생 시 전역 핸들러가 처리
+				CourseMemberAddition.MemberAdditionItem item = request.members().get(0);
+
+				courseMemberService.addSingleMember(courseId, item);
+
+				CourseMemberAddition.Response response = new CourseMemberAddition.Response(
+					1, 1, 0,
+					List.of(new CourseMemberAddition.MemberResult(item.email(), item.role(), "SUCCESS", "과정 멤버 추가에 성공"))
+				);
+
+				return ResponseEntity.ok(response);
+			} else {    // 벌크 요청: 207 Multi-Status
+				CourseMemberAddition.Response response = courseMemberService.addMultipleMembers(courseId,
+					request.members());
+
+				return ResponseEntity.status(HttpStatus.MULTI_STATUS).body(response);
+			}
+
+		}, courseTaskExecutor);
+
 	}
 }

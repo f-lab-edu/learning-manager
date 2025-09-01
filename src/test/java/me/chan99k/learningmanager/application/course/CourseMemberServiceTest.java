@@ -21,6 +21,7 @@ import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
 import me.chan99k.learningmanager.application.course.provides.CourseMemberAddition;
 import me.chan99k.learningmanager.application.course.requires.CourseCommandRepository;
 import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
+import me.chan99k.learningmanager.application.member.requires.MemberEmailPair;
 import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
 import me.chan99k.learningmanager.common.exception.AuthenticationException;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
@@ -64,136 +65,161 @@ class CourseMemberServiceTest {
 	}
 
 	private CourseMemberAddition.Request createRequest(String email, CourseRole role) {
-		return new CourseMemberAddition.Request(email, role);
+		return new CourseMemberAddition.Request(List.of(
+			new CourseMemberAddition.MemberAdditionItem(email, role)
+		));
 	}
 
 	@Test
 	@DisplayName("[Success] 과정 매니저가 새로운 멤버를 성공적으로 추가한다")
-	void addMemberToCourse_Success() {
-		// given
-		CourseMemberAddition.Request request = createRequest(memberToAddEmail, CourseRole.MENTEE);
+	void addSingleMember_Success() {
+		CourseMemberAddition.MemberAdditionItem item = new CourseMemberAddition.MemberAdditionItem(memberToAddEmail,
+			CourseRole.MENTEE);
 
 		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
 			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
+			when(courseQueryRepository.isCourseManager(courseId, managerId)).thenReturn(true);
 			when(courseQueryRepository.findById(courseId)).thenReturn(Optional.of(course));
 			when(memberQueryRepository.findByEmail(Email.of(memberToAddEmail))).thenReturn(Optional.of(memberToAdd));
 
-			// isManager 권한 확인을 위한 설정
-			when(course.getCourseMemberList()).thenReturn(List.of(courseMember));
-			when(courseMember.getMemberId()).thenReturn(managerId);
-			when(courseMember.getCourseRole()).thenReturn(CourseRole.MANAGER);
+			courseMemberService.addSingleMember(courseId, item);
 
-			// when
-			courseMemberService.addMemberToCourse(courseId, request);
-
-			// then
 			verify(course).addMember(memberToAddId, CourseRole.MENTEE);
 			verify(courseCommandRepository).save(course);
 		}
 	}
 
 	@Test
-	@DisplayName("[Failure] 인증된 사용자 정보가 없으면 AuthException이 발생한다")
-	void addMemberToCourse_Fail_Unauthenticated() {
-		// given
-		CourseMemberAddition.Request request = createRequest(memberToAddEmail, CourseRole.MENTEE);
+	@DisplayName("[Failure] 단일 요청에서 인증된 사용자 정보가 없으면 AuthException이 발생한다")
+	void addSingleMember_Fail_Unauthenticated() {
+		CourseMemberAddition.MemberAdditionItem item = new CourseMemberAddition.MemberAdditionItem(memberToAddEmail,
+			CourseRole.MENTEE);
 
 		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
 			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.empty());
 
-			// when & then
-			assertThatThrownBy(() -> courseMemberService.addMemberToCourse(courseId, request))
+			assertThatThrownBy(() -> courseMemberService.addSingleMember(courseId, item))
 				.isInstanceOf(AuthenticationException.class)
 				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND);
 		}
 	}
 
 	@Test
-	@DisplayName("[Failure] 과정이 존재하지 않으면 DomainException이 발생한다")
-	void addMemberToCourse_Fail_CourseNotFound() {
-		// given
-		CourseMemberAddition.Request request = createRequest(memberToAddEmail, CourseRole.MENTEE);
+	@DisplayName("[Failure] 단일 요청에서 과정이 존재하지 않으면 DomainException이 발생한다")
+	void addSingleMember_Fail_CourseNotFound() {
+		CourseMemberAddition.MemberAdditionItem item = new CourseMemberAddition.MemberAdditionItem(memberToAddEmail,
+			CourseRole.MENTEE);
 
 		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
 			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
+			when(courseQueryRepository.isCourseManager(courseId, managerId)).thenReturn(true);
 			when(courseQueryRepository.findById(courseId)).thenReturn(Optional.empty());
 
-			// when & then
-			assertThatThrownBy(() -> courseMemberService.addMemberToCourse(courseId, request))
+			assertThatThrownBy(() -> courseMemberService.addSingleMember(courseId, item))
 				.isInstanceOf(DomainException.class)
 				.hasFieldOrPropertyWithValue("problemCode", CourseProblemCode.COURSE_NOT_FOUND);
 		}
 	}
 
 	@Test
-	@DisplayName("[Failure] 요청자가 과정의 매니저가 아니면 AuthException이 발생한다")
-	void addMemberToCourse_Fail_NotManager() {
-		// given
-		CourseMemberAddition.Request request = createRequest(memberToAddEmail, CourseRole.MENTEE);
+	@DisplayName("[Failure] 단일 요청에서 요청자가 과정의 매니저가 아니면 AuthException이 발생한다")
+	void addSingleMember_Fail_NotManager() {
+		CourseMemberAddition.MemberAdditionItem item = new CourseMemberAddition.MemberAdditionItem(memberToAddEmail,
+			CourseRole.MENTEE);
 
 		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
 			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(courseQueryRepository.findById(courseId)).thenReturn(Optional.of(course));
+			when(courseQueryRepository.isCourseManager(courseId, managerId)).thenReturn(false);
 
-			// isManager 권한 확인을 위한 설정 (MENTEE 역할로 설정)
-			when(course.getCourseMemberList()).thenReturn(List.of(courseMember));
-			when(courseMember.getMemberId()).thenReturn(managerId);
-			when(courseMember.getCourseRole()).thenReturn(CourseRole.MENTEE);
-
-			// when & then
-			assertThatThrownBy(() -> courseMemberService.addMemberToCourse(courseId, request))
+			assertThatThrownBy(() -> courseMemberService.addSingleMember(courseId, item))
 				.isInstanceOf(AuthorizationException.class)
 				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
 		}
 	}
 
 	@Test
-	@DisplayName("[Failure] 추가하려는 멤버가 존재하지 않으면 DomainException이 발생한다")
-	void addMemberToCourse_Fail_MemberToAddNotFound() {
+	@DisplayName("[Failure] 단일 요청에서 추가하려는 멤버가 존재하지 않으면 DomainException이 발생한다")
+	void addSingleMember_Fail_MemberNotFound() {
 		// given
-		CourseMemberAddition.Request request = createRequest(memberToAddEmail, CourseRole.MENTEE);
+		CourseMemberAddition.MemberAdditionItem item = new CourseMemberAddition.MemberAdditionItem(memberToAddEmail,
+			CourseRole.MENTEE);
 
 		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
 			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
+			when(courseQueryRepository.isCourseManager(courseId, managerId)).thenReturn(true);
 			when(courseQueryRepository.findById(courseId)).thenReturn(Optional.of(course));
 			when(memberQueryRepository.findByEmail(Email.of(memberToAddEmail))).thenReturn(Optional.empty());
 
-			// isManager 권한 확인
-			when(course.getCourseMemberList()).thenReturn(List.of(courseMember));
-			when(courseMember.getMemberId()).thenReturn(managerId);
-			when(courseMember.getCourseRole()).thenReturn(CourseRole.MANAGER);
-
 			// when & then
-			assertThatThrownBy(() -> courseMemberService.addMemberToCourse(courseId, request))
+			assertThatThrownBy(() -> courseMemberService.addSingleMember(courseId, item))
 				.isInstanceOf(DomainException.class)
 				.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.MEMBER_NOT_FOUND);
 		}
 	}
 
 	@Test
-	@DisplayName("[Failure] 멤버를 추가하는 도중 도메인 규칙(이미 멤버가 존재)을 위반하면 예외가 발생한다")
-	void addMemberToCourse_Fail_DomainRuleViolation() {
-		// given
-		CourseMemberAddition.Request request = createRequest(memberToAddEmail, CourseRole.MENTEE);
+	@DisplayName("[Failure] 벌크 요청에서 일부 멤버가 존재하지 않으면 실패 정보가 반환된다")
+	void addMultipleMembers_PartialSuccess_MemberNotFound() {
+		List<CourseMemberAddition.MemberAdditionItem> members = List.of(
+			new CourseMemberAddition.MemberAdditionItem("success@example.com", CourseRole.MENTEE),
+			new CourseMemberAddition.MemberAdditionItem("notfound@example.com", CourseRole.MENTEE)
+		);
+
+		// 성공할 멤버만 반환되도록 Mock 설정
+		MemberEmailPair successPair = new MemberEmailPair(memberToAdd, "success@example.com");
+		List<MemberEmailPair> foundPairs = List.of(successPair);
+
+		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
+			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
+			when(courseQueryRepository.isCourseManager(courseId, managerId)).thenReturn(true);
+			when(courseQueryRepository.findById(courseId)).thenReturn(Optional.of(course));
+			when(memberQueryRepository.findMembersByEmails(anyList(), eq(100))).thenReturn(foundPairs);
+
+			CourseMemberAddition.Response response = courseMemberService.addMultipleMembers(courseId, members);
+
+			assertThat(response.totalCount()).isEqualTo(2);
+			assertThat(response.successCount()).isEqualTo(1);
+			assertThat(response.failureCount()).isEqualTo(1);
+			assertThat(response.results()).hasSize(2);
+
+			// 성공 결과 확인
+			assertThat(response.results().get(0).email()).isEqualTo("success@example.com");
+			assertThat(response.results().get(0).status()).isEqualTo("SUCCESS");
+
+			// 실패 결과 확인
+			assertThat(response.results().get(1).email()).isEqualTo("notfound@example.com");
+			assertThat(response.results().get(1).status()).isEqualTo("FAILED");
+			assertThat(response.results().get(1).message()).contains("해당 회원이 존재하지 않습니다");
+
+			verify(courseCommandRepository).save(course);
+		}
+	}
+
+	@Test
+	@DisplayName("[Failure] 벌크 요청에서 도메인 규칙 위반 시 실패 정보가 반환된다")
+	void addMultipleMembers_Fail_DomainRuleViolation() {
+		List<CourseMemberAddition.MemberAdditionItem> members = List.of(
+			new CourseMemberAddition.MemberAdditionItem(memberToAddEmail, CourseRole.MENTEE)
+		);
+		MemberEmailPair memberPair = new MemberEmailPair(memberToAdd, memberToAddEmail);
 		doThrow(new IllegalArgumentException(CourseProblemCode.COURSE_MEMBER_ALREADY_REGISTERED.getMessage()))
 			.when(course).addMember(anyLong(), any(CourseRole.class));
 
 		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
 			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
+			when(courseQueryRepository.isCourseManager(courseId, managerId)).thenReturn(true);
 			when(courseQueryRepository.findById(courseId)).thenReturn(Optional.of(course));
-			when(memberQueryRepository.findByEmail(Email.of(memberToAddEmail))).thenReturn(Optional.of(memberToAdd));
+			when(memberQueryRepository.findMembersByEmails(anyList(), eq(100))).thenReturn(List.of(memberPair));
 
-			// isManager 권한 확인
-			when(course.getCourseMemberList()).thenReturn(List.of(courseMember));
-			when(courseMember.getMemberId()).thenReturn(managerId);
-			when(courseMember.getCourseRole()).thenReturn(CourseRole.MANAGER);
+			CourseMemberAddition.Response response = courseMemberService.addMultipleMembers(courseId, members);
 
-			// when & then
-			assertThatThrownBy(() -> courseMemberService.addMemberToCourse(courseId, request))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage(CourseProblemCode.COURSE_MEMBER_ALREADY_REGISTERED.getMessage());
+			assertThat(response.totalCount()).isEqualTo(1);
+			assertThat(response.successCount()).isEqualTo(0);
+			assertThat(response.failureCount()).isEqualTo(1);
+			assertThat(response.results().get(0).status()).isEqualTo("FAILED");
+			assertThat(response.results().get(0).message()).contains("이미 과정에 등록된 멤버");
 
-			verify(courseCommandRepository, never()).save(any(Course.class));
+			verify(courseCommandRepository).save(course);
 		}
 	}
 }

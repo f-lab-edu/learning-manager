@@ -90,10 +90,8 @@ class CourseCreationServiceTest {
 	@Test
 	@DisplayName("[Failure] 인증되지 않은 사용자는 과정 생성에 실패한다")
 	void test03() {
-		// given
 		CourseCreation.Request request = new CourseCreation.Request("Test Course", "Test Description");
 
-		// when & then
 		try (MockedStatic<AuthenticationContextHolder> mockedContextHolder = mockStatic(
 			AuthenticationContextHolder.class)) {
 			mockedContextHolder.when(AuthenticationContextHolder::getCurrentMemberId)
