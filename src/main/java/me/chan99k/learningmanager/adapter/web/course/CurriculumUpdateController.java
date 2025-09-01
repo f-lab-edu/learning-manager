@@ -31,7 +31,7 @@ public class CurriculumUpdateController {
 	public CompletableFuture<ResponseEntity<Void>> updateCurriculum(
 		@PathVariable Long courseId,
 		@PathVariable Long curriculumId,
-		@Valid @RequestBody CurriculumInfoUpdate.Request request) {
+		@RequestBody CurriculumInfoUpdate.Request request) {
 		return CompletableFuture.supplyAsync(() -> {
 			curriculumInfoUpdate.updateCurriculumInfo(courseId, curriculumId, request);
 			return ResponseEntity.ok().build();
