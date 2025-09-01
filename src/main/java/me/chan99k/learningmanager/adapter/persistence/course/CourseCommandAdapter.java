@@ -22,4 +22,9 @@ public class CourseCommandAdapter implements CourseCommandRepository {
 	public Course save(Course course) {
 		return jpaCourseRepository.save(course);
 	}
+
+	@Override
+	public void delete(Course course) {
+		jpaCourseRepository.delete(course);
+	}
 }

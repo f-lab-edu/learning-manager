@@ -6,4 +6,6 @@ public interface CourseCommandRepository {
 	Course create(Course course);
 
 	Course save(Course course);
+
+	void delete(Course course);
 }
