@@ -223,7 +223,14 @@ class CourseCurriculumAdditionControllerTest {
 		mockMvc.perform(post("/api/v1/courses/{courseId}/curriculums", courseId)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
-				.content("{ invalid json }"))
+				.content(
+					"""
+						{
+							"invalid": "json"
+						}
+						"""
+				)
+			)
 			.andExpect(status().isBadRequest());
 	}
 
