@@ -6,6 +6,7 @@ import static org.springframework.util.Assert.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -48,11 +49,6 @@ public class Course extends AbstractEntity {
 		this.description = newDescription;
 	}
 
-	public boolean isManager(Long memberId) {
-		return this.courseMemberList.stream()
-			.anyMatch(cm -> cm.getMemberId().equals(memberId) && cm.getCourseRole() == CourseRole.MANAGER);
-	}
-
 	public void addMember(Long memberId, CourseRole courseRole) {
 		boolean alreadyExists = this.courseMemberList.stream().anyMatch(
 			member -> member.getMemberId().equals(memberId)
@@ -85,6 +81,17 @@ public class Course extends AbstractEntity {
 		boolean removed = this.curriculumList.remove(curriculum);
 
 		isTrue(removed, CURRICULUM_NOT_FOUND_IN_COURSE.getMessage() + " ID: " + curriculum.getId());
+	}
+
+	public Curriculum findCurriculumById(Long curriculumId) {
+		notNull(curriculumId, "[System] 커리큘럼 ID 는 필수입니다");
+
+		return this.curriculumList.stream()
+			.filter(curriculum -> Objects.equals(curriculum.getId(), curriculumId))
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException(
+				CURRICULUM_NOT_FOUND_IN_COURSE.getMessage() + " ID: " + curriculumId
+			));
 	}
 
 	/* 게터 로직 */
