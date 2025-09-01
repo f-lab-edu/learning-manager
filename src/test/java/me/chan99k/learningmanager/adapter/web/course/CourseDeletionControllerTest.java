@@ -64,7 +64,7 @@ class CourseDeletionControllerTest {
 			.andReturn();
 
 		mockMvc.perform(asyncDispatch(mvcResult))
-			.andExpect(status().isOk());
+			.andExpect(status().isNoContent());
 	}
 
 	@Test

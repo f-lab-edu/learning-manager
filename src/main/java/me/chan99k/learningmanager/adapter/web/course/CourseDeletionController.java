@@ -29,7 +29,7 @@ public class CourseDeletionController {
 	) {
 		return CompletableFuture.supplyAsync(() -> {
 			courseDeletion.deleteCourse(courseId);
-			return ResponseEntity.ok().build();
+			return ResponseEntity.noContent().build();
 		}, courseTaskExecutor);
 	}
 }
