@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,14 +28,19 @@ import me.chan99k.learningmanager.domain.member.MemberProblemCode;
 @Service
 @Transactional
 public class CourseMemberService implements CourseMemberAddition {
-	private final static int MAX_BULK_SIZE = 100;
+
+	private final int MAX_BULK_SIZE;
 
 	private final CourseQueryRepository queryRepository;
 	private final CourseCommandRepository commandRepository;
 	private final MemberQueryRepository memberQueryRepository;
 
-	public CourseMemberService(CourseQueryRepository queryRepository, CourseCommandRepository commandRepository,
-		MemberQueryRepository memberQueryRepository) {
+	public CourseMemberService(
+		@Value("${course.member.bulk.max-size}")
+		int maxBulkSize,
+		CourseQueryRepository queryRepository,
+		CourseCommandRepository commandRepository, MemberQueryRepository memberQueryRepository) {
+		MAX_BULK_SIZE = maxBulkSize;
 		this.queryRepository = queryRepository;
 		this.commandRepository = commandRepository;
 		this.memberQueryRepository = memberQueryRepository;
@@ -42,14 +48,8 @@ public class CourseMemberService implements CourseMemberAddition {
 
 	@Override
 	public void addSingleMember(Long courseId, MemberAdditionItem item) {
-		// >>>>>>>>> TODO 권한 확인 로직 ASPECT 로 분리하기
-		Long managerId = AuthenticationContextHolder.getCurrentMemberId()
-			.orElseThrow(() -> new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
+		authenticateAndAuthorizeManager(courseId);
 
-		if (!queryRepository.isCourseManager(courseId, managerId)) {
-			throw new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED);
-		}
-		// <<<<<<<<<
 		Course course = queryRepository.findById(courseId)
 			.orElseThrow(() -> new DomainException(CourseProblemCode.COURSE_NOT_FOUND));
 
@@ -70,24 +70,14 @@ public class CourseMemberService implements CourseMemberAddition {
 			throw new IllegalArgumentException("과정 멤버 추가 요청은 한번에 최대 " + MAX_BULK_SIZE + "개까지 가능합니다");
 		}
 
-		// >>>>>>>>> TODO 권한 확인 로직 ASPECT 로 분리하기
-		Long managerId = AuthenticationContextHolder.getCurrentMemberId()
-			.orElseThrow(() -> new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
-
-		if (!queryRepository.isCourseManager(courseId, managerId)) {
-			throw new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED);
-		}
-		// <<<<<<<<<
+		authenticateAndAuthorizeManager(courseId);
 
 		Course course = queryRepository.findById(courseId)
 			.orElseThrow(() -> new DomainException(CourseProblemCode.COURSE_NOT_FOUND));
 
 		// 멤버 조회 로직
-		List<Email> emails = members.stream()
-			.map(item -> Email.of(item.email()))
-			.toList();
-		List<MemberEmailPair> memberPairs = memberQueryRepository
-			.findMembersByEmails(emails, MAX_BULK_SIZE);
+		List<Email> emails = members.stream().map(item -> Email.of(item.email())).toList();
+		List<MemberEmailPair> memberPairs = memberQueryRepository.findMembersByEmails(emails, MAX_BULK_SIZE);
 		Map<String, Member> memberMap = memberPairs.stream()
 			.collect(Collectors.toMap(MemberEmailPair::email, MemberEmailPair::member));
 
@@ -117,4 +107,19 @@ public class CourseMemberService implements CourseMemberAddition {
 
 	}
 
+	/**
+	 * Authenticates the current member and checks if they are the manager of the given course.
+	 *
+	 * @param courseId the course to check
+	 * @throws AuthenticationException if authentication context is not found
+	 * @throws AuthorizationException  if the member is not the course manager
+	 */
+	private void authenticateAndAuthorizeManager(Long courseId) {    // TODO 권한 확인 로직 ASPECT 로 분리하기
+		Long managerId = AuthenticationContextHolder.getCurrentMemberId()
+			.orElseThrow(() -> new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
+
+		if (!queryRepository.isCourseManager(courseId, managerId)) {
+			throw new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED);
+		}
+	}
 }

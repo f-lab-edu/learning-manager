@@ -16,6 +16,11 @@ jwt:
     audience: ${JWT_AUDIENCE:lxm-password-auth}
     validity-in-seconds: ${JWT_PASSWORD_RESET_TOKEN_VALIDITY:300}
 
+course:
+  member:
+    bulk:
+      max-size: 100
+
 ---
 spring:
   config:
@@ -50,6 +55,11 @@ jwt:
     audience: "lxm-dev-auth"
     validity-in-seconds: 300
 
+course:
+  member:
+    bulk:
+      max-size: 100
+
 ---
 
 spring:
@@ -81,3 +91,8 @@ jwt:
     issuer: "lxm-prod-api"
     audience: "lxm-prod-auth"
     validity-in-seconds: 300
+
+course:
+  member:
+    bulk:
+      max-size: 100

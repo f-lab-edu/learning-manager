@@ -35,3 +35,7 @@ jwt:
     audience: ${JWT_AUDIENCE:lxm-test-auth}
     validity-in-seconds: ${JWT_PASSWORD_RESET_TOKEN_VALIDITY:1800}
 
+course:
+  member:
+    bulk:
+      max-size: 100

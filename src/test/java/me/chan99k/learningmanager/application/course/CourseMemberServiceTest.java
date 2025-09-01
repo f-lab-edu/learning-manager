@@ -11,7 +11,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -41,7 +40,7 @@ class CourseMemberServiceTest {
 	private final Long managerId = 10L;
 	private final Long memberToAddId = 20L;
 	private final String memberToAddEmail = "add@example.com";
-	@InjectMocks
+
 	private CourseMemberService courseMemberService;
 	@Mock
 	private CourseQueryRepository courseQueryRepository;
@@ -60,7 +59,12 @@ class CourseMemberServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		// 기본 Mock 객체 설정
+		courseMemberService = new CourseMemberService(
+			100, // test용 bulk size 직접 지정
+			courseQueryRepository,
+			courseCommandRepository,
+			memberQueryRepository
+		);
 		lenient().when(memberToAdd.getId()).thenReturn(memberToAddId);
 	}
 
