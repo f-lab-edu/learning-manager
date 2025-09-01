@@ -29,10 +29,7 @@ public class CurriculumInfoUpdateService implements CurriculumInfoUpdate {
 
 	@Override
 	public void updateCurriculumInfo(Long courseId, Long curriculumId, CurriculumInfoUpdate.Request request) {
-		// 업데이트할 필드가 하나도 없으면 예외 발생
-		if (request.title() == null && request.description() == null) {
-			throw new IllegalArgumentException("제목 또는 설명 중 하나 이상을 입력해주세요");
-		}
+		request.validate();
 
 		Course course = authenticatedAndAuthorizedCourseByManager(courseId);
 
