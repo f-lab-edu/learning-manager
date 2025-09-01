@@ -1,7 +1,11 @@
 package me.chan99k.learningmanager.application.course.provides;
 
+import java.util.List;
+
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import me.chan99k.learningmanager.domain.course.CourseRole;
 
@@ -31,13 +35,20 @@ import me.chan99k.learningmanager.domain.course.CourseRole;
 
  */
 public interface CourseMemberAddition {
-	Response addMemberToCourse(Long courseId, Request request);
 
-	record Request(@NotBlank @Email String email, @NotNull CourseRole role) {
+	void addSingleMember(Long courseId, MemberAdditionItem item);
 
+	Response addMultipleMembers(Long courseId, List<MemberAdditionItem> members);
+
+	record Request(@NotEmpty @Valid List<MemberAdditionItem> members) {
 	}
 
-	record Response() {
+	record Response(int totalCount, int successCount, int failureCount, List<MemberResult> results) {
+	}
 
+	record MemberResult(String email, CourseRole role, String status, String message) {
+	}
+
+	record MemberAdditionItem(@NotBlank @Email String email, @NotNull CourseRole role) {
 	}
 }
