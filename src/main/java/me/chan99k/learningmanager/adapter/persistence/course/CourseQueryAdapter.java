@@ -28,7 +28,7 @@ public class CourseQueryAdapter implements CourseQueryRepository {
 	}
 
 	@Override
-	public boolean isCourseManager(Long courseId, Long memberId) {
-		return jpaCourseRepository.isCourseManager(courseId, memberId);
+	public Optional<Course> findManagedCourseById(Long courseId, Long memberId) {
+		return jpaCourseRepository.findManagedCourseById(courseId, memberId);
 	}
 }

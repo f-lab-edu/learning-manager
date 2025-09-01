@@ -11,8 +11,8 @@ import me.chan99k.learningmanager.domain.course.Course;
 public interface JpaCourseRepository extends JpaRepository<Course, Long> {
 	Optional<Course> findByTitle(String title);
 
-	@Query("SELECT CASE WHEN COUNT(cm) > 0 THEN true ELSE false END " +
-		"FROM CourseMember cm " +
-		"WHERE cm.course.id = :courseId AND cm.memberId = :memberId AND cm.courseRole = 'MANAGER'")
-	boolean isCourseManager(@Param("courseId") Long courseId, @Param("memberId") Long memberId);
+	@Query("SELECT c FROM Course c JOIN c.courseMemberList cm " +
+		"WHERE c.id = :courseId AND cm.memberId = :memberId AND cm.courseRole = 'MANAGER'")
+	Optional<Course> findManagedCourseById(@Param("courseId") Long courseId,
+		@Param("memberId") Long memberId);
 }

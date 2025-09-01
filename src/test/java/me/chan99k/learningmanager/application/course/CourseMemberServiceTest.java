@@ -82,8 +82,7 @@ class CourseMemberServiceTest {
 
 		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
 			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(courseQueryRepository.isCourseManager(courseId, managerId)).thenReturn(true);
-			when(courseQueryRepository.findById(courseId)).thenReturn(Optional.of(course));
+			when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 			when(memberQueryRepository.findByEmail(Email.of(memberToAddEmail))).thenReturn(Optional.of(memberToAdd));
 
 			courseMemberService.addSingleMember(courseId, item);
@@ -109,31 +108,15 @@ class CourseMemberServiceTest {
 	}
 
 	@Test
-	@DisplayName("[Failure] 단일 요청에서 과정이 존재하지 않으면 DomainException이 발생한다")
-	void addSingleMember_Fail_CourseNotFound() {
+	@DisplayName("[Failure] 단일 요청에서 과정이 존재하지 않거나 매니저가 아니면 AuthorizationException이 발생한다")
+	void addSingleMember_Fail_CourseNotFoundOrNotManager() {
 		CourseMemberAddition.MemberAdditionItem item = new CourseMemberAddition.MemberAdditionItem(memberToAddEmail,
 			CourseRole.MENTEE);
 
 		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
 			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(courseQueryRepository.isCourseManager(courseId, managerId)).thenReturn(true);
-			when(courseQueryRepository.findById(courseId)).thenReturn(Optional.empty());
-
-			assertThatThrownBy(() -> courseMemberService.addSingleMember(courseId, item))
-				.isInstanceOf(DomainException.class)
-				.hasFieldOrPropertyWithValue("problemCode", CourseProblemCode.COURSE_NOT_FOUND);
-		}
-	}
-
-	@Test
-	@DisplayName("[Failure] 단일 요청에서 요청자가 과정의 매니저가 아니면 AuthException이 발생한다")
-	void addSingleMember_Fail_NotManager() {
-		CourseMemberAddition.MemberAdditionItem item = new CourseMemberAddition.MemberAdditionItem(memberToAddEmail,
-			CourseRole.MENTEE);
-
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(courseQueryRepository.isCourseManager(courseId, managerId)).thenReturn(false);
+			// findManagedCourseById가 Optional.empty()를 반환하는 경우 (코스가 없거나, 매니저가 아님)
+			when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.empty());
 
 			assertThatThrownBy(() -> courseMemberService.addSingleMember(courseId, item))
 				.isInstanceOf(AuthorizationException.class)
@@ -150,8 +133,7 @@ class CourseMemberServiceTest {
 
 		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
 			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(courseQueryRepository.isCourseManager(courseId, managerId)).thenReturn(true);
-			when(courseQueryRepository.findById(courseId)).thenReturn(Optional.of(course));
+			when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 			when(memberQueryRepository.findByEmail(Email.of(memberToAddEmail))).thenReturn(Optional.empty());
 
 			// when & then
@@ -175,8 +157,7 @@ class CourseMemberServiceTest {
 
 		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
 			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(courseQueryRepository.isCourseManager(courseId, managerId)).thenReturn(true);
-			when(courseQueryRepository.findById(courseId)).thenReturn(Optional.of(course));
+			when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 			when(memberQueryRepository.findMembersByEmails(anyList(), eq(100))).thenReturn(foundPairs);
 
 			CourseMemberAddition.Response response = courseMemberService.addMultipleMembers(courseId, members);
@@ -211,8 +192,7 @@ class CourseMemberServiceTest {
 
 		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
 			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(courseQueryRepository.isCourseManager(courseId, managerId)).thenReturn(true);
-			when(courseQueryRepository.findById(courseId)).thenReturn(Optional.of(course));
+			when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 			when(memberQueryRepository.findMembersByEmails(anyList(), eq(100))).thenReturn(List.of(memberPair));
 
 			CourseMemberAddition.Response response = courseMemberService.addMultipleMembers(courseId, members);
