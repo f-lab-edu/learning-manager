@@ -6,6 +6,7 @@ import static org.springframework.util.Assert.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -83,10 +84,10 @@ public class Course extends AbstractEntity {
 	}
 
 	public Curriculum findCurriculumById(Long curriculumId) {
-		notNull(curriculumId, "Curriculum ID is required");
+		notNull(curriculumId, "[System] 커리큘럼 ID 는 필수입니다");
 
 		return this.curriculumList.stream()
-			.filter(curriculum -> curriculum.getId().equals(curriculumId))
+			.filter(curriculum -> Objects.equals(curriculum.getId(), curriculumId))
 			.findFirst()
 			.orElseThrow(() -> new IllegalArgumentException(
 				CURRICULUM_NOT_FOUND_IN_COURSE.getMessage() + " ID: " + curriculumId
