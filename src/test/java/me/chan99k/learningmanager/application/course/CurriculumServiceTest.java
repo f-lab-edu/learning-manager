@@ -45,16 +45,9 @@ class CurriculumServiceTest {
 		long managerId = 10L;
 		CurriculumCreation.Request request = new CurriculumCreation.Request("JPA 기초", "JPA의 기본 개념을 학습합니다.");
 
-		Curriculum newCurriculum = Curriculum.create(course, request.title(), request.description());
-		// 테스트를 위해 ID를 임의로 설정
-		java.lang.reflect.Field idField;
-		try {
-			idField = newCurriculum.getClass().getSuperclass().getDeclaredField("id");
-			idField.setAccessible(true);
-			idField.set(newCurriculum, 101L);
-		} catch (NoSuchFieldException | IllegalAccessException e) {
-			throw new RuntimeException(e);
-		}
+		Curriculum newCurriculum = mock(Curriculum.class);
+		when(newCurriculum.getId()).thenReturn(101L);
+		when(newCurriculum.getTitle()).thenReturn(request.title());
 
 		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
 			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
@@ -108,16 +101,9 @@ class CurriculumServiceTest {
 		long managerId = 10L;
 		CurriculumCreation.Request request = new CurriculumCreation.Request("Spring Security", null);
 
-		Curriculum newCurriculum = Curriculum.create(course, request.title(), request.description());
-		// 테스트를 위해 ID를 임의로 설정
-		java.lang.reflect.Field idField;
-		try {
-			idField = newCurriculum.getClass().getSuperclass().getDeclaredField("id");
-			idField.setAccessible(true);
-			idField.set(newCurriculum, 102L);
-		} catch (NoSuchFieldException | IllegalAccessException e) {
-			throw new RuntimeException(e);
-		}
+		Curriculum newCurriculum = mock(Curriculum.class);
+		when(newCurriculum.getId()).thenReturn(102L);
+		when(newCurriculum.getTitle()).thenReturn(request.title());
 
 		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
 			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
@@ -139,16 +125,10 @@ class CurriculumServiceTest {
 		long managerId = 10L;
 		CurriculumCreation.Request request = new CurriculumCreation.Request("React 기초", "");
 
-		Curriculum newCurriculum = Curriculum.create(course, request.title(), request.description());
-		// 테스트를 위해 ID를 임의로 설정
-		java.lang.reflect.Field idField;
-		try {
-			idField = newCurriculum.getClass().getSuperclass().getDeclaredField("id");
-			idField.setAccessible(true);
-			idField.set(newCurriculum, 103L);
-		} catch (NoSuchFieldException | IllegalAccessException e) {
-			throw new RuntimeException(e);
-		}
+		Curriculum newCurriculum = mock(Curriculum.class);
+		when(newCurriculum.getId()).thenReturn(103L);
+		when(newCurriculum.getTitle()).thenReturn(request.title());
+
 
 		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
 			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
