@@ -48,11 +48,6 @@ public class Course extends AbstractEntity {
 		this.description = newDescription;
 	}
 
-	public boolean isManager(Long memberId) {
-		return this.courseMemberList.stream()
-			.anyMatch(cm -> cm.getMemberId().equals(memberId) && cm.getCourseRole() == CourseRole.MANAGER);
-	}
-
 	public void addMember(Long memberId, CourseRole courseRole) {
 		boolean alreadyExists = this.courseMemberList.stream().anyMatch(
 			member -> member.getMemberId().equals(memberId)
