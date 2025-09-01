@@ -72,10 +72,11 @@ public class Course extends AbstractEntity {
 		isTrue(removed, COURSE_MEMBER_NOT_REGISTERED.getMessage());
 	}
 
-	public void addCurriculum(String title, String description) {
+	public Curriculum addCurriculum(String title, String description) {
 		Curriculum curriculum = Curriculum.create(this, title, description);
 
 		this.curriculumList.add(curriculum);
+		return curriculum;
 	}
 
 	public void removeCurriculum(Curriculum curriculum) {
