@@ -87,6 +87,17 @@ public class Course extends AbstractEntity {
 		isTrue(removed, CURRICULUM_NOT_FOUND_IN_COURSE.getMessage() + " ID: " + curriculum.getId());
 	}
 
+	public Curriculum findCurriculumById(Long curriculumId) {
+		notNull(curriculumId, "Curriculum ID is required");
+
+		return this.curriculumList.stream()
+			.filter(curriculum -> curriculum.getId().equals(curriculumId))
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException(
+				CURRICULUM_NOT_FOUND_IN_COURSE.getMessage() + " ID: " + curriculumId
+			));
+	}
+
 	/* 게터 로직 */
 
 	public String getTitle() {
