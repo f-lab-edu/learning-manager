@@ -20,7 +20,6 @@ import me.chan99k.learningmanager.common.exception.AuthenticationException;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
 import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.course.Course;
-import me.chan99k.learningmanager.domain.course.CourseProblemCode;
 import me.chan99k.learningmanager.domain.member.Email;
 import me.chan99k.learningmanager.domain.member.Member;
 import me.chan99k.learningmanager.domain.member.MemberProblemCode;
@@ -48,10 +47,7 @@ public class CourseMemberService implements CourseMemberAddition {
 
 	@Override
 	public void addSingleMember(Long courseId, MemberAdditionItem item) {
-		authenticateAndAuthorizeManager(courseId);
-
-		Course course = queryRepository.findById(courseId)
-			.orElseThrow(() -> new DomainException(CourseProblemCode.COURSE_NOT_FOUND));
+		Course course = authenticateAndAuthorizeManager(courseId);
 
 		Member member = memberQueryRepository.findByEmail(Email.of(item.email()))
 			.orElseThrow(() -> new DomainException(MemberProblemCode.MEMBER_NOT_FOUND));
@@ -70,10 +66,7 @@ public class CourseMemberService implements CourseMemberAddition {
 			throw new IllegalArgumentException("과정 멤버 추가 요청은 한번에 최대 " + MAX_BULK_SIZE + "개까지 가능합니다");
 		}
 
-		authenticateAndAuthorizeManager(courseId);
-
-		Course course = queryRepository.findById(courseId)
-			.orElseThrow(() -> new DomainException(CourseProblemCode.COURSE_NOT_FOUND));
+		Course course = authenticateAndAuthorizeManager(courseId);
 
 		// 멤버 조회 로직
 		List<Email> emails = members.stream().map(item -> Email.of(item.email())).toList();
@@ -114,12 +107,11 @@ public class CourseMemberService implements CourseMemberAddition {
 	 * @throws AuthenticationException if authentication context is not found
 	 * @throws AuthorizationException  if the member is not the course manager
 	 */
-	private void authenticateAndAuthorizeManager(Long courseId) {    // TODO 권한 확인 로직 ASPECT 로 분리하기
+	private Course authenticateAndAuthorizeManager(Long courseId) {    // TODO 권한 확인 로직 ASPECT 로 분리하기
 		Long managerId = AuthenticationContextHolder.getCurrentMemberId()
 			.orElseThrow(() -> new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
 
-		if (!queryRepository.isCourseManager(courseId, managerId)) {
-			throw new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED);
-		}
+		return queryRepository.findManagedCourseById(courseId, managerId)
+			.orElseThrow(() -> new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED));
 	}
 }
