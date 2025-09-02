@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.validation.Valid;
 import me.chan99k.learningmanager.application.course.provides.CourseInfoUpdate;
 
 @RestController
@@ -30,7 +29,7 @@ public class CourseInfoUpdateController {
 	@PutMapping("/{courseId}")
 	public CompletableFuture<ResponseEntity<Void>> updateCourse(
 		@PathVariable Long courseId,
-		@Valid @RequestBody CourseInfoUpdate.Request request) {
+		@RequestBody CourseInfoUpdate.Request request) {
 		return CompletableFuture.supplyAsync(() -> {
 			courseInfoUpdate.updateCourseInfo(courseId, request);
 			return ResponseEntity.ok().build();
