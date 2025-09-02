@@ -2,6 +2,8 @@ package me.chan99k.learningmanager.application.session.provides;
 
 import java.time.Instant;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import me.chan99k.learningmanager.domain.session.Session;
 import me.chan99k.learningmanager.domain.session.SessionLocation;
 import me.chan99k.learningmanager.domain.session.SessionType;
@@ -43,9 +45,12 @@ public interface SessionCreation {
 					Long courseId,
 					Long curriculumId,
 					Long sessionId, // 특정 세션의 하위 세션일 경우
-					String title,
-					Instant scheduledAt, Instant scheduledEndAt,
-					SessionType type, SessionLocation location, String locationDetails
+					@NotBlank(message = "세션 제목은 필수입니다") String title,
+					@NotNull(message = "세션 시작 시간은 필수입니다") Instant scheduledAt,
+					@NotNull(message = "세션 종료 시간은 필수입니다") Instant scheduledEndAt,
+					@NotNull(message = "세션 타입은 필수입니다") SessionType type,
+					@NotNull(message = "세션 장소는 필수입니다") SessionLocation location,
+					String locationDetails
 	) {
 
 	}
