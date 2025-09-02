@@ -7,14 +7,12 @@ import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
 import me.chan99k.learningmanager.application.member.requires.MemberEmailPair;
 import me.chan99k.learningmanager.domain.member.Email;
 import me.chan99k.learningmanager.domain.member.Member;
 import me.chan99k.learningmanager.domain.member.Nickname;
 
-@Repository
 public interface JpaMemberRepository extends JpaRepository<Member, Long> {
 
 	@Query("SELECT DISTINCT m FROM Member m JOIN FETCH m.accounts a WHERE a.email = :email")
