@@ -132,8 +132,7 @@ public class SessionParticipantService implements SessionParticipantManagement {
 				.count();
 
 			if (hostCount <= 1) {
-				throw new AuthorizationException(
-					AuthProblemCode.AUTHORIZATION_REQUIRED); // FIXME :: SessionProblemCode - "[System] HOST는 다른 HOST를 지정한 후에 세션을 떠날 수 있습니다." 로 변경하여야 함
+				throw new DomainException(SessionProblemCode.HOST_CANNOT_LEAVE_ALONE);
 			}
 		}
 	}

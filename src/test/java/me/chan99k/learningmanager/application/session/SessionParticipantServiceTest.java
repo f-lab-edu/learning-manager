@@ -54,7 +54,6 @@ class SessionParticipantServiceTest {
 	@Test
 	@DisplayName("Course Manager는 참여자를 추가할 수 있다")
 	void addParticipant_AsCourseManager_Success() {
-		// given
 		try (var mockedStatic = mockStatic(AuthenticationContextHolder.class)) {
 			mockedStatic.when(AuthenticationContextHolder::getCurrentMemberId)
 				.thenReturn(Optional.of(managerId));
@@ -70,10 +69,8 @@ class SessionParticipantServiceTest {
 
 			var request = new AddParticipantRequest(memberId, SessionParticipantRole.ATTENDEE);
 
-			// when
 			var response = sessionParticipantService.addParticipant(sessionId, request);
 
-			// then
 			assertThat(response).isNotNull();
 			assertThat(response.sessionId()).isEqualTo(sessionId);
 			verify(session).addParticipant(memberId, SessionParticipantRole.ATTENDEE);
@@ -84,7 +81,6 @@ class SessionParticipantServiceTest {
 	@Test
 	@DisplayName("Session Host는 참여자를 추가할 수 있다")
 	void addParticipant_AsSessionHost_Success() {
-		// given
 		try (var mockedStatic = mockStatic(AuthenticationContextHolder.class)) {
 			mockedStatic.when(AuthenticationContextHolder::getCurrentMemberId)
 				.thenReturn(Optional.of(hostId));
@@ -104,10 +100,8 @@ class SessionParticipantServiceTest {
 
 			var request = new AddParticipantRequest(memberId, SessionParticipantRole.SPEAKER);
 
-			// when
 			var response = sessionParticipantService.addParticipant(sessionId, request);
 
-			// then
 			assertThat(response).isNotNull();
 			verify(session).addParticipant(memberId, SessionParticipantRole.SPEAKER);
 		}
@@ -116,7 +110,6 @@ class SessionParticipantServiceTest {
 	@Test
 	@DisplayName("권한이 없는 사용자는 참여자를 추가할 수 없다")
 	void addParticipant_NoPermission_ThrowsAuthorizationException() {
-		// given
 		try (var mockedStatic = mockStatic(AuthenticationContextHolder.class)) {
 			mockedStatic.when(AuthenticationContextHolder::getCurrentMemberId)
 				.thenReturn(Optional.of(memberId));
@@ -129,7 +122,6 @@ class SessionParticipantServiceTest {
 
 			var request = new AddParticipantRequest(999L, SessionParticipantRole.ATTENDEE);
 
-			// when & then
 			assertThatThrownBy(() -> sessionParticipantService.addParticipant(sessionId, request))
 				.isInstanceOf(AuthorizationException.class)
 				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
@@ -139,7 +131,6 @@ class SessionParticipantServiceTest {
 	@Test
 	@DisplayName("인증되지 않은 사용자는 참여자를 추가할 수 없다")
 	void addParticipant_NotAuthenticated_ThrowsAuthenticationException() {
-		// given
 		try (var mockedStatic = mockStatic(AuthenticationContextHolder.class)) {
 			mockedStatic.when(AuthenticationContextHolder::getCurrentMemberId)
 				.thenReturn(Optional.empty());
@@ -148,7 +139,6 @@ class SessionParticipantServiceTest {
 
 			var request = new AddParticipantRequest(memberId, SessionParticipantRole.ATTENDEE);
 
-			// when & then
 			assertThatThrownBy(() -> sessionParticipantService.addParticipant(sessionId, request))
 				.isInstanceOf(AuthenticationException.class)
 				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND);
@@ -158,12 +148,10 @@ class SessionParticipantServiceTest {
 	@Test
 	@DisplayName("존재하지 않는 세션의 참여자를 추가할 수 없다")
 	void addParticipant_SessionNotFound_ThrowsDomainException() {
-		// given
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.empty());
 
 		var request = new AddParticipantRequest(memberId, SessionParticipantRole.ATTENDEE);
 
-		// when & then
 		assertThatThrownBy(() -> sessionParticipantService.addParticipant(sessionId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.SESSION_NOT_FOUND);
@@ -172,7 +160,6 @@ class SessionParticipantServiceTest {
 	@Test
 	@DisplayName("Course Manager는 참여자를 제거할 수 있다")
 	void removeParticipant_AsCourseManager_Success() {
-		// given
 		try (var mockedStatic = mockStatic(AuthenticationContextHolder.class)) {
 			mockedStatic.when(AuthenticationContextHolder::getCurrentMemberId)
 				.thenReturn(Optional.of(managerId));
@@ -202,7 +189,6 @@ class SessionParticipantServiceTest {
 	@Test
 	@DisplayName("Session Host는 참여자를 제거할 수 있다")
 	void removeParticipant_AsSessionHost_Success() {
-		// given
 		try (var mockedStatic = mockStatic(AuthenticationContextHolder.class)) {
 			mockedStatic.when(AuthenticationContextHolder::getCurrentMemberId)
 				.thenReturn(Optional.of(hostId));
@@ -220,10 +206,8 @@ class SessionParticipantServiceTest {
 
 			var request = new RemoveParticipantRequest(sessionId, memberId);
 
-			// when
 			var response = sessionParticipantService.removeParticipant(request);
 
-			// then
 			assertThat(response).isNotNull();
 			verify(session).removeParticipant(memberId);
 		}
@@ -232,7 +216,6 @@ class SessionParticipantServiceTest {
 	@Test
 	@DisplayName("권한이 없는 사용자는 참여자를 제거할 수 없다")
 	void removeParticipant_NoPermission_ThrowsAuthorizationException() {
-		// given
 		try (var mockedStatic = mockStatic(AuthenticationContextHolder.class)) {
 			mockedStatic.when(AuthenticationContextHolder::getCurrentMemberId)
 				.thenReturn(Optional.of(memberId));
@@ -245,7 +228,6 @@ class SessionParticipantServiceTest {
 
 			var request = new RemoveParticipantRequest(sessionId, 999L);
 
-			// when & then
 			assertThatThrownBy(() -> sessionParticipantService.removeParticipant(request))
 				.isInstanceOf(AuthorizationException.class)
 				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
@@ -255,7 +237,6 @@ class SessionParticipantServiceTest {
 	@Test
 	@DisplayName("Course Manager는 참여자 역할을 변경할 수 있다")
 	void changeParticipantRole_AsCourseManager_Success() {
-		// given
 		try (var mockedStatic = mockStatic(AuthenticationContextHolder.class)) {
 			mockedStatic.when(AuthenticationContextHolder::getCurrentMemberId)
 				.thenReturn(Optional.of(managerId));
@@ -271,10 +252,9 @@ class SessionParticipantServiceTest {
 
 			var request = new ChangeParticipantRoleRequest(sessionId, memberId, SessionParticipantRole.SPEAKER);
 
-			// when
+
 			var response = sessionParticipantService.changeParticipantRole(request);
 
-			// then
 			assertThat(response).isNotNull();
 			assertThat(response.sessionId()).isEqualTo(sessionId);
 			verify(session).changeParticipantRole(memberId, SessionParticipantRole.SPEAKER);
@@ -285,7 +265,6 @@ class SessionParticipantServiceTest {
 	@Test
 	@DisplayName("Session Host는 참여자 역할을 변경할 수 있다")
 	void changeParticipantRole_AsSessionHost_Success() {
-		// given
 		try (var mockedStatic = mockStatic(AuthenticationContextHolder.class)) {
 			mockedStatic.when(AuthenticationContextHolder::getCurrentMemberId)
 				.thenReturn(Optional.of(hostId));
@@ -303,10 +282,8 @@ class SessionParticipantServiceTest {
 
 			var request = new ChangeParticipantRoleRequest(sessionId, memberId, SessionParticipantRole.ATTENDEE);
 
-			// when
 			var response = sessionParticipantService.changeParticipantRole(request);
 
-			// then
 			assertThat(response).isNotNull();
 			verify(session).changeParticipantRole(memberId, SessionParticipantRole.ATTENDEE);
 		}
@@ -315,7 +292,6 @@ class SessionParticipantServiceTest {
 	@Test
 	@DisplayName("권한이 없는 사용자는 참여자 역할을 변경할 수 없다")
 	void changeParticipantRole_NoPermission_ThrowsAuthorizationException() {
-		// given
 		try (var mockedStatic = mockStatic(AuthenticationContextHolder.class)) {
 			mockedStatic.when(AuthenticationContextHolder::getCurrentMemberId)
 				.thenReturn(Optional.of(memberId));
@@ -328,7 +304,6 @@ class SessionParticipantServiceTest {
 
 			var request = new ChangeParticipantRoleRequest(sessionId, 999L, SessionParticipantRole.SPEAKER);
 
-			// when & then
 			assertThatThrownBy(() -> sessionParticipantService.changeParticipantRole(request))
 				.isInstanceOf(AuthorizationException.class)
 				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
@@ -338,7 +313,6 @@ class SessionParticipantServiceTest {
 	@Test
 	@DisplayName("단독 세션(Course 없음)의 경우 Host만 참여자 관리가 가능하다")
 	void addParticipant_StandaloneSession_OnlyHostCanManage() {
-		// given
 		when(session.getCourseId()).thenReturn(null); // 단독 세션
 
 		try (var mockedStatic = mockStatic(AuthenticationContextHolder.class)) {
@@ -355,10 +329,8 @@ class SessionParticipantServiceTest {
 
 			var request = new AddParticipantRequest(memberId, SessionParticipantRole.ATTENDEE);
 
-			// when
 			var response = sessionParticipantService.addParticipant(sessionId, request);
 
-			// then
 			assertThat(response).isNotNull();
 			verify(session).addParticipant(memberId, SessionParticipantRole.ATTENDEE);
 			// Course 조회는 발생하지 않아야 함
@@ -369,7 +341,6 @@ class SessionParticipantServiceTest {
 	@Test
 	@DisplayName("단독 세션에서 Host가 아닌 사용자는 참여자 관리를 할 수 없다")
 	void addParticipant_StandaloneSession_NonHostCannotManage() {
-		// given
 		when(session.getCourseId()).thenReturn(null); // 단독 세션
 
 		try (var mockedStatic = mockStatic(AuthenticationContextHolder.class)) {
@@ -381,7 +352,6 @@ class SessionParticipantServiceTest {
 
 			var request = new AddParticipantRequest(999L, SessionParticipantRole.ATTENDEE);
 
-			// when & then
 			assertThatThrownBy(() -> sessionParticipantService.addParticipant(sessionId, request))
 				.isInstanceOf(AuthorizationException.class)
 				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
@@ -394,7 +364,6 @@ class SessionParticipantServiceTest {
 	@Test
 	@DisplayName("HOST 자신을 제거할 때 다른 HOST가 있으면 성공한다")
 	void removeParticipant_HostSelfRemoval_SuccessWithOtherHost() {
-		// given
 		try (var mockedStatic = mockStatic(AuthenticationContextHolder.class)) {
 			mockedStatic.when(AuthenticationContextHolder::getCurrentMemberId)
 				.thenReturn(Optional.of(hostId));
@@ -416,10 +385,8 @@ class SessionParticipantServiceTest {
 
 			var request = new RemoveParticipantRequest(sessionId, hostId); // 자신을 제거
 
-			// when
 			var response = sessionParticipantService.removeParticipant(request);
 
-			// then
 			assertThat(response).isNotNull();
 			verify(session).removeParticipant(hostId);
 		}
@@ -428,7 +395,6 @@ class SessionParticipantServiceTest {
 	@Test
 	@DisplayName("HOST 자신을 제거할 때 다른 HOST가 없으면 실패한다")
 	void removeParticipant_HostSelfRemoval_FailWithoutOtherHost() {
-		// given
 		try (var mockedStatic = mockStatic(AuthenticationContextHolder.class)) {
 			mockedStatic.when(AuthenticationContextHolder::getCurrentMemberId)
 				.thenReturn(Optional.of(hostId));
@@ -438,7 +404,6 @@ class SessionParticipantServiceTest {
 			when(hostParticipant.getRole()).thenReturn(SessionParticipantRole.HOST);
 
 			var attendeeParticipant = mock(SessionParticipant.class);
-			// attendeeParticipant은 HOST 검증 로직에서 사용되지 않으므로 stubbing 불필요
 
 			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
 			when(session.getCourseId()).thenReturn(null); // standalone 세션 (Course 없음)
@@ -446,10 +411,9 @@ class SessionParticipantServiceTest {
 
 			var request = new RemoveParticipantRequest(sessionId, hostId); // 자신을 제거
 
-			// when & then
 			assertThatThrownBy(() -> sessionParticipantService.removeParticipant(request))
-				.isInstanceOf(AuthorizationException.class)
-				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
+				.isInstanceOf(DomainException.class)
+				.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.HOST_CANNOT_LEAVE_ALONE);
 
 			verify(session, never()).removeParticipant(hostId);
 		}
