@@ -20,6 +20,7 @@ public interface SessionJpaRepository extends JpaRepository<Session, Long> {
 	@Query("SELECT s FROM Session s " +
 		"LEFT JOIN Course c ON s.courseId = c.id " +
 		"LEFT JOIN c.courseMemberList cm ON cm.courseRole = me.chan99k.learningmanager.domain.course.CourseRole.MANAGER "
+		// TODO :: 하드 코딩된 매니저 역할을 파라미터로 옮길 필요 있음
 		+
 		"WHERE s.id = :sessionId " +
 		"AND (s.courseId IS NULL OR cm.memberId = :memberId)")
