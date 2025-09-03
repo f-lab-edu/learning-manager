@@ -8,7 +8,6 @@ public enum SessionProblemCode implements ProblemCode {
 	INVALID_SESSION_HIERARCHY("DLS003", "[System] 하위 세션은 또 다른 하위 세션을 가질 수 없습니다."),
 	ALREADY_PARTICIPATING_MEMBER("DLS004", "[System] 이미 세션에 참여 중인 멤버입니다."),
 	MEMBER_NOT_PARTICIPATING("DLS005", "[System] 해당 세션에 참여하지 않는 멤버입니다."),
-	ONLY_ONE_HOST_ALLOWED("DLS006", "[System] 한 세션에는 한 명의 호스트만 지정할 수 있습니다."),
 	CANNOT_MODIFY_STARTED_SESSION("DLS007", "[System] 이미 시작된 세션은 수정할 수 없습니다."),
 	ROOT_SESSION_MODIFICATION_DEADLINE_EXCEEDED("DLS008", "[System] 루트 세션은 시작 3일 전까지만 수정할 수 있습니다."),
 	CHILD_SESSION_MODIFICATION_DEADLINE_EXCEEDED("DLS009", "[System] 하위 세션은 시작 1시간 전까지만 수정할 수 있습니다."),
