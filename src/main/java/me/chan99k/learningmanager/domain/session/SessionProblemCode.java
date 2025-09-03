@@ -25,7 +25,8 @@ public enum SessionProblemCode implements ProblemCode {
 	SAME_ROLE_PARTICIPANT_ALREADY("DLS020", "[System] 이미 해당 역할을 가지고 있습니다."),
 	SESSION_REQUIRED("DLS021", "[System] 세션 참여를 위해서는 유효한 세션이 필요합니다."),
 	MEMBER_ID_REQUIRED("DLS022", "[System] 세션 참여를 위해서는 유효한 회원 ID가 필요합니다."),
-	PARTICIPANT_ROLE_REQUIRED("DLS023", "[System] 세션 참여를 위해서는 유효한 역할이 필요합니다.");
+	PARTICIPANT_ROLE_REQUIRED("DLS023", "[System] 세션 참여를 위해서는 유효한 역할이 필요합니다."),
+	SESSION_NOT_FOUND("DLS024", "[System] 세션을 찾을 수 없습니다.");
 
 	private final String code;
 	private final String message;

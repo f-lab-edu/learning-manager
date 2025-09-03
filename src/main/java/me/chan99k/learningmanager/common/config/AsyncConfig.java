@@ -166,6 +166,36 @@ public class AsyncConfig {
 		return executor;
 	}
 
+	@Bean(name = "sessionTaskExecutor")
+	public AsyncTaskExecutor sessionTaskExecutor() {
+		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+
+		executor.setCorePoolSize(5);
+		executor.setMaxPoolSize(20);
+		executor.setQueueCapacity(20);
+		executor.setThreadNamePrefix("session-async-");
+		executor.setWaitForTasksToCompleteOnShutdown(true);
+		executor.setAwaitTerminationSeconds(30);
+		executor.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
+
+		addAuthenticationContextTaskDecorator(executor);
+
+		executor.setAllowCoreThreadTimeOut(true);
+		executor.setKeepAliveSeconds(120);
+		executor.setBeanName("sessionTaskExecutor");
+		executor.initialize();
+
+		log.info(
+			"[System] Session Task Executor initialized - Core: {}, Max: {}, Queue: {}, Priority: {}, KeepAlive: {}s",
+			executor.getCorePoolSize(),
+			executor.getMaxPoolSize(),
+			executor.getQueueCapacity(),
+			executor.getThreadPriority(),
+			executor.getKeepAliveSeconds());
+
+		return executor;
+	}
+
 	private void addAuthenticationContextTaskDecorator(ThreadPoolTaskExecutor executor) {
 		executor.setTaskDecorator(runnable -> {
 			Runnable authDecoratedTask = new AuthenticationContextTaskDecorator().decorate(runnable);
