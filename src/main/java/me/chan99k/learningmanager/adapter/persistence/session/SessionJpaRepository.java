@@ -19,7 +19,8 @@ public interface SessionJpaRepository extends JpaRepository<Session, Long> {
 
 	@Query("SELECT s FROM Session s " +
 		"LEFT JOIN Course c ON s.courseId = c.id " +
-		"LEFT JOIN c.courseMemberList cm ON cm.courseRole = 'MANAGER' " +
+		"LEFT JOIN c.courseMemberList cm ON cm.courseRole = me.chan99k.learningmanager.domain.course.CourseRole.MANAGER "
+		+
 		"WHERE s.id = :sessionId " +
 		"AND (s.courseId IS NULL OR cm.memberId = :memberId)")
 	Optional<Session> findManagedSessionById(@Param("sessionId") Long sessionId,
