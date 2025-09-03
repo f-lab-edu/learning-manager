@@ -186,7 +186,6 @@ class CourseMemberControllerTest {
 		doThrow(new DomainException(CourseProblemCode.COURSE_NOT_FOUND))
 			.when(courseMemberService).addSingleMember(anyLong(), any(CourseMemberAddition.MemberAdditionItem.class));
 
-		// when
 		MvcResult mvcResult = mockMvc.perform(post("/api/v1/courses/{courseId}/members", 999L)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
