@@ -138,14 +138,6 @@ public class Session extends AbstractEntity {
 		// 수정 가능 여부를 먼저 검증
 		validateUpdatable();
 
-		// 역할 변경에 대한 비즈니스 규칙 검증
-		// -> HOST는 세션에 한 명만 존재해야 한다
-		if (newRole == SessionParticipantRole.HOST) {
-			boolean anotherHostExists = this.participants.stream()
-				.anyMatch(p -> p.getRole() == SessionParticipantRole.HOST && !p.getMemberId().equals(memberId));
-			isTrue(!anotherHostExists, ONLY_ONE_HOST_ALLOWED.getMessage());
-		}
-
 		// 대상 참여자를 찾아서 실제 역할 변경을 위임
 		SessionParticipant participant = findParticipant(memberId);
 		participant.changeRole(newRole);

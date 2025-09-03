@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -260,14 +261,20 @@ class SessionTest {
 		}
 
 		@Test
-		@DisplayName("[Failure] 이미 호스트가 존재할 때, 다른 참여자를 호스트로 변경하면 예외가 발생한다.")
-		void change_participant_role_to_host_fail_if_host_already_exists() {
+		@DisplayName("[Success] 이미 호스트가 존재할 때도 다른 참여자를 호스트로 변경할 수 있다.")
+		void change_participant_role_to_host_success_multiple_hosts_allowed() {
 			session.addParticipant(1L, SessionParticipantRole.HOST);
 			session.addParticipant(2L, SessionParticipantRole.ATTENDEE);
 
-			assertThatThrownBy(() -> session.changeParticipantRole(2L, SessionParticipantRole.HOST))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage(ONLY_ONE_HOST_ALLOWED.getMessage());
+			// 여러 HOST가 허용되므로 예외가 발생하지 않아야 함
+			assertThatCode(() -> session.changeParticipantRole(2L, SessionParticipantRole.HOST))
+				.doesNotThrowAnyException();
+
+			// 두 참여자 모두 HOST 역할을 가져야 함
+			List<SessionParticipant> participants = session.getParticipants();
+			assertThat(participants).hasSize(2);
+			assertThat(participants.stream().filter(p -> p.getRole() == SessionParticipantRole.HOST))
+				.hasSize(2);
 		}
 
 		@Test
