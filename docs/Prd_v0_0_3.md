@@ -1,6 +1,6 @@
 # 제품 요구사항 명세서 (PRD): Learning Manager
 
-> v.0.0.3 | 25.07.25
+> v.0.0.4 | 25.09.11
 ---
 
 ## 1. 개요 (Overview)
@@ -323,22 +323,45 @@
 ### 6.4 Attendance
 #### 6.4.1 `Attendance` : 출석 기록
 
-> 세션별 회원의 입실 및 퇴실 기록을 관리합니다.
+> 이벤트 소싱 기반으로 세션별 회원의 모든 출입 이력을 추적하고 최종 출석 상태를 관리합니다.
 
-- **id** (Long), **memberId** (Long), **sessionId** (Long)
-- **checkInTime** (Instant), **checkOutTime** (Instant)
-- **createdAt**, **createdBy**, **updatedAt**, **updatedBy**
+- **id** (String): 고유 식별자 (MongoDB ObjectId 호환)
+- **sessionId** (Long), **memberId** (Long): 불변 컨텍스트 정보
+- **events** (List<AttendanceEvent>): 시간순 출입 이벤트 목록
+- **finalStatus** (AttendanceStatus): 계산된 최종 출석 상태
 
 ##### provides
 
-- `checkIn()`: 입실 시간을 기록합니다.
-- `checkOut()`: 퇴실 시간을 기록합니다.
+- `create(sessionId, memberId)`: 신규 출석 기록을 생성합니다.
+- `restore(id, sessionId, memberId, events)`: 기존 이벤트로부터 출석 기록을 재구성합니다.
+- `checkIn(Clock)`: 입실 이벤트를 기록하고 상태를 재계산합니다.
+- `checkOut(Clock)`: 퇴실 이벤트를 기록하고 상태를 재계산합니다.
+- `setId(String)`: 외부에서 생성된 ID를 한 번만 설정합니다.
 
 ##### requires
 
 - `save()`: 출석 정보 변경 사항을 DB에 저장(또는 수정)합니다.
 
+#### 6.4.2 `AttendanceEvent` : 출석 이벤트
 
+> 개별 출입 행동을 나타내는 불변 이벤트입니다.
+
+- **Sealed Interface**: `CheckedIn`, `CheckedOut` 구현체만 허용
+- **timestamp** (Instant): 이벤트 발생 시점
+
+##### provides
+
+- `checkIn(Clock)`: 입실 이벤트를 생성합니다.
+- `checkOut(Clock)`: 퇴실 이벤트를 생성합니다.
+
+#### 6.4.3 `AttendanceStatus` : 최종 출석 상태
+
+> 이벤트 기반으로 계산된 최종 출석 상태를 나타냅니다.
+
+- **PRESENT**: 출석 (체크인 이벤트 존재)
+- **ABSENT**: 결석 (체크인 이벤트 없음)
+- **LATE**: 지각 (추후 확장)
+- **LEFT_EARLY**: 조퇴 (추후 확장)
 
 ### 6.5 Notification
 

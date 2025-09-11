@@ -3,46 +3,118 @@ package me.chan99k.learningmanager.domain.attendance;
 import static me.chan99k.learningmanager.domain.attendance.AttendanceProblemCode.*;
 import static org.springframework.util.Assert.*;
 
-import java.time.Instant;
-import java.util.Objects;
+import java.time.Clock;
+import java.util.ArrayList;
+import java.util.List;
 
-import jakarta.persistence.Entity;
-import me.chan99k.learningmanager.domain.AbstractEntity;
+public class Attendance {
 
-@Entity
+	private final Long sessionId;
+	private final Long memberId;
+	private String id;
+	private List<AttendanceEvent> events;
 
-public class Attendance extends AbstractEntity {
+	private AttendanceStatus finalStatus;        // 계산된 최종 상태
 
-	private Long sessionId;
-
-	private Long memberId;
-
-	private Instant checkInTime;
-
-	private Instant checkOutTime;
-
-	/* 도메인 로직 */
-
-	public static Attendance checkIn(Long sessionId, Long memberId) {
+	private Attendance(String id, Long sessionId, Long memberId) {
 		notNull(sessionId, SESSION_ID_REQUIRED.getMessage());
 		notNull(memberId, MEMBER_ID_REQUIRED.getMessage());
 
-		Attendance attendance = new Attendance();
-		attendance.sessionId = sessionId;
-		attendance.memberId = memberId;
-		attendance.checkInTime = Instant.now(); // 입실 시간은 현재 시간
-		attendance.checkOutTime = null; // 퇴실 시간은 아직 없음
+		this.id = id;
+		this.sessionId = sessionId;
+		this.memberId = memberId;
+		this.events = new ArrayList<>();
+		this.finalStatus = AttendanceStatus.ABSENT;
+	}
 
+	public static Attendance create(Long sessionId, Long memberId) {
+		return new Attendance(null, sessionId, memberId);
+	}
+
+	public static Attendance restore(
+		String id, Long sessionId, Long memberId,
+		List<AttendanceEvent> events
+	) {
+		Attendance attendance = new Attendance(id, sessionId, memberId);
+		attendance.events = new ArrayList<>(events);
+		attendance.recalculateStatus();
 		return attendance;
 	}
 
-	public void checkOut() {
-		state(Objects.isNull(checkOutTime), ALREADY_CHECKED_OUT.getMessage());
+	public void checkIn(Clock clock) {
+		validateNotAlreadyCheckedIn();
 
-		this.checkOutTime = Instant.now();
+		AttendanceEvent event = AttendanceEvent.checkIn(clock);
+		events.add(event);
+		recalculateStatus();
+	}
 
-		// checkOutTime이 checkInTime 보다 늦는지 검증
-		isTrue(this.checkOutTime.isAfter(this.checkInTime), CHECK_OUT_TIME_BEFORE_CHECK_IN_TIME.getMessage());
+	/* 도메인 로직 */
+
+	public void checkOut(Clock clock) {
+		validateAlreadyCheckedIn();
+
+		AttendanceEvent event = AttendanceEvent.checkOut(clock);
+		events.add(event);
+		recalculateStatus();
+	}
+
+	private void recalculateStatus() {
+		boolean hasCheckIn = events.stream().anyMatch(event -> event instanceof CheckedIn);
+
+		this.finalStatus = hasCheckIn ? AttendanceStatus.PRESENT : AttendanceStatus.ABSENT;
+	}
+
+	/**
+	 * 아직 체크인 상태가 아님을 보장하는 메서드
+	 */
+	private void validateNotAlreadyCheckedIn() {
+		boolean isCurrentlyCheckedIn = getCurrentAttendanceState() == AttendanceState.CHECKED_IN;
+
+		if (isCurrentlyCheckedIn) {
+			throw new IllegalStateException(ALREADY_CHECKED_IN.getMessage());
+		}
+	}
+
+	/**
+	 * 체크인 상태임을 보장하는 메서드
+	 */
+	private void validateAlreadyCheckedIn() {
+		boolean isCurrentlyCheckedIn = getCurrentAttendanceState() == AttendanceState.CHECKED_IN;
+
+		if (!isCurrentlyCheckedIn) {
+			throw new IllegalStateException(NOT_CHECKED_IN.getMessage());
+		}
+
+	}
+
+	private AttendanceState getCurrentAttendanceState() {
+		if (events.isEmpty()) {
+			return AttendanceState.NOT_CHECKED_IN;
+		}
+
+		AttendanceEvent lastEvent = events.get(events.size() - 1);
+		if (lastEvent instanceof CheckedIn) {
+			return AttendanceState.CHECKED_IN;
+		} else if (lastEvent instanceof CheckedOut) {
+			return AttendanceState.CHECKED_OUT;
+		}
+
+		return AttendanceState.NOT_CHECKED_IN;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	/* 접근 & 수정자 로직 */
+
+	public void setId(String id) {
+		if (this.id != null) {
+			throw new IllegalStateException(AttendanceProblemCode.CANNOT_REASSIGN_ID.getMessage());
+		}
+		this.id = id;
+
 	}
 
 	public Long getSessionId() {
@@ -53,11 +125,15 @@ public class Attendance extends AbstractEntity {
 		return memberId;
 	}
 
-	public Instant getCheckInTime() {
-		return checkInTime;
+	public List<AttendanceEvent> getEvents() {
+		return events;
 	}
 
-	public Instant getCheckOutTime() {
-		return checkOutTime;
+	public AttendanceStatus getFinalStatus() {
+		return finalStatus;
+	}
+
+	private enum AttendanceState {
+		NOT_CHECKED_IN, CHECKED_IN, CHECKED_OUT
 	}
 }
