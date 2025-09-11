@@ -103,7 +103,7 @@ public class MemberRegisterControllerTest {
 					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
 				.andExpect(status().isBadRequest())
-				.andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+				.andExpect(content().contentType("application/problem+json;charset=UTF-8"))
 				.andExpect(jsonPath("$.title").value("Validation Error"))
 				.andExpect(jsonPath("$.detail").exists());
 			// TODO ::  응답이 Body = {... "status":400,"detail":"[System] ì´ë ...} 처럼 깨져서 보이는 것을 해결 하여야 함
@@ -119,7 +119,7 @@ public class MemberRegisterControllerTest {
 					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
 				.andExpect(status().isBadRequest())
-				.andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+				.andExpect(content().contentType("application/problem+json;charset=UTF-8"))
 				.andExpect(jsonPath("$.title").value("Validation Error"));
 		}
 
@@ -133,7 +133,7 @@ public class MemberRegisterControllerTest {
 					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
 				.andExpect(status().isBadRequest())
-				.andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+				.andExpect(content().contentType("application/problem+json;charset=UTF-8"))
 				.andExpect(jsonPath("$.title").value("Validation Error"));
 		}
 
@@ -147,7 +147,7 @@ public class MemberRegisterControllerTest {
 					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
 				.andExpect(status().isBadRequest())
-				.andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+				.andExpect(content().contentType("application/problem+json;charset=UTF-8"))
 				.andExpect(jsonPath("$.title").value("Validation Error"));
 		}
 

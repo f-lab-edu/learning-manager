@@ -3,7 +3,9 @@ package me.chan99k.learningmanager.adapter.web;
 import java.net.URI;
 
 import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -29,7 +31,7 @@ public class GlobalExceptionHandler {
 		if (e.getProblemCode() == MemberProblemCode.ACCOUNT_NOT_FOUND) { // 계정 없음 예외의 경우
 			ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
 			problem.setDetail(e.getMessage());
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).headers(createProblemJsonHeaders()).body(problem);
 		}
 
 		ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
@@ -42,7 +44,7 @@ public class GlobalExceptionHandler {
 		problemDetail.setTitle("Domain Error");
 		problemDetail.setProperty("code", e.getProblemCode().getCode());
 
-		return ResponseEntity.badRequest().body(problemDetail);
+		return ResponseEntity.badRequest().headers(createProblemJsonHeaders()).body(problemDetail);
 	}
 
 
@@ -63,7 +65,7 @@ public class GlobalExceptionHandler {
 		problemDetail.setTitle("Authentication Error");
 		problemDetail.setProperty("code", e.getProblemCode().getCode());
 
-		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail);
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(createProblemJsonHeaders()).body(problemDetail);
 	}
 
 	/**
@@ -83,7 +85,7 @@ public class GlobalExceptionHandler {
 		problemDetail.setTitle("Authorization Error");
 		problemDetail.setProperty("code", e.getProblemCode().getCode());
 
-		return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problemDetail);
+		return ResponseEntity.status(HttpStatus.FORBIDDEN).headers(createProblemJsonHeaders()).body(problemDetail);
 	}
 
 	/**
@@ -108,7 +110,7 @@ public class GlobalExceptionHandler {
 		problemDetail.setTitle("Validation Error");
 		problemDetail.setProperty("code", "VALIDATION_ERROR");
 
-		return ResponseEntity.badRequest().body(problemDetail);
+		return ResponseEntity.badRequest().headers(createProblemJsonHeaders()).body(problemDetail);
 	}
 
 	/**
@@ -127,7 +129,7 @@ public class GlobalExceptionHandler {
 		problemDetail.setTitle("Invalid Argument");
 		problemDetail.setProperty("code", "INVALID_ARGUMENT");
 
-		return ResponseEntity.badRequest().body(problemDetail);
+		return ResponseEntity.badRequest().headers(createProblemJsonHeaders()).body(problemDetail);
 	}
 
 	@ExceptionHandler(HttpMessageNotReadableException.class)
@@ -138,7 +140,7 @@ public class GlobalExceptionHandler {
 		problemDetail.setTitle("Bad Request");
 		problemDetail.setProperty("code", "INVALID JSON");
 
-		return ResponseEntity.badRequest().body(problemDetail);
+		return ResponseEntity.badRequest().headers(createProblemJsonHeaders()).body(problemDetail);
 	}
 
 	@ExceptionHandler(IllegalStateException.class)
@@ -154,7 +156,9 @@ public class GlobalExceptionHandler {
 			problemDetail.setTitle("Authentication Context Not Found");
 			problemDetail.setProperty("code", "AUTH007");
 
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail);
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+				.headers(createProblemJsonHeaders())
+				.body(problemDetail);
 		}
 
 		// 기타 IllegalStateException은 내부 서버 오류로 처리
@@ -166,7 +170,9 @@ public class GlobalExceptionHandler {
 		problemDetail.setType(URI.create("https://api.lm.com/errors/internal-error"));
 		problemDetail.setTitle("Internal Server Error");
 
-		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problemDetail);
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+			.headers(createProblemJsonHeaders())
+			.body(problemDetail);
 	}
 
 	@ExceptionHandler(Exception.class)
@@ -180,6 +186,15 @@ public class GlobalExceptionHandler {
 		problemDetail.setTitle("Internal Server Error");
 		problemDetail.setProperty("code", "INTERNAL_SERVER_ERROR");
 
-		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problemDetail);
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+			.headers(createProblemJsonHeaders())
+			.body(problemDetail);
 	}
+
+	private HttpHeaders createProblemJsonHeaders() {
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.parseMediaType("application/problem+json;charset=UTF-8"));
+		return headers;
+	}
+
 }
