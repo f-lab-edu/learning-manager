@@ -4,11 +4,16 @@ import java.time.Instant;
 import java.util.List;
 
 import org.bson.types.ObjectId;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import jakarta.persistence.Column;
 import me.chan99k.learningmanager.domain.attendance.Attendance;
 import me.chan99k.learningmanager.domain.attendance.AttendanceEvent;
 import me.chan99k.learningmanager.domain.attendance.AttendanceStatus;
@@ -21,16 +26,34 @@ import me.chan99k.learningmanager.domain.attendance.CheckedOut;
 	unique = true
 )
 public class AttendanceDocument {
-	private final Long sessionId;
-	private final Long memberId;
-	private final List<AttendanceEventDocument> events;
-	private final AttendanceStatus finalStatus;
 	@Id
 	private ObjectId _id;
 
+	private Long sessionId;
+	private Long memberId;
+	private List<AttendanceEventDocument> events;
+	private AttendanceStatus finalStatus;
+
+	@CreatedDate
+	private Instant createdAt;
+
+	@LastModifiedDate
+	private Instant lastModifiedAt;
+
+	@CreatedBy
+	@Column(nullable = false, updatable = false)
+	private Long createdBy;
+
+	@LastModifiedBy
+	private Long lastModifiedBy;
+
+	private AttendanceDocument() {
+	}
+
 	@PersistenceCreator
-	public AttendanceDocument(ObjectId _id, Long sessionId, Long memberId,
-		List<AttendanceEventDocument> events, AttendanceStatus finalStatus) {
+	private AttendanceDocument(ObjectId _id, Long sessionId, Long memberId,
+		List<AttendanceEventDocument> events, AttendanceStatus finalStatus
+	) {
 		this._id = _id;
 		this.sessionId = sessionId;
 		this.memberId = memberId;
@@ -40,12 +63,15 @@ public class AttendanceDocument {
 
 	public static AttendanceDocument from(Attendance attendance) {
 		ObjectId objectId = attendance.getId() != null ? new ObjectId(attendance.getId()) : null;
+
 		List<AttendanceEventDocument> eventDocs = attendance.getEvents().stream()
 			.map(AttendanceEventDocument::from)
 			.toList();
 
-		return new AttendanceDocument(objectId, attendance.getSessionId(), attendance.getMemberId(),
-			eventDocs, attendance.getFinalStatus());
+		return new AttendanceDocument(
+			objectId, attendance.getSessionId(), attendance.getMemberId(),
+			eventDocs, attendance.getFinalStatus()
+		);
 	}
 
 	public Attendance toDomain() {
@@ -79,6 +105,22 @@ public class AttendanceDocument {
 
 	public AttendanceStatus getFinalStatus() {
 		return finalStatus;
+	}
+
+	public Instant getCreatedAt() {
+		return createdAt;
+	}
+
+	public Instant getLastModifiedAt() {
+		return lastModifiedAt;
+	}
+
+	public Long getLastModifiedBy() {
+		return lastModifiedBy;
+	}
+
+	public Long getCreatedBy() {
+		return createdBy;
 	}
 
 	public record AttendanceEventDocument(
