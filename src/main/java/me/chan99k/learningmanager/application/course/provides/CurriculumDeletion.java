@@ -19,7 +19,4 @@ package me.chan99k.learningmanager.application.course.provides;
  */
 public interface CurriculumDeletion {
 	void deleteCurriculum(Long courseId, Long curriculumId);
-
-	record Request(Long curriculumId) {
-	}
 }
