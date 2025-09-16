@@ -70,6 +70,9 @@ class SessionControllerTest {
 	SessionUpdate sessionUpdate;
 
 	@MockBean
+	me.chan99k.learningmanager.application.session.provides.SessionDeletion sessionDeletion;
+
+	@MockBean
 	SessionQueryRepository sessionQueryRepository;
 
 	@MockBean(name = "sessionTaskExecutor")
@@ -394,5 +397,74 @@ class SessionControllerTest {
 			.andExpect(status().isNoContent());
 
 		verify(sessionUpdate).updateSession(sessionId, request);
+	}
+
+	@Test
+	@DisplayName("[Success] 세션 삭제 요청이 성공하면 204 No Content를 반환한다")
+	void deleteSession_Success() throws Exception {
+		Long sessionId = 1L;
+
+		doNothing().when(sessionDeletion).deleteSession(sessionId);
+
+		mockMvc.perform(delete("/api/v1/sessions/{sessionId}", sessionId))
+			.andDo(print())
+			.andExpect(status().isNoContent());
+
+		verify(sessionDeletion).deleteSession(sessionId);
+	}
+
+	@Test
+	@DisplayName("[Failure] 권한이 없는 사용자의 세션 삭제 시 403 응답")
+	void deleteSession_AuthorizationFail() throws Exception {
+		Long sessionId = 1L;
+
+		doThrow(new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED))
+			.when(sessionDeletion).deleteSession(sessionId);
+
+		mockMvc.perform(delete("/api/v1/sessions/{sessionId}", sessionId))
+			.andDo(print())
+			.andExpect(status().isForbidden())
+			.andExpect(jsonPath("$.code").value(AuthProblemCode.AUTHORIZATION_REQUIRED.getCode()));
+	}
+
+	@Test
+	@DisplayName("[Failure] 인증되지 않은 사용자의 세션 삭제 시 401 응답")
+	void deleteSession_AuthenticationFail() throws Exception {
+		Long sessionId = 1L;
+
+		doThrow(new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND))
+			.when(sessionDeletion).deleteSession(sessionId);
+
+		mockMvc.perform(delete("/api/v1/sessions/{sessionId}", sessionId))
+			.andDo(print())
+			.andExpect(status().isUnauthorized())
+			.andExpect(jsonPath("$.code").value(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND.getCode()));
+	}
+
+	@Test
+	@DisplayName("[Failure] 존재하지 않는 세션 삭제 시 400 응답")
+	void deleteSession_SessionNotFound() throws Exception {
+		Long sessionId = 999L;
+
+		doThrow(new DomainException(SessionProblemCode.SESSION_NOT_FOUND))
+			.when(sessionDeletion).deleteSession(sessionId);
+
+		mockMvc.perform(delete("/api/v1/sessions/{sessionId}", sessionId))
+			.andDo(print())
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.code").value(SessionProblemCode.SESSION_NOT_FOUND.getCode()));
+	}
+
+	@Test
+	@DisplayName("[Failure] 하위 세션이 있는 세션 삭제 시 400 응답")
+	void deleteSession_SessionWithChildren() throws Exception {
+		Long sessionId = 1L;
+
+		doThrow(new IllegalArgumentException(SessionProblemCode.CANNOT_DELETE_WHEN_CHILD_EXISTS.getMessage()))
+			.when(sessionDeletion).deleteSession(sessionId);
+
+		mockMvc.perform(delete("/api/v1/sessions/{sessionId}", sessionId))
+			.andDo(print())
+			.andExpect(status().isBadRequest());
 	}
 }
