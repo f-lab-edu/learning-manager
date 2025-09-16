@@ -19,6 +19,9 @@ spring:
       enabled: true
   flyway:
     enabled: false
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/test_db
 logging:
   level:
     web: trace
