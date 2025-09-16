@@ -37,6 +37,7 @@ import me.chan99k.learningmanager.adapter.auth.jwt.InMemoryJwtTokenRevocationPro
 import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
 import me.chan99k.learningmanager.application.session.SessionCreationService;
 import me.chan99k.learningmanager.application.session.provides.SessionCreation;
+import me.chan99k.learningmanager.application.session.provides.SessionUpdate;
 import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
 import me.chan99k.learningmanager.common.exception.AuthenticationException;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
@@ -64,6 +65,9 @@ class SessionControllerTest {
 
 	@MockBean
 	SessionCreationService sessionCreationService;
+
+	@MockBean
+	SessionUpdate sessionUpdate;
 
 	@MockBean
 	SessionQueryRepository sessionQueryRepository;
@@ -267,5 +271,128 @@ class SessionControllerTest {
 				.content(invalidRequest))
 			.andDo(print())
 			.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@DisplayName("[Success] 세션 수정 요청이 성공하면 204 No Content를 반환한다")
+	void updateSession_Success() throws Exception {
+		Long sessionId = 1L;
+		SessionUpdate.Request request = new SessionUpdate.Request(
+			"Updated Session Title",
+			LocalDateTime.now().plusDays(7).toInstant(ZoneOffset.UTC),
+			LocalDateTime.now().plusDays(7).plusHours(3).toInstant(ZoneOffset.UTC),
+			SessionType.OFFLINE,
+			SessionLocation.SITE,
+			"Updated Room 101"
+		);
+
+		doNothing().when(sessionUpdate).updateSession(sessionId, request);
+
+		mockMvc.perform(put("/api/v1/sessions/{sessionId}", sessionId)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andDo(print())
+			.andExpect(status().isNoContent());
+
+		verify(sessionUpdate).updateSession(sessionId, request);
+	}
+
+	@Test
+	@DisplayName("[Failure] 인증되지 않은 사용자의 세션 수정 시 401 응답")
+	void updateSession_AuthenticationFail() throws Exception {
+		Long sessionId = 1L;
+		SessionUpdate.Request request = new SessionUpdate.Request(
+			"Title", LocalDateTime.now().plusDays(1).toInstant(ZoneOffset.UTC),
+			LocalDateTime.now().plusDays(1).plusHours(1).toInstant(ZoneOffset.UTC),
+			SessionType.ONLINE, SessionLocation.ZOOM, null
+		);
+
+		doThrow(new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND))
+			.when(sessionUpdate).updateSession(sessionId, request);
+
+		mockMvc.perform(put("/api/v1/sessions/{sessionId}", sessionId)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andDo(print())
+			.andExpect(status().isUnauthorized())
+			.andExpect(jsonPath("$.code").value(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND.getCode()));
+	}
+
+	@Test
+	@DisplayName("[Failure] 권한이 없는 사용자의 세션 수정 시 403 응답")
+	void updateSession_AuthorizationFail() throws Exception {
+		Long sessionId = 1L;
+		SessionUpdate.Request request = new SessionUpdate.Request(
+			"Title", LocalDateTime.now().plusDays(1).toInstant(ZoneOffset.UTC),
+			LocalDateTime.now().plusDays(1).plusHours(1).toInstant(ZoneOffset.UTC),
+			SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null
+		);
+
+		doThrow(new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED))
+			.when(sessionUpdate).updateSession(sessionId, request);
+
+		mockMvc.perform(put("/api/v1/sessions/{sessionId}", sessionId)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andDo(print())
+			.andExpect(status().isForbidden())
+			.andExpect(jsonPath("$.code").value(AuthProblemCode.AUTHORIZATION_REQUIRED.getCode()));
+	}
+
+	@Test
+	@DisplayName("[Failure] 존재하지 않는 세션 수정 시 400 응답")
+	void updateSession_SessionNotFound() throws Exception {
+		Long sessionId = 999L;
+		SessionUpdate.Request request = new SessionUpdate.Request(
+			"Title", LocalDateTime.now().plusDays(1).toInstant(ZoneOffset.UTC),
+			LocalDateTime.now().plusDays(1).plusHours(1).toInstant(ZoneOffset.UTC),
+			SessionType.ONLINE, SessionLocation.ZOOM, null
+		);
+
+		doThrow(new DomainException(SessionProblemCode.SESSION_NOT_FOUND))
+			.when(sessionUpdate).updateSession(sessionId, request);
+
+		mockMvc.perform(put("/api/v1/sessions/{sessionId}", sessionId)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andDo(print())
+			.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@DisplayName("[Failure] 잘못된 요청 데이터로 세션 수정 시 400 응답")
+	void updateSession_InvalidRequest() throws Exception {
+		Long sessionId = 1L;
+		String invalidRequest = "{\"title\":\"\"}";
+
+		mockMvc.perform(put("/api/v1/sessions/{sessionId}", sessionId)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(invalidRequest))
+			.andDo(print())
+			.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@DisplayName("[Success] 유효한 세션ID로 수정 요청이 성공한다")
+	void updateSession_ValidSessionId_Success() throws Exception {
+		Long sessionId = 123L;
+		SessionUpdate.Request request = new SessionUpdate.Request(
+			"Valid Session Title",
+			LocalDateTime.now().plusDays(5).toInstant(ZoneOffset.UTC),
+			LocalDateTime.now().plusDays(5).plusHours(2).toInstant(ZoneOffset.UTC),
+			SessionType.ONLINE,
+			SessionLocation.ZOOM,
+			null
+		);
+
+		doNothing().when(sessionUpdate).updateSession(sessionId, request);
+
+		mockMvc.perform(put("/api/v1/sessions/{sessionId}", sessionId)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andDo(print())
+			.andExpect(status().isNoContent());
+
+		verify(sessionUpdate).updateSession(sessionId, request);
 	}
 }
