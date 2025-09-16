@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,6 +17,7 @@ import jakarta.validation.Valid;
 import me.chan99k.learningmanager.application.session.SessionCreationService;
 import me.chan99k.learningmanager.application.session.provides.SessionCreation;
 import me.chan99k.learningmanager.application.session.provides.SessionDetailRetrieval;
+import me.chan99k.learningmanager.application.session.provides.SessionUpdate;
 import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
 import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.session.Session;
@@ -25,13 +27,16 @@ import me.chan99k.learningmanager.domain.session.SessionProblemCode;
 @RequestMapping("/api/v1/sessions")
 public class SessionController {
 	private final SessionCreationService sessionCreationService;
+	private final SessionUpdate sessionUpdate;
 	private final SessionQueryRepository sessionQueryRepository;
 	private final TaskExecutor sessionTaskExecutor;
 
 	public SessionController(SessionCreationService sessionCreationService,
+		SessionUpdate sessionUpdate,
 		SessionQueryRepository sessionQueryRepository,
 		TaskExecutor sessionTaskExecutor) {
 		this.sessionCreationService = sessionCreationService;
+		this.sessionUpdate = sessionUpdate;
 		this.sessionQueryRepository = sessionQueryRepository;
 		this.sessionTaskExecutor = sessionTaskExecutor;
 	}
@@ -81,5 +86,13 @@ public class SessionController {
 			);
 			return ResponseEntity.ok(response);
 		}, sessionTaskExecutor);
+	}
+
+	@PutMapping("/{sessionId}")
+	public ResponseEntity<Void> updateSession(
+		@PathVariable Long sessionId,
+		@Valid @RequestBody SessionUpdate.Request request) {
+		sessionUpdate.updateSession(sessionId, request);
+		return ResponseEntity.noContent().build();
 	}
 }
