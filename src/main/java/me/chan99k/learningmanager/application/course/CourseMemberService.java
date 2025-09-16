@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
 import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
 import me.chan99k.learningmanager.application.course.provides.CourseMemberAddition;
+import me.chan99k.learningmanager.application.course.provides.CourseMemberRemoval;
 import me.chan99k.learningmanager.application.course.requires.CourseCommandRepository;
 import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
 import me.chan99k.learningmanager.application.member.requires.MemberEmailPair;
@@ -26,7 +27,7 @@ import me.chan99k.learningmanager.domain.member.MemberProblemCode;
 
 @Service
 @Transactional
-public class CourseMemberService implements CourseMemberAddition {
+public class CourseMemberService implements CourseMemberAddition, CourseMemberRemoval {
 
 	private final int MAX_BULK_SIZE;
 
@@ -96,17 +97,17 @@ public class CourseMemberService implements CourseMemberAddition {
 
 		commandRepository.save(course);
 
-		return new Response(members.size(), successCount, members.size() - successCount, results);
+		return new CourseMemberAddition.Response(members.size(), successCount, members.size() - successCount, results);
 
 	}
 
-	/**
-	 * Authenticates the current member and checks if they are the manager of the given course.
-	 *
-	 * @param courseId the course to check
-	 * @throws AuthenticationException if authentication context is not found
-	 * @throws AuthorizationException  if the member is not the course manager
-	 */
+	@Override
+	public void removeMemberFromCourse(Long courseId, Long memberId) {
+		Course course = authenticateAndAuthorizeManager(courseId);
+		course.removeMember(memberId);
+		commandRepository.save(course);
+	}
+
 	private Course authenticateAndAuthorizeManager(Long courseId) {    // TODO 권한 확인 로직 ASPECT 로 분리하기
 		Long managerId = AuthenticationContextHolder.getCurrentMemberId()
 			.orElseThrow(() -> new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));

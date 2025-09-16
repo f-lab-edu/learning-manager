@@ -206,4 +206,39 @@ class CourseMemberServiceTest {
 			verify(courseCommandRepository).save(course);
 		}
 	}
+
+	@Test
+	@DisplayName("[Success] 과정 매니저가 멤버를 성공적으로 제외한다")
+	void removeMember_Success() {
+		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
+			// given
+			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
+			when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
+
+			// when
+			courseMemberService.removeMemberFromCourse(courseId, memberToAddId);
+
+			// then
+			verify(course).removeMember(memberToAddId);
+			verify(courseCommandRepository).save(course);
+		}
+	}
+
+	@Test
+	@DisplayName("[Failure] 과정 매니저가 아니면 멤버를 제외할 수 없다")
+	void removeMember_Fail_NotManager() {
+		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
+			// given
+			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
+			when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.empty());
+
+			// when & then
+			assertThatThrownBy(() -> courseMemberService.removeMemberFromCourse(courseId, memberToAddId))
+				.isInstanceOf(AuthorizationException.class)
+				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
+
+			verify(course, never()).removeMember(anyLong());
+			verify(courseCommandRepository, never()).save(any(Course.class));
+		}
+	}
 }

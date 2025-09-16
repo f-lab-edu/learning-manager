@@ -190,4 +190,31 @@ class CourseMemberControllerTest {
 			.andExpect(status().isBadRequest())
 			.andExpect(jsonPath("$.code").value(CourseProblemCode.COURSE_NOT_FOUND.getCode()));
 	}
+
+	@Test
+	@DisplayName("[Success] 유효한 요청으로 멤버 제외 시 204 No Content를 반환한다")
+	void removeMember_Success() throws Exception {
+		long courseId = 1L;
+		long memberId = 10L;
+
+		doNothing().when(courseMemberService).removeMemberFromCourse(courseId, memberId);
+
+		mockMvc.perform(delete("/api/v1/courses/{courseId}/members/{memberId}", courseId, memberId)
+				.header("Authorization", "Bearer valid-token"))
+			.andExpect(status().isNoContent());
+	}
+
+	@Test
+	@DisplayName("[Failure] 권한이 없는 사용자의 멤버 제외 요청 시 403 Forbidden을 반환한다")
+	void removeMember_Fail_Forbidden() throws Exception {
+		long courseId = 1L;
+		long memberId = 10L;
+
+		doThrow(new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED))
+			.when(courseMemberService).removeMemberFromCourse(anyLong(), anyLong());
+
+		mockMvc.perform(delete("/api/v1/courses/{courseId}/members/{memberId}", courseId, memberId)
+				.header("Authorization", "Bearer valid-token"))
+			.andExpect(status().isForbidden());
+	}
 }
