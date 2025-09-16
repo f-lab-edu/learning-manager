@@ -43,10 +43,10 @@ services:
     ports:
       - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-@hyeau1477}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME:-lm_db_dev}
       MYSQL_USER: ${DB_USER:-lm-admin}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-1q2w3e4r}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
     command: --default-authentication-plugin=mysql_native_password

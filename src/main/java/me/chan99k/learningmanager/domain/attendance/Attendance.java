@@ -36,7 +36,6 @@ public class Attendance {
 	) {
 		Attendance attendance = new Attendance(id, sessionId, memberId);
 		attendance.events = new ArrayList<>(events);
-		;
 		attendance.recalculateStatus();
 		return attendance;
 	}

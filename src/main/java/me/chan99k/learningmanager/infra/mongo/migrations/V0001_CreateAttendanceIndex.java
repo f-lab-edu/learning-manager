@@ -56,8 +56,6 @@ public class V0001_CreateAttendanceIndex {
 			mongoTemplate.indexOps("attendance").dropIndex("event_type_idx");
 			mongoTemplate.indexOps("attendance").dropIndex("final_status_idx");
 		} catch (Exception e) {
-			// 인덱스 삭제 실패는 로그만 남기고 계속 진행
-			// TODO :: 실제 환경에서는 로깅 프레임워크 사용 필요
 			log.error("Failed to rollback indexes: {}", e.getMessage());
 		}
 	}
