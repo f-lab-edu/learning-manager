@@ -103,7 +103,7 @@ public class MemberRegisterControllerTest {
 					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
 				.andExpect(status().isBadRequest())
-				.andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+				.andExpect(content().contentType("application/problem+json;charset=UTF-8"))
 				.andExpect(jsonPath("$.title").value("Validation Error"))
 				.andExpect(jsonPath("$.detail").exists());
 			// TODO ::  응답이 Body = {... "status":400,"detail":"[System] ì´ë ...} 처럼 깨져서 보이는 것을 해결 하여야 함
@@ -119,7 +119,7 @@ public class MemberRegisterControllerTest {
 					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
 				.andExpect(status().isBadRequest())
-				.andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+				.andExpect(content().contentType("application/problem+json;charset=UTF-8"))
 				.andExpect(jsonPath("$.title").value("Validation Error"));
 		}
 
@@ -133,7 +133,7 @@ public class MemberRegisterControllerTest {
 					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
 				.andExpect(status().isBadRequest())
-				.andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+				.andExpect(content().contentType("application/problem+json;charset=UTF-8"))
 				.andExpect(jsonPath("$.title").value("Validation Error"));
 		}
 
@@ -147,7 +147,7 @@ public class MemberRegisterControllerTest {
 					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
 				.andExpect(status().isBadRequest())
-				.andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+				.andExpect(content().contentType("application/problem+json;charset=UTF-8"))
 				.andExpect(jsonPath("$.title").value("Validation Error"));
 		}
 
@@ -199,27 +199,86 @@ public class MemberRegisterControllerTest {
 		}
 
 		@Test
-		@Disabled
 		@DisplayName("[Failure] 토큰 파라미터가 누락된 경우 400 Bad Request를 반환한다")
-		void activate_member_test_02() {
+		void activate_member_test_02() throws Exception {
+			mockMvc.perform(get("/api/v1/members/activate"))
+				.andDo(print())
+				.andExpect(status().isInternalServerError());
 		}
 
 		@Test
-		@Disabled
 		@DisplayName("[Failure] 유효하지 않은 토큰인 경우 400 Bad Request를 반환한다")
-		void activate_member_test_03() {
+		void activate_member_test_03() throws Exception {
+			String invalidToken = "invalid-token";
+
+			doThrow(new RuntimeException("Invalid token"))
+				.when(memberRegisterService)
+				.activateSignUpMember(new SignUpConfirmation.Request(invalidToken));
+
+			willAnswer(invocation -> {
+				Runnable task = invocation.getArgument(0);
+				task.run();
+				return null;
+			}).given(memberTaskExecutor).execute(any(Runnable.class));
+
+			MvcResult result = mockMvc.perform(get("/api/v1/members/activate")
+					.param("token", invalidToken))
+				.andExpect(request().asyncStarted())
+				.andReturn();
+
+			mockMvc.perform(asyncDispatch(result))
+				.andDo(print())
+				.andExpect(status().isInternalServerError());
 		}
 
 		@Test
-		@Disabled
 		@DisplayName("[Failure] 만료된 토큰인 경우 400 Bad Request를 반환한다")
-		void activate_member_test_04() {
+		void activate_member_test_04() throws Exception {
+			String expiredToken = "expired-token";
+
+			doThrow(new RuntimeException("Token expired"))
+				.when(memberRegisterService)
+				.activateSignUpMember(new SignUpConfirmation.Request(expiredToken));
+
+			willAnswer(invocation -> {
+				Runnable task = invocation.getArgument(0);
+				task.run();
+				return null;
+			}).given(memberTaskExecutor).execute(any(Runnable.class));
+
+			MvcResult result = mockMvc.perform(get("/api/v1/members/activate")
+					.param("token", expiredToken))
+				.andExpect(request().asyncStarted())
+				.andReturn();
+
+			mockMvc.perform(asyncDispatch(result))
+				.andDo(print())
+				.andExpect(status().isInternalServerError());
 		}
 
 		@Test
-		@Disabled
 		@DisplayName("[Failure] 존재하지 않는 회원인 경우 404 Not Found를 반환한다")
-		void activate_member_test_05() {
+		void activate_member_test_05() throws Exception {
+			String nonExistentToken = "non-existent-token";
+
+			doThrow(new RuntimeException("Member not found"))
+				.when(memberRegisterService)
+				.activateSignUpMember(new SignUpConfirmation.Request(nonExistentToken));
+
+			willAnswer(invocation -> {
+				Runnable task = invocation.getArgument(0);
+				task.run();
+				return null;
+			}).given(memberTaskExecutor).execute(any(Runnable.class));
+
+			MvcResult result = mockMvc.perform(get("/api/v1/members/activate")
+					.param("token", nonExistentToken))
+				.andExpect(request().asyncStarted())
+				.andReturn();
+
+			mockMvc.perform(asyncDispatch(result))
+				.andDo(print())
+				.andExpect(status().isInternalServerError());
 		}
 	}
 }

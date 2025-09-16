@@ -13,7 +13,6 @@ public class Attendance {
 	private final Long memberId;
 	private String id;
 	private List<AttendanceEvent> events;
-
 	private AttendanceStatus finalStatus;        // 계산된 최종 상태
 
 	private Attendance(String id, Long sessionId, Long memberId) {

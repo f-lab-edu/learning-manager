@@ -33,11 +33,14 @@ spring:
     open-in-view: false
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    url: jdbc:mysql://localhost:3306/lm_db_dev?useSSL=false&allowPublicKeyRetrieval=true
+    username: lm-admin
+    password: 1q2w3e4r
   flyway:
     enabled: true
+  data:
+    mongodb:
+      uri: mongodb://admin:mongopassword@localhost:27017/learning_manager?authSource=admin
 
 logging:
   level:
@@ -76,6 +79,10 @@ spring:
     password: ${DB_PASSWORD}
   flyway:
     enabled: true
+  data:
+    mongodb:
+      uri: mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@${MONGO_HOST:-localhost}:${MONGO_PORT:-27017}/${MONGO_DATABASE}?authSource=admin
+
 logging:
   level:
     web: error

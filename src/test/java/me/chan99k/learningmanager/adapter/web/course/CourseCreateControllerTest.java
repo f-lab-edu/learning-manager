@@ -132,7 +132,7 @@ class CourseCreateControllerTest {
 				.content(objectMapper.writeValueAsString(request)))
 			.andDo(print())
 			.andExpect(status().isBadRequest())
-			.andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+			.andExpect(content().contentType("application/problem+json;charset=UTF-8"))
 			.andExpect(jsonPath("$.title").value("Validation Error"))
 			.andExpect(jsonPath("$.detail").exists());
 	}
@@ -150,7 +150,7 @@ class CourseCreateControllerTest {
 				.content(objectMapper.writeValueAsString(request)))
 			.andDo(print())
 			.andExpect(status().isBadRequest())
-			.andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+			.andExpect(content().contentType("application/problem+json;charset=UTF-8"))
 			.andExpect(jsonPath("$.title").value("Validation Error"));
 	}
 
@@ -177,7 +177,7 @@ class CourseCreateControllerTest {
 		mockMvc.perform(asyncDispatch(mvcResult))
 			.andDo(print())
 			.andExpect(status().isForbidden())
-			.andExpect(content().contentType("application/problem+json"));
+			.andExpect(content().contentType("application/problem+json;charset=UTF-8"));
 	}
 
 	@Test
