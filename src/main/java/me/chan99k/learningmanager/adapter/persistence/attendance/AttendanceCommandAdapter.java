@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
+import me.chan99k.learningmanager.adapter.persistence.attendance.documents.AttendanceDocument;
+import me.chan99k.learningmanager.adapter.persistence.attendance.documents.AttendanceReservationDocument;
 import me.chan99k.learningmanager.application.attendance.requires.AttendanceCommandRepository;
 import me.chan99k.learningmanager.domain.attendance.Attendance;
 

@@ -8,6 +8,8 @@ import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
+import me.chan99k.learningmanager.adapter.persistence.attendance.documents.AttendanceReservationDocument;
+
 public interface AttendanceReservationMongoRepository extends MongoRepository<AttendanceReservationDocument, ObjectId> {
 
 	Optional<AttendanceReservationDocument> findBySessionMemberKey(String sessionMemberKey);

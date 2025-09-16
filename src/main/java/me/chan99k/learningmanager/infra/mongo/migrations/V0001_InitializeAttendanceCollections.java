@@ -28,9 +28,8 @@ public class V0001_InitializeAttendanceCollections {
 
 	@Execution
 	public void initializeAttendanceCollections(MongoTemplate mongoTemplate) {
-		// 1. Attendance 메인 컬렉션 생성 및 검증 규칙 설정
+		// 1. Attendance 컬렉션 생성 및 검증 규칙 설정
 		if (!mongoTemplate.collectionExists("attendance")) {
-			// JSON Schema를 사용한 검증 규칙 정의
 			MongoJsonSchema attendanceSchema = MongoJsonSchema.builder()
 				.required("sessionId", "memberId", "events", "finalStatus")
 				.properties(
@@ -45,7 +44,7 @@ public class V0001_InitializeAttendanceCollections {
 			);
 		}
 
-		// 2.   컬렉션 (Saga 패턴용 임시 예약)
+		// 2. reservation 컬렉션
 		if (!mongoTemplate.collectionExists("attendance_reservations")) {
 
 			MongoJsonSchema reservationSchema = MongoJsonSchema.builder()
@@ -62,7 +61,7 @@ public class V0001_InitializeAttendanceCollections {
 				.validator(Validator.schema(reservationSchema))
 			);
 
-			// TTL 인덱스 - 5분 후 자동 만료 (Saga 타임아웃)
+			// TTL 인덱스 - 5분 후 자동 만료
 			mongoTemplate.indexOps("attendance_reservations")
 				.ensureIndex(new Index("expiresAt", Sort.Direction.ASC)
 					.expire(0, TimeUnit.SECONDS)
@@ -75,12 +74,10 @@ public class V0001_InitializeAttendanceCollections {
 					.named("session_member_key_unique_idx"));
 		}
 
-		// 3. 시스템 메타데이터 초기화
 		if (!mongoTemplate.collectionExists("system_metadata")) {
 			mongoTemplate.createCollection("system_metadata");
 		}
 
-		// 출석 시스템 메타데이터 문서 생성
 		Document attendanceMetadata = new Document()
 			.append("_id", "attendance_metadata")
 			.append("version", "1.0.0")
@@ -92,7 +89,6 @@ public class V0001_InitializeAttendanceCollections {
 
 		mongoTemplate.save(attendanceMetadata, "system_metadata");
 
-		// 4. 통계 및 분석을 위한 뷰 생성
 		createAttendanceStatisticsView(mongoTemplate);
 	}
 
@@ -118,8 +114,7 @@ public class V0001_InitializeAttendanceCollections {
 				return null;
 			});
 		} catch (Exception e) {
-			// 뷰 생성 실패는 치명적이지 않으므로 로그만 남김
-			System.err.println("Warning: Failed to create attendance statistics view: " + e.getMessage());
+			log.error("Warning: Failed to create attendance statistics view: {}", e.getMessage());
 		}
 	}
 

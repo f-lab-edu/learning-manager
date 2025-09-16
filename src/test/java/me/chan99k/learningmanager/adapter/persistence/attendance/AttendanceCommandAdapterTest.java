@@ -14,6 +14,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DuplicateKeyException;
 
+import me.chan99k.learningmanager.adapter.persistence.attendance.documents.AttendanceDocument;
+import me.chan99k.learningmanager.adapter.persistence.attendance.documents.AttendanceReservationDocument;
 import me.chan99k.learningmanager.domain.attendance.Attendance;
 
 @ExtendWith(MockitoExtension.class)

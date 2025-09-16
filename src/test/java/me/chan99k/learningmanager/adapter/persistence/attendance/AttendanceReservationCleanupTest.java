@@ -14,6 +14,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import me.chan99k.learningmanager.adapter.persistence.attendance.documents.AttendanceReservationDocument;
+
 @ExtendWith(MockitoExtension.class)
 class AttendanceReservationCleanupTest {
 

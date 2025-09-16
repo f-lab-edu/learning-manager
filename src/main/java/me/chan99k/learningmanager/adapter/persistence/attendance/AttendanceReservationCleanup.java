@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import me.chan99k.learningmanager.adapter.persistence.attendance.documents.AttendanceReservationDocument;
+
 @Component
 public class AttendanceReservationCleanup {
 

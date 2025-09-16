@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.adapter.persistence.attendance;
+package me.chan99k.learningmanager.adapter.persistence.attendance.documents;
 
 import java.time.Instant;
 import java.util.UUID;
