@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -53,5 +54,15 @@ public class CourseMemberController {
 
 		}, courseTaskExecutor);
 
+	}
+
+	@DeleteMapping("/{courseId}/members/{memberId}")
+	public ResponseEntity<Void> removeMemberFromCourse(
+		@PathVariable Long courseId,
+		@PathVariable Long memberId
+	) {
+		courseMemberService.removeMemberFromCourse(courseId, memberId);
+
+		return ResponseEntity.noContent().build();
 	}
 }

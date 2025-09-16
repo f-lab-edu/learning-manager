@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
 import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
 import me.chan99k.learningmanager.application.course.provides.CourseMemberAddition;
+import me.chan99k.learningmanager.application.course.provides.CourseMemberRemoval;
 import me.chan99k.learningmanager.application.course.requires.CourseCommandRepository;
 import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
 import me.chan99k.learningmanager.application.member.requires.MemberEmailPair;
@@ -26,7 +27,7 @@ import me.chan99k.learningmanager.domain.member.MemberProblemCode;
 
 @Service
 @Transactional
-public class CourseMemberService implements CourseMemberAddition {
+public class CourseMemberService implements CourseMemberAddition, CourseMemberRemoval {
 
 	private final int MAX_BULK_SIZE;
 
@@ -96,8 +97,15 @@ public class CourseMemberService implements CourseMemberAddition {
 
 		commandRepository.save(course);
 
-		return new Response(members.size(), successCount, members.size() - successCount, results);
+		return new CourseMemberAddition.Response(members.size(), successCount, members.size() - successCount, results);
 
+	}
+
+	@Override
+	public void removeMemberFromCourse(Long courseId, Long memberId) {
+		Course course = authenticateAndAuthorizeManager(courseId);
+		course.removeMember(memberId);
+		commandRepository.save(course);
 	}
 
 	/**
@@ -114,4 +122,5 @@ public class CourseMemberService implements CourseMemberAddition {
 		return queryRepository.findManagedCourseById(courseId, managerId)
 			.orElseThrow(() -> new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED));
 	}
+
 }
