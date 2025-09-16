@@ -5,6 +5,7 @@ import java.util.concurrent.CompletableFuture;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import me.chan99k.learningmanager.application.session.SessionCreationService;
 import me.chan99k.learningmanager.application.session.provides.SessionCreation;
+import me.chan99k.learningmanager.application.session.provides.SessionDeletion;
 import me.chan99k.learningmanager.application.session.provides.SessionDetailRetrieval;
 import me.chan99k.learningmanager.application.session.provides.SessionUpdate;
 import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
@@ -28,15 +30,18 @@ import me.chan99k.learningmanager.domain.session.SessionProblemCode;
 public class SessionController {
 	private final SessionCreationService sessionCreationService;
 	private final SessionUpdate sessionUpdate;
+	private final SessionDeletion sessionDeletion;
 	private final SessionQueryRepository sessionQueryRepository;
 	private final TaskExecutor sessionTaskExecutor;
 
 	public SessionController(SessionCreationService sessionCreationService,
 		SessionUpdate sessionUpdate,
+		SessionDeletion sessionDeletion,
 		SessionQueryRepository sessionQueryRepository,
 		TaskExecutor sessionTaskExecutor) {
 		this.sessionCreationService = sessionCreationService;
 		this.sessionUpdate = sessionUpdate;
+		this.sessionDeletion = sessionDeletion;
 		this.sessionQueryRepository = sessionQueryRepository;
 		this.sessionTaskExecutor = sessionTaskExecutor;
 	}
@@ -93,6 +98,12 @@ public class SessionController {
 		@PathVariable Long sessionId,
 		@Valid @RequestBody SessionUpdate.Request request) {
 		sessionUpdate.updateSession(sessionId, request);
+		return ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping("/{sessionId}")
+	public ResponseEntity<Void> deleteSession(@PathVariable Long sessionId) {
+		sessionDeletion.deleteSession(sessionId);
 		return ResponseEntity.noContent().build();
 	}
 }
