@@ -108,13 +108,6 @@ public class CourseMemberService implements CourseMemberAddition, CourseMemberRe
 		commandRepository.save(course);
 	}
 
-	/**
-	 * Authenticates the current member and checks if they are the manager of the given course.
-	 *
-	 * @param courseId the course to check
-	 * @throws AuthenticationException if authentication context is not found
-	 * @throws AuthorizationException  if the member is not the course manager
-	 */
 	private Course authenticateAndAuthorizeManager(Long courseId) {    // TODO 권한 확인 로직 ASPECT 로 분리하기
 		Long managerId = AuthenticationContextHolder.getCurrentMemberId()
 			.orElseThrow(() -> new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
@@ -122,5 +115,4 @@ public class CourseMemberService implements CourseMemberAddition, CourseMemberRe
 		return queryRepository.findManagedCourseById(courseId, managerId)
 			.orElseThrow(() -> new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED));
 	}
-
 }

@@ -38,7 +38,8 @@
 
 ### 데이터베이스
 
-- **MySQL**: 운영 RDB
+- **MySQL**: 운영 RDB (Member, Course, Session 등 관계형 데이터)
+- **MongoDB**: 출석 시스템용 NoSQL DB (이벤트 소싱 기반 출석 데이터)
 - **H2**: 테스트용 인메모리 RDB
 
 ---
@@ -323,12 +324,14 @@
 ### 6.4 Attendance
 #### 6.4.1 `Attendance` : 출석 기록
 
-> 이벤트 소싱 기반으로 세션별 회원의 모든 출입 이력을 추적하고 최종 출석 상태를 관리합니다.
+> 이벤트 소싱 기반으로 세션별 회원의 모든 출입 이력을 추적하고 최종 출석 상태를 관리합니다. MongoDB에 저장됩니다.
 
 - **id** (String): 고유 식별자 (MongoDB ObjectId 호환)
 - **sessionId** (Long), **memberId** (Long): 불변 컨텍스트 정보
 - **events** (List<AttendanceEvent>): 시간순 출입 이벤트 목록
 - **finalStatus** (AttendanceStatus): 계산된 최종 출석 상태
+
+**저장소**: MongoDB (이벤트 소싱 패턴에 최적화된 스키마리스 저장)
 
 ##### provides
 
