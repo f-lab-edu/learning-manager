@@ -14,6 +14,8 @@ public interface SessionParticipantManagement {
 
 	SessionParticipantResponse changeParticipantRole(ChangeParticipantRoleRequest request);
 
+	SessionParticipantResponse leaveSession(LeaveSessionRequest request);
+
 	record AddParticipantRequest(
 		@NotNull Long memberId,
 		@NotNull SessionParticipantRole role
@@ -30,6 +32,11 @@ public interface SessionParticipantManagement {
 		@NotNull Long sessionId,
 		@NotNull Long memberId,
 		@NotNull SessionParticipantRole newRole
+	) {
+	}
+
+	record LeaveSessionRequest(
+		@NotNull Long sessionId
 	) {
 	}
 

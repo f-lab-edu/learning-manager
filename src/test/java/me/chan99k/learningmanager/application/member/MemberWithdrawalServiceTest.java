@@ -116,7 +116,7 @@ class MemberWithdrawalServiceTest {
 
 			assertThatThrownBy(() -> memberWithdrawalService.withdrawal())
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage("스터디장 권한을 다른 멤버에게 위임한 후 탈퇴할 수 있습니다.");
+				.hasMessage("[System] 스터디장 권한을 다른 멤버에게 위임한 후 탈퇴할 수 있습니다.");
 
 			verify(member, never()).withdraw();
 			verify(memberCommandRepository, never()).save(any());

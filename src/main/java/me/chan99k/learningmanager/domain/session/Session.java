@@ -244,11 +244,11 @@ public class Session extends AbstractEntity {
 		return Collections.unmodifiableList(this.participants);
 	}
 
-	boolean isRootSession() {
+	public boolean isRootSession() {
 		return Objects.isNull(this.parent);
 	}
 
-	boolean isChildSession() {
+	public boolean isChildSession() {
 		return !this.isRootSession();
 	}
 

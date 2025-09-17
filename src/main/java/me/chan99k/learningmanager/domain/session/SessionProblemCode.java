@@ -27,7 +27,8 @@ public enum SessionProblemCode implements ProblemCode {
 	PARTICIPANT_ROLE_REQUIRED("DLS023", "[System] 세션 참여를 위해서는 유효한 역할이 필요합니다"),
 	SESSION_NOT_FOUND("DLS024", "[System] 세션을 찾을 수 없습니다."),
 	HOST_CANNOT_LEAVE_ALONE("DLS025", "[System] HOST는 다른 HOST를 지정한 후에 세션을 떠날 수 있습니다"),
-	CANNOT_DELETE_WHEN_CHILD_EXISTS("DLS026", "[System] 하위 세션이 있는 세션은 삭제할 수 없습니다. 먼저 하위 세션을 삭제해주세요.");
+	CANNOT_DELETE_WHEN_CHILD_EXISTS("DLS026", "[System] 하위 세션이 있는 세션은 삭제할 수 없습니다. 먼저 하위 세션을 삭제해주세요."),
+	ROOT_SESSION_SELF_LEAVE_NOT_ALLOWED("DLS027", "[System] 루트 세션에서는 자가 탈퇴가 불가능합니다. 관리자에게 문의하세요.");
 
 	private final String code;
 	private final String message;

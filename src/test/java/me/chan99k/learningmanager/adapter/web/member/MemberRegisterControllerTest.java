@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.adapter.web;
+package me.chan99k.learningmanager.adapter.web.member;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
@@ -27,7 +27,6 @@ import me.chan99k.learningmanager.adapter.auth.BcryptPasswordEncoder;
 import me.chan99k.learningmanager.adapter.auth.JwtCredentialProvider;
 import me.chan99k.learningmanager.adapter.auth.jwt.AccessJwtTokenProvider;
 import me.chan99k.learningmanager.adapter.auth.jwt.InMemoryJwtTokenRevocationProvider;
-import me.chan99k.learningmanager.adapter.web.member.MemberRegisterController;
 import me.chan99k.learningmanager.application.member.MemberRegisterService;
 import me.chan99k.learningmanager.application.member.provides.MemberRegistration;
 import me.chan99k.learningmanager.application.member.provides.SignUpConfirmation;

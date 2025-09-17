@@ -18,6 +18,7 @@ import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
 import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
 import me.chan99k.learningmanager.application.session.provides.SessionParticipantManagement.AddParticipantRequest;
 import me.chan99k.learningmanager.application.session.provides.SessionParticipantManagement.ChangeParticipantRoleRequest;
+import me.chan99k.learningmanager.application.session.provides.SessionParticipantManagement.LeaveSessionRequest;
 import me.chan99k.learningmanager.application.session.provides.SessionParticipantManagement.RemoveParticipantRequest;
 import me.chan99k.learningmanager.application.session.requires.SessionCommandRepository;
 import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
@@ -476,5 +477,139 @@ class SessionParticipantServiceTest {
 			verify(session).changeParticipantRole(memberId, SessionParticipantRole.HOST);
 			verify(sessionCommandRepository).save(session);
 		}
+	}
+
+	@Test
+	@DisplayName("하위 세션에서 자가 탈퇴가 성공한다")
+	void leaveSession_ChildSession_Success() {
+		try (var mockedStatic = mockStatic(AuthenticationContextHolder.class)) {
+			mockedStatic.when(AuthenticationContextHolder::getCurrentMemberId)
+				.thenReturn(Optional.of(memberId));
+
+			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
+			when(session.isRootSession()).thenReturn(false); // 하위 세션
+			when(session.getId()).thenReturn(sessionId);
+			when(session.getTitle()).thenReturn("테스트 하위 세션");
+			when(session.getParticipants()).thenReturn(List.of());
+			when(sessionCommandRepository.save(session)).thenReturn(session);
+
+			var request = new LeaveSessionRequest(sessionId);
+
+			var response = sessionParticipantService.leaveSession(request);
+
+			assertThat(response).isNotNull();
+			assertThat(response.sessionId()).isEqualTo(sessionId);
+			verify(session).removeParticipant(memberId);
+			verify(sessionCommandRepository).save(session);
+		}
+	}
+
+	@Test
+	@DisplayName("루트 세션에서 자가 탈퇴는 실패한다")
+	void leaveSession_RootSession_ThrowsDomainException() {
+		try (var mockedStatic = mockStatic(AuthenticationContextHolder.class)) {
+			mockedStatic.when(AuthenticationContextHolder::getCurrentMemberId)
+				.thenReturn(Optional.of(memberId));
+
+			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
+			when(session.isRootSession()).thenReturn(true); // 루트 세션
+
+			var request = new LeaveSessionRequest(sessionId);
+
+			assertThatThrownBy(() -> sessionParticipantService.leaveSession(request))
+				.isInstanceOf(DomainException.class)
+				.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.ROOT_SESSION_SELF_LEAVE_NOT_ALLOWED);
+
+			verify(session, never()).removeParticipant(any());
+			verify(sessionCommandRepository, never()).save(any());
+		}
+	}
+
+	@Test
+	@DisplayName("하위 세션에서 HOST 자가 탈퇴시 다른 HOST가 없으면 실패한다")
+	void leaveSession_ChildSession_HostWithoutOtherHost_ThrowsDomainException() {
+		try (var mockedStatic = mockStatic(AuthenticationContextHolder.class)) {
+			mockedStatic.when(AuthenticationContextHolder::getCurrentMemberId)
+				.thenReturn(Optional.of(hostId));
+
+			var hostParticipant = mock(SessionParticipant.class);
+			when(hostParticipant.getMemberId()).thenReturn(hostId);
+			when(hostParticipant.getRole()).thenReturn(SessionParticipantRole.HOST);
+
+			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
+			when(session.isRootSession()).thenReturn(false); // 하위 세션
+			when(session.getParticipants()).thenReturn(List.of(hostParticipant));
+
+			var request = new LeaveSessionRequest(sessionId);
+
+			assertThatThrownBy(() -> sessionParticipantService.leaveSession(request))
+				.isInstanceOf(DomainException.class)
+				.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.HOST_CANNOT_LEAVE_ALONE);
+
+			verify(session, never()).removeParticipant(any());
+			verify(sessionCommandRepository, never()).save(any());
+		}
+	}
+
+	@Test
+	@DisplayName("하위 세션에서 HOST 자가 탈퇴시 다른 HOST가 있으면 성공한다")
+	void leaveSession_ChildSession_HostWithOtherHost_Success() {
+		try (var mockedStatic = mockStatic(AuthenticationContextHolder.class)) {
+			mockedStatic.when(AuthenticationContextHolder::getCurrentMemberId)
+				.thenReturn(Optional.of(hostId));
+
+			var hostParticipant1 = mock(SessionParticipant.class);
+			when(hostParticipant1.getMemberId()).thenReturn(hostId);
+			when(hostParticipant1.getRole()).thenReturn(SessionParticipantRole.HOST);
+
+			var hostParticipant2 = mock(SessionParticipant.class);
+			when(hostParticipant2.getMemberId()).thenReturn(999L);
+			when(hostParticipant2.getRole()).thenReturn(SessionParticipantRole.HOST);
+
+			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
+			when(session.isRootSession()).thenReturn(false); // 하위 세션
+			when(session.getId()).thenReturn(sessionId);
+			when(session.getTitle()).thenReturn("테스트 하위 세션");
+			when(session.getParticipants()).thenReturn(List.of(hostParticipant1, hostParticipant2));
+			when(sessionCommandRepository.save(session)).thenReturn(session);
+
+			var request = new LeaveSessionRequest(sessionId);
+
+			var response = sessionParticipantService.leaveSession(request);
+
+			assertThat(response).isNotNull();
+			verify(session).removeParticipant(hostId);
+			verify(sessionCommandRepository).save(session);
+		}
+	}
+
+	@Test
+	@DisplayName("자가 탈퇴시 인증되지 않은 사용자는 실패한다")
+	void leaveSession_NotAuthenticated_ThrowsAuthenticationException() {
+		try (var mockedStatic = mockStatic(AuthenticationContextHolder.class)) {
+			mockedStatic.when(AuthenticationContextHolder::getCurrentMemberId)
+				.thenReturn(Optional.empty());
+
+			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
+			when(session.isRootSession()).thenReturn(false); // 하위 세션
+
+			var request = new LeaveSessionRequest(sessionId);
+
+			assertThatThrownBy(() -> sessionParticipantService.leaveSession(request))
+				.isInstanceOf(AuthenticationException.class)
+				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND);
+		}
+	}
+
+	@Test
+	@DisplayName("존재하지 않는 세션에서 자가 탈퇴는 실패한다")
+	void leaveSession_SessionNotFound_ThrowsDomainException() {
+		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.empty());
+
+		var request = new LeaveSessionRequest(sessionId);
+
+		assertThatThrownBy(() -> sessionParticipantService.leaveSession(request))
+			.isInstanceOf(DomainException.class)
+			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.SESSION_NOT_FOUND);
 	}
 }
