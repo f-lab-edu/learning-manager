@@ -32,6 +32,7 @@ import me.chan99k.learningmanager.application.session.SessionParticipantService;
 import me.chan99k.learningmanager.application.session.provides.SessionParticipantManagement.AddParticipantRequest;
 import me.chan99k.learningmanager.application.session.provides.SessionParticipantManagement.ChangeParticipantRoleRequest;
 import me.chan99k.learningmanager.application.session.provides.SessionParticipantManagement.ChangeRoleDto;
+import me.chan99k.learningmanager.application.session.provides.SessionParticipantManagement.LeaveSessionRequest;
 import me.chan99k.learningmanager.application.session.provides.SessionParticipantManagement.ParticipantInfo;
 import me.chan99k.learningmanager.application.session.provides.SessionParticipantManagement.RemoveParticipantRequest;
 import me.chan99k.learningmanager.application.session.provides.SessionParticipantManagement.SessionParticipantResponse;
@@ -219,6 +220,56 @@ class SessionParticipantControllerTest {
 		mockMvc.perform(put("/api/v1/sessions/{sessionId}/participants/{memberId}/role", sessionId, memberId)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(invalidRequest))
+			.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@DisplayName("자가 탈퇴 API - 성공")
+	void leaveSession_Success() throws Exception {
+		// given
+		var response = new SessionParticipantResponse(
+			sessionId,
+			"테스트 하위 세션",
+			List.of() // 자가 탈퇴 후 빈 목록
+		);
+
+		when(sessionParticipantService.leaveSession(any(LeaveSessionRequest.class)))
+			.thenReturn(response);
+
+		// when & then
+		mockMvc.perform(delete("/api/v1/sessions/{sessionId}/participants/me", sessionId))
+			.andExpect(status().isNoContent());
+
+		verify(sessionParticipantService).leaveSession(any(LeaveSessionRequest.class));
+	}
+
+	@Test
+	@DisplayName("자가 탈퇴 API - 루트 세션에서 실패")
+	void leaveSession_RootSession_Fail() throws Exception {
+		when(sessionParticipantService.leaveSession(any(LeaveSessionRequest.class)))
+			.thenThrow(new DomainException(SessionProblemCode.ROOT_SESSION_SELF_LEAVE_NOT_ALLOWED));
+
+		mockMvc.perform(delete("/api/v1/sessions/{sessionId}/participants/me", sessionId))
+			.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@DisplayName("자가 탈퇴 API - HOST가 혼자인 경우 실패")
+	void leaveSession_HostAlone_Fail() throws Exception {
+		when(sessionParticipantService.leaveSession(any(LeaveSessionRequest.class)))
+			.thenThrow(new DomainException(SessionProblemCode.HOST_CANNOT_LEAVE_ALONE));
+
+		mockMvc.perform(delete("/api/v1/sessions/{sessionId}/participants/me", sessionId))
+			.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@DisplayName("자가 탈퇴 API - 세션 없음")
+	void leaveSession_SessionNotFound() throws Exception {
+		when(sessionParticipantService.leaveSession(any(LeaveSessionRequest.class)))
+			.thenThrow(new DomainException(SessionProblemCode.SESSION_NOT_FOUND));
+
+		mockMvc.perform(delete("/api/v1/sessions/{sessionId}/participants/me", sessionId))
 			.andExpect(status().isBadRequest());
 	}
 
