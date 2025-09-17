@@ -51,7 +51,7 @@ public class MemberStatusChangeService implements MemberStatusChange {
 			case INACTIVE -> targetMember.deactivate();
 			case BANNED -> targetMember.ban();
 			case WITHDRAWN -> targetMember.withdraw();
-			default -> throw new IllegalArgumentException("지원하지 않는 상태 변경입니다: " + newStatus);
+			default -> throw new AssertionError("Unreachable code: 지원하지 않는 상태 변경입니다: " + newStatus);
 		}
 
 		memberCommandRepository.save(targetMember);
