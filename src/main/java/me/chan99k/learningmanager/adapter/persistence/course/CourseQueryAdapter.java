@@ -9,8 +9,7 @@ import me.chan99k.learningmanager.application.course.requires.CourseQueryReposit
 import me.chan99k.learningmanager.domain.course.Course;
 
 @Repository
-public class CourseQueryAdapter
-	implements CourseQueryRepository, me.chan99k.learningmanager.application.member.requires.CourseQueryRepository {
+public class CourseQueryAdapter implements CourseQueryRepository {
 
 	private final JpaCourseRepository jpaCourseRepository;
 
