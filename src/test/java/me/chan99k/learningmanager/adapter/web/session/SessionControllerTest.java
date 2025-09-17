@@ -73,6 +73,9 @@ class SessionControllerTest {
 	me.chan99k.learningmanager.application.session.provides.SessionDeletion sessionDeletion;
 
 	@MockBean
+	me.chan99k.learningmanager.application.session.provides.SessionListRetrieval sessionListRetrieval;
+
+	@MockBean
 	SessionQueryRepository sessionQueryRepository;
 
 	@MockBean(name = "sessionTaskExecutor")
