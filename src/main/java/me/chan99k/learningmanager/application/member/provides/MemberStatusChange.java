@@ -1,8 +1,14 @@
 package me.chan99k.learningmanager.application.member.provides;
 
-/**
- * [P2] 회원 상태 변경
- */
+import me.chan99k.learningmanager.domain.member.MemberStatus;
+
 public interface MemberStatusChange {
-	void promote();
+
+	void changeStatus(Request request);
+
+	record Request(
+		Long memberId,
+		MemberStatus status
+	) {
+	}
 }
