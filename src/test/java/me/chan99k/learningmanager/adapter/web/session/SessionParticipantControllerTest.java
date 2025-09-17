@@ -78,7 +78,6 @@ class SessionParticipantControllerTest {
 	@Test
 	@DisplayName("참여자 추가 API - 성공")
 	void addParticipant_Success() throws Exception {
-		// given
 		var request = new AddParticipantRequest(memberId, SessionParticipantRole.ATTENDEE);
 		var response = new SessionParticipantResponse(
 			sessionId,
@@ -100,13 +99,11 @@ class SessionParticipantControllerTest {
 	@Test
 	@DisplayName("참여자 추가 API - 권한 없음")
 	void addParticipant_NoPermission() throws Exception {
-		// given
 		var request = new AddParticipantRequest(memberId, SessionParticipantRole.ATTENDEE);
 
 		when(sessionParticipantService.addParticipant(eq(sessionId), any(AddParticipantRequest.class)))
 			.thenThrow(new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED));
 
-		// when & then
 		mockMvc.perform(post("/api/v1/sessions/{sessionId}/participants", sessionId)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
@@ -116,7 +113,6 @@ class SessionParticipantControllerTest {
 	@Test
 	@DisplayName("참여자 추가 API - 세션 없음")
 	void addParticipant_SessionNotFound() throws Exception {
-		// given
 		var request = new AddParticipantRequest(memberId, SessionParticipantRole.ATTENDEE);
 
 		when(sessionParticipantService.addParticipant(eq(sessionId), any(AddParticipantRequest.class)))
@@ -142,7 +138,6 @@ class SessionParticipantControllerTest {
 	@Test
 	@DisplayName("참여자 제거 API - 성공")
 	void removeParticipant_Success() throws Exception {
-		// given
 		var response = new SessionParticipantResponse(
 			sessionId,
 			"테스트 세션",
@@ -152,7 +147,6 @@ class SessionParticipantControllerTest {
 		when(sessionParticipantService.removeParticipant(any(RemoveParticipantRequest.class)))
 			.thenReturn(response);
 
-		// when & then
 		mockMvc.perform(
 				delete("/api/v1/sessions/{sessionId}/participants/{memberId}", sessionId, memberId))
 			.andExpect(status().isNoContent());
@@ -198,7 +192,6 @@ class SessionParticipantControllerTest {
 	@Test
 	@DisplayName("참여자 역할 변경 API - 권한 없음")
 	void changeParticipantRole_NoPermission() throws Exception {
-		// given
 		var request = new ChangeRoleDto(SessionParticipantRole.HOST);
 
 		when(sessionParticipantService.changeParticipantRole(any(ChangeParticipantRoleRequest.class)))
@@ -226,7 +219,6 @@ class SessionParticipantControllerTest {
 	@Test
 	@DisplayName("자가 탈퇴 API - 성공")
 	void leaveSession_Success() throws Exception {
-		// given
 		var response = new SessionParticipantResponse(
 			sessionId,
 			"테스트 하위 세션",
@@ -236,7 +228,6 @@ class SessionParticipantControllerTest {
 		when(sessionParticipantService.leaveSession(any(LeaveSessionRequest.class)))
 			.thenReturn(response);
 
-		// when & then
 		mockMvc.perform(delete("/api/v1/sessions/{sessionId}/participants/me", sessionId))
 			.andExpect(status().isNoContent());
 
