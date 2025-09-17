@@ -47,7 +47,7 @@ public class MemberWithdrawalService implements MemberWithdrawal {
 			memberId); // 관리 권한을 가진 채로 탈퇴 불가
 
 		if (!managedCourses.isEmpty()) {
-			throw new IllegalStateException("스터디장 권한을 다른 멤버에게 위임한 후 탈퇴할 수 있습니다.");
+			throw new IllegalStateException(MemberProblemCode.CANNOT_WITHDRAW_WHEN_YOU_ARE_MANAGER.getMessage());
 		}
 
 		member.withdraw();
