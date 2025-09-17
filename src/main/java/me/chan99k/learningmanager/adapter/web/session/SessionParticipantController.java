@@ -55,4 +55,11 @@ public class SessionParticipantController {
 		sessionParticipantService.changeParticipantRole(serviceRequest);
 		return ResponseEntity.noContent().build();
 	}
+
+	@DeleteMapping("/{sessionId}/participants/me")
+	public ResponseEntity<Void> leaveSession(@PathVariable Long sessionId) {
+		var serviceRequest = new SessionParticipantManagement.LeaveSessionRequest(sessionId);
+		sessionParticipantService.leaveSession(serviceRequest);
+		return ResponseEntity.noContent().build();
+	}
 }

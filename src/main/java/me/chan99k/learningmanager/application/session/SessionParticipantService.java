@@ -137,6 +137,27 @@ public class SessionParticipantService implements SessionParticipantManagement {
 		}
 	}
 
+	@Override
+	public SessionParticipantResponse leaveSession(LeaveSessionRequest request) {
+		Session session = getSessionById(request.sessionId());
+
+		// 루트 세션에서는 자가 탈퇴 불가능
+		if (session.isRootSession()) {
+			throw new DomainException(SessionProblemCode.ROOT_SESSION_SELF_LEAVE_NOT_ALLOWED);
+		}
+
+		Long currentMemberId = AuthenticationContextHolder.getCurrentMemberId()
+			.orElseThrow(() -> new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
+
+		// HOST 자신을 제거하는 경우 검증
+		validateHostSelfRemoval(session, currentMemberId);
+
+		session.removeParticipant(currentMemberId);
+		Session savedSession = sessionCommandRepository.save(session);
+
+		return toResponse(savedSession);
+	}
+
 	private SessionParticipantResponse toResponse(Session session) {
 		var participants = session.getParticipants().stream()
 			.map(p -> new ParticipantInfo(p.getMemberId(), p.getRole()))
