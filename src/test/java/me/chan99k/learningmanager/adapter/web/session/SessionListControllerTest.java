@@ -79,10 +79,14 @@ class SessionListControllerTest {
 		given(accessTokenProvider.validateAccessToken("valid-token")).willReturn(true);
 		given(accessTokenProvider.getIdFromAccessToken("valid-token")).willReturn(1L);
 
-		// TaskExecutor가 동기적으로 실행하도록 설정
+		// TaskExecutor가 동기적으로 실행하도록 설정 - CompletableFuture.supplyAsync 지원
 		willAnswer(invocation -> {
 			Runnable task = invocation.getArgument(0);
-			task.run();
+			try {
+				task.run();
+			} catch (Exception e) {
+				throw new RuntimeException("TaskExecutor execution failed", e);
+			}
 			return null;
 		}).given(sessionTaskExecutor).execute(any(Runnable.class));
 	}
