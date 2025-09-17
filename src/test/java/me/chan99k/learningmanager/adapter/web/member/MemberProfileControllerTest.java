@@ -26,6 +26,7 @@ import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
 import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
 import me.chan99k.learningmanager.application.member.provides.MemberProfileRetrieval;
 import me.chan99k.learningmanager.application.member.provides.MemberProfileUpdate;
+import me.chan99k.learningmanager.application.member.provides.MemberWithdrawal;
 import me.chan99k.learningmanager.common.exception.DomainException;
 
 @WebMvcTest(controllers = MemberProfileController.class)
@@ -40,6 +41,9 @@ class MemberProfileControllerTest {
 
 	@MockBean
 	MemberProfileRetrieval memberProfileRetrieval;
+
+	@MockBean
+	MemberWithdrawal memberWithdrawal;
 
 	@MockBean
 	AccessTokenProvider<Long> accessTokenProvider;
@@ -173,6 +177,17 @@ class MemberProfileControllerTest {
 			"img".equals(req.profileImageUrl()) &&
 				"intro".equals(req.selfIntroduction())
 		));
+	}
+
+	@Test
+	@DisplayName("[Success] 회원 탈퇴 요청이 성공하면 204 No Content를 반환한다")
+	void withdrawal_Success() throws Exception {
+		doNothing().when(memberWithdrawal).withdrawal();
+
+		mockMvc.perform(delete("/api/v1/members/withdrawal"))
+			.andExpect(status().isNoContent());
+
+		verify(memberWithdrawal).withdrawal();
 	}
 
 	private void setAuthenticatedUser(Long memberId) {

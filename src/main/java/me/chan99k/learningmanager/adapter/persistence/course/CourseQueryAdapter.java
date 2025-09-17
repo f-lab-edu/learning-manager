@@ -1,5 +1,6 @@
 package me.chan99k.learningmanager.adapter.persistence.course;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
@@ -29,5 +30,10 @@ public class CourseQueryAdapter implements CourseQueryRepository {
 	@Override
 	public Optional<Course> findManagedCourseById(Long courseId, Long memberId) {
 		return jpaCourseRepository.findManagedCourseById(courseId, memberId);
+	}
+
+	@Override
+	public List<Course> findManagedCoursesByMemberId(Long memberId) {
+		return jpaCourseRepository.findManagedCoursesByMemberId(memberId);
 	}
 }
