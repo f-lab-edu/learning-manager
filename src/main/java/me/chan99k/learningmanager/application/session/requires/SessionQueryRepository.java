@@ -1,6 +1,7 @@
 package me.chan99k.learningmanager.application.session.requires;
 
 import java.time.Instant;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,4 +33,10 @@ public interface SessionQueryRepository {
 	Page<Session> findByCurriculumIdWithFilters(Long curriculumId, SessionType type,
 		SessionLocation location, Instant startDate, Instant endDate,
 		Boolean includeChildSessions, Pageable pageable);
+
+	Page<Session> findByMemberIdWithFilters(Long memberId, SessionType type,
+		SessionLocation location, Instant startDate, Instant endDate, Pageable pageable);
+
+	List<Session> findByYearMonth(YearMonth yearMonth, SessionType type, SessionLocation location,
+		Long courseId, Long curriculumId);
 }
