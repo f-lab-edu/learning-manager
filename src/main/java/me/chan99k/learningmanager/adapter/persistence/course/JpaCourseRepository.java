@@ -20,4 +20,8 @@ public interface JpaCourseRepository extends JpaRepository<Course, Long> {
 	@Query("SELECT c FROM Course c JOIN c.courseMemberList cm " +
 		"WHERE cm.memberId = :memberId AND cm.courseRole = 'MANAGER'")
 	List<Course> findManagedCoursesByMemberId(@Param("memberId") Long memberId);
+
+	@Query("SELECT c FROM Course c JOIN c.courseMemberList cm " +
+		"WHERE cm.memberId = :memberId")
+	List<Course> findParticipatingCoursesByMemberId(@Param("memberId") Long memberId);
 }
