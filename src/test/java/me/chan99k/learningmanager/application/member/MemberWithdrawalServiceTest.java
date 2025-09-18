@@ -18,7 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
 import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
-import me.chan99k.learningmanager.application.member.requires.CourseQueryRepository;
+import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
 import me.chan99k.learningmanager.application.member.requires.MemberCommandRepository;
 import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
 import me.chan99k.learningmanager.common.exception.AuthenticationException;

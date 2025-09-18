@@ -4,8 +4,10 @@ import java.util.List;
 
 import me.chan99k.learningmanager.domain.course.Course;
 
-public interface CourseQueryRepository {
+public interface MemberCourseQueryRepository {
 
 	List<Course> findManagedCoursesByMemberId(Long memberId);
+
+	List<Course> findParticipatingCoursesByMemberId(Long memberId);
 
 }
