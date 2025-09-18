@@ -25,6 +25,10 @@ public class WebConfig implements WebMvcConfigurer {
 		registration.addUrlPatterns("/api/v1/members/password");
 		registration.addUrlPatterns("/api/v1/attendance/*");
 		registration.addUrlPatterns("/api/v1/courses/*");
+		// 개인 일정 조회
+		registration.addUrlPatterns("/api/v1/sessions/members/*");
+		// 참여자 관리
+		registration.addUrlPatterns("/api/v1/sessions/*/participants*");
 		registration.setOrder(1);
 
 		return registration;
