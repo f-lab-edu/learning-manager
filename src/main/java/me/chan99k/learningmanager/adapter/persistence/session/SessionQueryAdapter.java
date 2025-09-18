@@ -1,6 +1,9 @@
 package me.chan99k.learningmanager.adapter.persistence.session;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -66,5 +69,25 @@ public class SessionQueryAdapter implements SessionQueryRepository {
 		Boolean includeChildSessions, Pageable pageable) {
 		return jpaRepository.findByCurriculumIdWithFilters(curriculumId, type, location,
 			startDate, endDate, includeChildSessions, pageable);
+	}
+
+	@Override
+	public Page<Session> findByMemberIdWithFilters(Long memberId, SessionType type,
+		SessionLocation location, Instant startDate, Instant endDate, Pageable pageable) {
+		return jpaRepository.findByMemberIdWithFilters(memberId, type, location,
+			startDate, endDate, pageable);
+	}
+
+	@Override
+	public List<Session> findByYearMonth(YearMonth yearMonth, SessionType type, SessionLocation location,
+		Long courseId, Long curriculumId) {
+		LocalDate startOfMonth = yearMonth.atDay(1);
+		LocalDate startOfNextMonth = yearMonth.plusMonths(1).atDay(1);
+
+		Instant startOfMonthInstant = startOfMonth.atStartOfDay().toInstant(ZoneOffset.UTC);
+		Instant startOfNextMonthInstant = startOfNextMonth.atStartOfDay().toInstant(ZoneOffset.UTC);
+
+		return jpaRepository.findByYearMonth(startOfMonthInstant, startOfNextMonthInstant,
+			type, location, courseId, curriculumId);
 	}
 }
