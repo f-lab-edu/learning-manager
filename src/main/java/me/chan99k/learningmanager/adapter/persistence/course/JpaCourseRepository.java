@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import me.chan99k.learningmanager.application.member.CourseParticipationInfo;
 import me.chan99k.learningmanager.domain.course.Course;
 
 public interface JpaCourseRepository extends JpaRepository<Course, Long> {
@@ -24,4 +25,10 @@ public interface JpaCourseRepository extends JpaRepository<Course, Long> {
 	@Query("SELECT c FROM Course c JOIN c.courseMemberList cm " +
 		"WHERE cm.memberId = :memberId")
 	List<Course> findParticipatingCoursesByMemberId(@Param("memberId") Long memberId);
+
+	@Query("SELECT new me.chan99k.learningmanager.application.member.CourseParticipationInfo(" +
+		"c.id, c.title, c.description, cm.courseRole) " +
+		"FROM Course c JOIN c.courseMemberList cm " +
+		"WHERE cm.memberId = :memberId")
+	List<CourseParticipationInfo> findParticipatingCoursesWithRoleByMemberId(@Param("memberId") Long memberId);
 }
