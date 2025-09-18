@@ -14,10 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.application.member.MemberCourseParticipationService.CourseParticipationInfo;
 import me.chan99k.learningmanager.application.member.MemberCourseParticipationService.ParticipatingCoursesResponse;
 import me.chan99k.learningmanager.application.member.requires.MemberCourseQueryRepository;
-import me.chan99k.learningmanager.domain.course.Course;
 import me.chan99k.learningmanager.domain.course.CourseRole;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,15 +37,16 @@ class MemberCourseParticipationServiceTest {
 		// given
 		Long memberId = 1L;
 
-		Course course1 = Course.create("Java 기초", "Java 프로그래밍 기초 과정");
-		Course course2 = Course.create("Spring Boot", "Spring Boot 웹 개발 과정");
+		CourseParticipationInfo courseInfo1 = new CourseParticipationInfo(
+			1L, "Java 기초", "Java 프로그래밍 기초 과정", CourseRole.MANAGER
+		);
+		CourseParticipationInfo courseInfo2 = new CourseParticipationInfo(
+			2L, "Spring Boot", "Spring Boot 웹 개발 과정", CourseRole.MENTEE
+		);
 
-		course1.addMember(memberId, CourseRole.MANAGER);
-		course2.addMember(memberId, CourseRole.MENTEE);
-
-		List<Course> mockCourses = Arrays.asList(course1, course2);
-		when(memberCourseQueryRepository.findParticipatingCoursesByMemberId(memberId))
-			.thenReturn(mockCourses);
+		List<CourseParticipationInfo> mockCourseInfos = Arrays.asList(courseInfo1, courseInfo2);
+		when(memberCourseQueryRepository.findParticipatingCoursesWithRoleByMemberId(memberId))
+			.thenReturn(mockCourseInfos);
 
 		// when
 		ParticipatingCoursesResponse response = service.getParticipatingCourses(memberId);
@@ -55,17 +54,17 @@ class MemberCourseParticipationServiceTest {
 		// then
 		assertThat(response.courses()).hasSize(2);
 
-		CourseParticipationInfo courseInfo1 = response.courses().get(0);
-		assertThat(courseInfo1.title()).isEqualTo("Java 기초");
-		assertThat(courseInfo1.description()).isEqualTo("Java 프로그래밍 기초 과정");
-		assertThat(courseInfo1.role()).isEqualTo(CourseRole.MANAGER);
+		CourseParticipationInfo actualCourse1 = response.courses().get(0);
+		assertThat(actualCourse1.title()).isEqualTo("Java 기초");
+		assertThat(actualCourse1.description()).isEqualTo("Java 프로그래밍 기초 과정");
+		assertThat(actualCourse1.role()).isEqualTo(CourseRole.MANAGER);
 
-		CourseParticipationInfo courseInfo2 = response.courses().get(1);
-		assertThat(courseInfo2.title()).isEqualTo("Spring Boot");
-		assertThat(courseInfo2.description()).isEqualTo("Spring Boot 웹 개발 과정");
-		assertThat(courseInfo2.role()).isEqualTo(CourseRole.MENTEE);
+		CourseParticipationInfo actualCourse2 = response.courses().get(1);
+		assertThat(actualCourse2.title()).isEqualTo("Spring Boot");
+		assertThat(actualCourse2.description()).isEqualTo("Spring Boot 웹 개발 과정");
+		assertThat(actualCourse2.role()).isEqualTo(CourseRole.MENTEE);
 
-		verify(memberCourseQueryRepository).findParticipatingCoursesByMemberId(memberId);
+		verify(memberCourseQueryRepository).findParticipatingCoursesWithRoleByMemberId(memberId);
 	}
 
 	@Test
@@ -73,7 +72,7 @@ class MemberCourseParticipationServiceTest {
 	void getParticipatingCourses_whenNoCourses() {
 		// given
 		Long memberId = 1L;
-		when(memberCourseQueryRepository.findParticipatingCoursesByMemberId(memberId))
+		when(memberCourseQueryRepository.findParticipatingCoursesWithRoleByMemberId(memberId))
 			.thenReturn(Collections.emptyList());
 
 		// when
@@ -81,7 +80,7 @@ class MemberCourseParticipationServiceTest {
 
 		// then
 		assertThat(response.courses()).isEmpty();
-		verify(memberCourseQueryRepository).findParticipatingCoursesByMemberId(memberId);
+		verify(memberCourseQueryRepository).findParticipatingCoursesWithRoleByMemberId(memberId);
 	}
 
 	@Test
@@ -90,17 +89,19 @@ class MemberCourseParticipationServiceTest {
 		// given
 		Long memberId = 1L;
 
-		Course course1 = Course.create("Java 기초", "Java 프로그래밍 기초 과정");
-		Course course2 = Course.create("Spring Boot", "Spring Boot 웹 개발 과정");
-		Course course3 = Course.create("React", "React 프론트엔드 과정");
+		CourseParticipationInfo courseInfo1 = new CourseParticipationInfo(
+			1L, "Java 기초", "Java 프로그래밍 기초 과정", CourseRole.MANAGER
+		);
+		CourseParticipationInfo courseInfo2 = new CourseParticipationInfo(
+			2L, "Spring Boot", "Spring Boot 웹 개발 과정", CourseRole.MENTOR
+		);
+		CourseParticipationInfo courseInfo3 = new CourseParticipationInfo(
+			3L, "React", "React 프론트엔드 과정", CourseRole.MENTEE
+		);
 
-		course1.addMember(memberId, CourseRole.MANAGER);
-		course2.addMember(memberId, CourseRole.MENTOR);
-		course3.addMember(memberId, CourseRole.MENTEE);
-
-		List<Course> mockCourses = Arrays.asList(course1, course2, course3);
-		when(memberCourseQueryRepository.findParticipatingCoursesByMemberId(memberId))
-			.thenReturn(mockCourses);
+		List<CourseParticipationInfo> mockCourseInfos = Arrays.asList(courseInfo1, courseInfo2, courseInfo3);
+		when(memberCourseQueryRepository.findParticipatingCoursesWithRoleByMemberId(memberId))
+			.thenReturn(mockCourseInfos);
 
 		// when
 		ParticipatingCoursesResponse response = service.getParticipatingCourses(memberId);
@@ -112,6 +113,6 @@ class MemberCourseParticipationServiceTest {
 			.extracting(CourseParticipationInfo::role)
 			.containsExactly(CourseRole.MANAGER, CourseRole.MENTOR, CourseRole.MENTEE);
 
-		verify(memberCourseQueryRepository).findParticipatingCoursesByMemberId(memberId);
+		verify(memberCourseQueryRepository).findParticipatingCoursesWithRoleByMemberId(memberId);
 	}
 }

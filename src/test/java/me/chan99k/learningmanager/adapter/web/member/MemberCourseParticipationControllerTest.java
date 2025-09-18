@@ -19,8 +19,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import me.chan99k.learningmanager.adapter.auth.AccessTokenProvider;
 import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.application.member.CourseParticipationInfo;
 import me.chan99k.learningmanager.application.member.MemberCourseParticipationService;
-import me.chan99k.learningmanager.application.member.MemberCourseParticipationService.CourseParticipationInfo;
 import me.chan99k.learningmanager.application.member.MemberCourseParticipationService.ParticipatingCoursesResponse;
 import me.chan99k.learningmanager.domain.course.CourseRole;
 
