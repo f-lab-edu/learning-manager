@@ -78,4 +78,35 @@ public interface SessionJpaRepository extends JpaRepository<Session, Long> {
 		@Param("includeChildSessions") Boolean includeChildSessions,
 		Pageable pageable
 	);
+
+	@Query("SELECT s FROM Session s " +
+		"JOIN s.participants p " +
+		"WHERE p.memberId = :memberId AND " +
+		"(:type IS NULL OR s.type = :type) AND " +
+		"(:location IS NULL OR s.location = :location) AND " +
+		"(:startDate IS NULL OR s.scheduledAt >= :startDate) AND " +
+		"(:endDate IS NULL OR s.scheduledAt <= :endDate)")
+	Page<Session> findByMemberIdWithFilters(
+		@Param("memberId") Long memberId,
+		@Param("type") SessionType type,
+		@Param("location") SessionLocation location,
+		@Param("startDate") Instant startDate,
+		@Param("endDate") Instant endDate,
+		Pageable pageable
+	);
+
+	@Query("SELECT s FROM Session s WHERE " +
+		"s.scheduledAt >= :startOfMonth AND s.scheduledAt < :startOfNextMonth AND " +
+		"(:type IS NULL OR s.type = :type) AND " +
+		"(:location IS NULL OR s.location = :location) AND " +
+		"(:courseId IS NULL OR s.courseId = :courseId) AND " +
+		"(:curriculumId IS NULL OR s.curriculumId = :curriculumId)")
+	List<Session> findByYearMonth(
+		@Param("startOfMonth") Instant startOfMonth,
+		@Param("startOfNextMonth") Instant startOfNextMonth,
+		@Param("type") SessionType type,
+		@Param("location") SessionLocation location,
+		@Param("courseId") Long courseId,
+		@Param("curriculumId") Long curriculumId
+	);
 }

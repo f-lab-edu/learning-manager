@@ -1,6 +1,10 @@
 package me.chan99k.learningmanager.adapter.web.session;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.core.task.TaskExecutor;
@@ -174,6 +178,47 @@ public class SessionController {
 			);
 			Page<SessionListRetrieval.SessionListResponse> response =
 				sessionListRetrieval.getCurriculumSessionList(curriculumId, request);
+			return ResponseEntity.ok(response);
+		}, sessionTaskExecutor);
+	}
+
+	@GetMapping("/members/{memberId}")
+	public CompletableFuture<ResponseEntity<Page<SessionListRetrieval.SessionListResponse>>> getUserSessionList(
+		@PathVariable Long memberId,
+		@RequestParam(defaultValue = "0") int page,
+		@RequestParam(defaultValue = "20") int size,
+		@RequestParam(defaultValue = "scheduledAt,desc") String sort,
+		@RequestParam(required = false) SessionType type,
+		@RequestParam(required = false) SessionLocation location,
+		@RequestParam(required = false) Instant startDate,
+		@RequestParam(required = false) Instant endDate
+	) {
+		return CompletableFuture.supplyAsync(() -> {
+			var request = new SessionListRetrieval.UserSessionListRequest(
+				page, size, sort, type, location, startDate, endDate
+			);
+			Page<SessionListRetrieval.SessionListResponse> response =
+				sessionListRetrieval.getUserSessionList(memberId, request);
+			return ResponseEntity.ok(response);
+		}, sessionTaskExecutor);
+	}
+
+	@GetMapping("/calendar")
+	public CompletableFuture<ResponseEntity<Map<LocalDate, List<SessionListRetrieval.SessionCalendarResponse>>>> getSessionCalendar(
+		@RequestParam int year,
+		@RequestParam int month,
+		@RequestParam(required = false) SessionType type,
+		@RequestParam(required = false) SessionLocation location,
+		@RequestParam(required = false) Long courseId,
+		@RequestParam(required = false) Long curriculumId
+	) {
+		return CompletableFuture.supplyAsync(() -> {
+			YearMonth yearMonth = YearMonth.of(year, month);
+			var request = new SessionListRetrieval.SessionCalendarRequest(
+				type, location, courseId, curriculumId
+			);
+			Map<LocalDate, List<SessionListRetrieval.SessionCalendarResponse>> response =
+				sessionListRetrieval.getSessionCalendar(yearMonth, request);
 			return ResponseEntity.ok(response);
 		}, sessionTaskExecutor);
 	}

@@ -1,6 +1,11 @@
 package me.chan99k.learningmanager.application.session;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -72,6 +77,40 @@ public class SessionListService implements SessionListRetrieval {
 		return sessions.map(this::toSessionListResponse);
 	}
 
+	@Override
+	public Page<SessionListResponse> getUserSessionList(Long memberId, UserSessionListRequest request) {
+		Pageable pageable = createPageable(request.page(), request.size(), request.sort());
+
+		Page<Session> sessions = sessionQueryRepository.findByMemberIdWithFilters(
+			memberId,
+			request.type(),
+			request.location(),
+			request.startDate(),
+			request.endDate(),
+			pageable
+		);
+
+		return sessions.map(this::toSessionListResponse);
+	}
+
+	@Override
+	public Map<LocalDate, List<SessionCalendarResponse>> getSessionCalendar(YearMonth yearMonth,
+		SessionCalendarRequest request) {
+		List<Session> sessions = sessionQueryRepository.findByYearMonth(
+			yearMonth,
+			request.type(),
+			request.location(),
+			request.courseId(),
+			request.curriculumId()
+		);
+
+		return sessions.stream()
+			.collect(Collectors.groupingBy(
+				session -> session.getScheduledAt().atOffset(java.time.ZoneOffset.UTC).toLocalDate(),
+				Collectors.mapping(this::toSessionCalendarResponse, Collectors.toList())
+			));
+	}
+
 	private Pageable createPageable(int page, int size, String sort) {
 		if (sort == null || sort.isEmpty()) {
 			return PageRequest.of(page, size);
@@ -114,5 +153,20 @@ public class SessionListService implements SessionListRetrieval {
 		} else {
 			return SessionStatus.ONGOING;
 		}
+	}
+
+	private SessionCalendarResponse toSessionCalendarResponse(Session session) {
+		return new SessionCalendarResponse(
+			session.getId(),
+			session.getTitle(),
+			session.getScheduledAt(),
+			session.getScheduledEndAt(),
+			session.getType(),
+			session.getLocation(),
+			session.getLocationDetails(),
+			session.getCourseId(),
+			session.getCurriculumId(),
+			determineSessionStatus(session.getScheduledAt(), session.getScheduledEndAt())
+		);
 	}
 }
