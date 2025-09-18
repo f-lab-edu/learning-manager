@@ -3,6 +3,7 @@ package me.chan99k.learningmanager.application.session;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -37,6 +38,9 @@ import me.chan99k.learningmanager.domain.session.SessionType;
 
 @ExtendWith(MockitoExtension.class)
 class SessionUpdateServiceTest {
+
+	@Mock
+	private Clock clock;
 
 	@InjectMocks
 	private SessionUpdateService sessionUpdateService;
@@ -89,9 +93,9 @@ class SessionUpdateServiceTest {
 
 			sessionUpdateService.updateSession(sessionId, request);
 
-			verify(session).reschedule(scheduledAt, scheduledEndAt);
-			verify(session).changeInfo("Updated Session Title", SessionType.ONLINE);
-			verify(session).changeLocation(SessionLocation.ZOOM, null);
+			verify(session).reschedule(scheduledAt, scheduledEndAt, clock);
+			verify(session).changeInfo("Updated Session Title", SessionType.ONLINE, clock);
+			verify(session).changeLocation(SessionLocation.ZOOM, null, clock);
 			verify(sessionCommandRepository).save(session);
 		}
 	}
@@ -123,9 +127,9 @@ class SessionUpdateServiceTest {
 
 			sessionUpdateService.updateSession(sessionId, request);
 
-			verify(session).reschedule(scheduledAt, scheduledEndAt);
-			verify(session).changeInfo("Updated Standalone Session", SessionType.OFFLINE);
-			verify(session).changeLocation(SessionLocation.SITE, "Conference Room A");
+			verify(session).reschedule(scheduledAt, scheduledEndAt, clock);
+			verify(session).changeInfo("Updated Standalone Session", SessionType.OFFLINE, clock);
+			verify(session).changeLocation(SessionLocation.SITE, "Conference Room A", clock);
 			verify(sessionCommandRepository).save(session);
 		}
 	}

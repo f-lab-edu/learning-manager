@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -42,6 +43,9 @@ import me.chan99k.learningmanager.domain.session.SessionType;
 
 @ExtendWith(MockitoExtension.class)
 class SessionCreationServiceTest {
+
+	@Mock
+	private Clock clock;
 
 	@Mock
 	private SessionQueryRepository sessionQueryRepository;
@@ -262,7 +266,8 @@ class SessionCreationServiceTest {
 		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(manager));
 		when(sessionQueryRepository.findById(parentSessionId)).thenReturn(Optional.of(parentSession));
 		when(parentSession.createChildSession(anyString(), any(Instant.class), any(Instant.class),
-			any(SessionType.class), any(SessionLocation.class), anyString())).thenReturn(childSession);
+			any(SessionType.class), any(SessionLocation.class), anyString(), any(Clock.class))).thenReturn(
+			childSession);
 		when(sessionCommandRepository.create(childSession)).thenReturn(childSession);
 
 		SessionCreation.Request request = new SessionCreation.Request(
@@ -284,7 +289,7 @@ class SessionCreationServiceTest {
 			assertThat(result).isEqualTo(childSession);
 			verify(sessionQueryRepository).findById(parentSessionId);
 			verify(parentSession).createChildSession(anyString(), any(Instant.class), any(Instant.class),
-				any(SessionType.class), any(SessionLocation.class), anyString());
+				any(SessionType.class), any(SessionLocation.class), anyString(), any(Clock.class));
 			verify(sessionCommandRepository).create(childSession);
 		}
 	}
