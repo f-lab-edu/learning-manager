@@ -3,8 +3,10 @@ package me.chan99k.learningmanager.domain.session;
 import static me.chan99k.learningmanager.domain.session.SessionProblemCode.*;
 import static org.springframework.util.Assert.*;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -75,37 +77,37 @@ public class Session extends AbstractEntity {
 	/* Domain Logic */
 
 	public static Session createStandaloneSession(String title, Instant scheduledAt, Instant scheduledEndAt,
-		SessionType type, SessionLocation location, String locationDetails
+		SessionType type, SessionLocation location, String locationDetails, Clock clock
 	) {
 		Session session = new Session(title, scheduledAt, scheduledEndAt, type, location, locationDetails);
-		session.validate();
+		session.validate(clock);
 		return session;
 	}
 
 	public static Session createCourseSession(Long courseId, String title,
 		Instant scheduledAt, Instant scheduledEndAt,
-		SessionType type, SessionLocation location, String locationDetails
+		SessionType type, SessionLocation location, String locationDetails, Clock clock
 	) {
 		notNull(courseId, COURSE_ID_REQUIRED.getMessage());
 		Session session = new Session(title, scheduledAt, scheduledEndAt, type, location, locationDetails);
 		session.courseId = courseId;
-		session.validate();
+		session.validate(clock);
 		return session;
 	}
 
 	public static Session createCurriculumSession(Long courseId, Long curriculumId, String title, Instant scheduledAt,
-		Instant scheduledEndAt, SessionType type, SessionLocation location, String locationDetails) {
+		Instant scheduledEndAt, SessionType type, SessionLocation location, String locationDetails, Clock clock) {
 		notNull(courseId, COURSE_ID_REQUIRED.getMessage());
 		notNull(curriculumId, CURRICULUM_ID_REQUIRED.getMessage());
 		Session session = new Session(title, scheduledAt, scheduledEndAt, type, location, locationDetails);
 		session.courseId = courseId;
 		session.curriculumId = curriculumId;
-		session.validate();
+		session.validate(clock);
 		return session;
 	}
 
 	public Session createChildSession(String title, Instant scheduledAt, Instant scheduledEndAt,
-		SessionType type, SessionLocation location, String locationDetails
+		SessionType type, SessionLocation location, String locationDetails, Clock clock
 	) {
 		isTrue(this.isRootSession(), INVALID_SESSION_HIERARCHY.getMessage());
 
@@ -115,7 +117,7 @@ public class Session extends AbstractEntity {
 		child.courseId = this.courseId;
 		child.curriculumId = this.curriculumId;
 
-		child.validate(); // 하위 세션 자체의 유효성 및 부모와의 관계 유효성 검증
+		child.validate(clock); // 하위 세션 자체의 유효성 및 부모와의 관계 유효성 검증
 		this.children.add(child);
 		return child;
 	}
@@ -134,9 +136,9 @@ public class Session extends AbstractEntity {
 		isTrue(removed, MEMBER_NOT_PARTICIPATING.getMessage());
 	}
 
-	public void changeParticipantRole(Long memberId, SessionParticipantRole newRole) {
+	public void changeParticipantRole(Long memberId, SessionParticipantRole newRole, Clock clock) {
 		// 수정 가능 여부를 먼저 검증
-		validateUpdatable();
+		validateUpdatable(clock);
 
 		// 대상 참여자를 찾아서 실제 역할 변경을 위임
 		SessionParticipant participant = findParticipant(memberId);
@@ -153,41 +155,41 @@ public class Session extends AbstractEntity {
 	/**
 	 * 세션의 시간을 재조정합니다.
 	 */
-	public void reschedule(Instant newScheduledAt, Instant newScheduledEndAt) {
-		validateUpdatable();
+	public void reschedule(Instant newScheduledAt, Instant newScheduledEndAt, Clock clock) {
+		validateUpdatable(clock);
 		this.scheduledAt = newScheduledAt;
 		this.scheduledEndAt = newScheduledEndAt;
-		validate();
+		validate(clock);
 	}
 
 	/**
 	 * 세션의 기본 정보를 변경합니다.
 	 */
-	public void changeInfo(String newTitle, SessionType newType) {
-		validateUpdatable();
+	public void changeInfo(String newTitle, SessionType newType, Clock clock) {
+		validateUpdatable(clock);
 		this.title = newTitle;
 		this.type = newType;
-		validate();
+		validate(clock);
 	}
 
 	/**
 	 * 세션의 장소를 변경합니다.
 	 */
-	public void changeLocation(SessionLocation newLocation, String newLocationDetails) {
-		validateUpdatable();
+	public void changeLocation(SessionLocation newLocation, String newLocationDetails, Clock clock) {
+		validateUpdatable(clock);
 		this.location = newLocation;
 		this.locationDetails = newLocationDetails;
-		validate();
+		validate(clock);
 	}
 
-	private void validate() {
-		validateSessionTime();
+	private void validate(Clock clock) {
+		validateSessionTime(clock);
 		validateLocation();
 		validateHierarchy();
 	}
 
-	private void validateUpdatable() {
-		Instant now = Instant.now();
+	private void validateUpdatable(Clock clock) {
+		Instant now = clock.instant();
 		isTrue(now.isBefore(this.scheduledAt), CANNOT_MODIFY_STARTED_SESSION.getMessage());
 
 		if (isRootSession()) {
@@ -201,7 +203,7 @@ public class Session extends AbstractEntity {
 		}
 	}
 
-	private void validateSessionTime() {
+	private void validateSessionTime(Clock clock) {
 		notNull(scheduledAt, SESSION_START_TIME_REQUIRED.getMessage());
 		notNull(scheduledEndAt, SESSION_END_TIME_REQUIRED.getMessage());
 		isTrue(scheduledAt.isBefore(scheduledEndAt), START_TIME_MUST_BE_BEFORE_END_TIME.getMessage());
@@ -209,10 +211,11 @@ public class Session extends AbstractEntity {
 		long durationHours = Duration.between(scheduledAt, scheduledEndAt).toHours();
 		isTrue(durationHours < 24, SESSION_DURATION_EXCEEDS_24_HOURS.getMessage());
 
-		long startDay = scheduledAt.truncatedTo(ChronoUnit.DAYS).toEpochMilli();
-		long endDay = scheduledEndAt.truncatedTo(ChronoUnit.DAYS).toEpochMilli();
+		// Clock의 타임존을 사용하여 같은 날인지 검증
+		LocalDate startDay = scheduledAt.atZone(clock.getZone()).toLocalDate();
+		LocalDate endDay = scheduledEndAt.atZone(clock.getZone()).toLocalDate();
 
-		isTrue(startDay == endDay, SESSION_CANNOT_SPAN_MULTIPLE_DAYS.getMessage());
+		isTrue(startDay.equals(endDay), SESSION_CANNOT_SPAN_MULTIPLE_DAYS.getMessage());
 	}
 
 	private void validateLocation() {
