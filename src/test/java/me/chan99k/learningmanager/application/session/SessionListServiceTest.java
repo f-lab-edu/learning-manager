@@ -4,7 +4,11 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -214,12 +218,107 @@ class SessionListServiceTest {
 		);
 	}
 
+	@Test
+	@DisplayName("사용자별 세션 목록 조회 - 성공")
+	void getUserSessionList_Success() {
+		// given
+		Long memberId = 300L;
+		var session = createMockSession(1L, "사용자 세션", SessionType.ONLINE, SessionLocation.ZOOM);
+		var sessions = new PageImpl<>(List.of(session), PageRequest.of(0, 20), 1);
+
+		when(sessionQueryRepository.findByMemberIdWithFilters(any(), any(), any(), any(), any(), any()))
+			.thenReturn(sessions);
+
+		var request = new SessionListRetrieval.UserSessionListRequest(
+			0, 20, "scheduledAt,desc", null, null, null, null
+		);
+
+		// when
+		Page<SessionListRetrieval.SessionListResponse> result =
+			sessionListService.getUserSessionList(memberId, request);
+
+		// then
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
+		assertThat(result.getContent().get(0).id()).isEqualTo(1L);
+		assertThat(result.getContent().get(0).title()).isEqualTo("사용자 세션");
+
+		verify(sessionQueryRepository).findByMemberIdWithFilters(
+			eq(memberId), eq(null), eq(null), eq(null), eq(null),
+			argThat(pageable -> pageable.getPageNumber() == 0 &&
+				pageable.getPageSize() == 20 &&
+				pageable.getSort().equals(Sort.by(Sort.Direction.DESC, "scheduledAt")))
+		);
+	}
+
+	@Test
+	@DisplayName("세션 캘린더 조회 - 성공")
+	void getSessionCalendar_Success() {
+		// given
+		YearMonth yearMonth = YearMonth.of(2024, 1);
+		LocalDate sessionDate = LocalDate.of(2024, 1, 15);
+		Instant sessionDateTime = sessionDate.atStartOfDay().toInstant(ZoneOffset.UTC);
+
+		var session = createMockSessionWithTime(1L, "캘린더 세션",
+			sessionDateTime, sessionDateTime.plusSeconds(3600));
+
+		when(sessionQueryRepository.findByYearMonth(any(), any(), any(), any(), any()))
+			.thenReturn(List.of(session));
+
+		var request = new SessionListRetrieval.SessionCalendarRequest(
+			null, null, null, null
+		);
+
+		// when
+		Map<LocalDate, List<SessionListRetrieval.SessionCalendarResponse>> result =
+			sessionListService.getSessionCalendar(yearMonth, request);
+
+		// then
+		assertThat(result).isNotNull();
+		assertThat(result).containsKey(sessionDate);
+		assertThat(result.get(sessionDate)).hasSize(1);
+		assertThat(result.get(sessionDate).get(0).id()).isEqualTo(1L);
+		assertThat(result.get(sessionDate).get(0).title()).isEqualTo("캘린더 세션");
+
+		verify(sessionQueryRepository).findByYearMonth(
+			eq(yearMonth), eq(null), eq(null), eq(null), eq(null)
+		);
+	}
+
+	@Test
+	@DisplayName("세션 캘린더 조회 - 필터 적용")
+	void getSessionCalendar_WithFilters() {
+		// given
+		YearMonth yearMonth = YearMonth.of(2024, 2);
+		Long courseId = 100L;
+		SessionType sessionType = SessionType.OFFLINE;
+
+		when(sessionQueryRepository.findByYearMonth(any(), any(), any(), any(), any()))
+			.thenReturn(List.of());
+
+		var request = new SessionListRetrieval.SessionCalendarRequest(
+			sessionType, SessionLocation.SITE, courseId, null
+		);
+
+		// when
+		Map<LocalDate, List<SessionListRetrieval.SessionCalendarResponse>> result =
+			sessionListService.getSessionCalendar(yearMonth, request);
+
+		// then
+		assertThat(result).isNotNull();
+		assertThat(result).isEmpty();
+
+		verify(sessionQueryRepository).findByYearMonth(
+			eq(yearMonth), eq(sessionType), eq(SessionLocation.SITE), eq(courseId), eq(null)
+		);
+	}
+
 	private Session createMockSession(Long id, String title, SessionType type, SessionLocation location) {
 		return createMockSessionWithTime(id, title, Instant.now().plusSeconds(3600), Instant.now().plusSeconds(7200));
 	}
 
 	private Session createMockSessionWithTime(Long id, String title, Instant scheduledAt, Instant scheduledEndAt) {
-		Session session = mock(Session.class);
+		Session session = mock(Session.class, withSettings().lenient());
 		when(session.getId()).thenReturn(id);
 		when(session.getTitle()).thenReturn(title);
 		when(session.getScheduledAt()).thenReturn(scheduledAt);
@@ -237,7 +336,7 @@ class SessionListServiceTest {
 
 	private Session createMockSessionWithCustomValues(Long id, String title, SessionType type, SessionLocation location,
 		Long courseId, Long curriculumId) {
-		Session session = mock(Session.class);
+		Session session = mock(Session.class, withSettings().lenient());
 		when(session.getId()).thenReturn(id);
 		when(session.getTitle()).thenReturn(title);
 		when(session.getScheduledAt()).thenReturn(Instant.now().plusSeconds(3600));
