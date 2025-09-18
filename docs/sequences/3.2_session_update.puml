@@ -46,10 +46,10 @@ AppService -> Repository: save
 activate Repository
 deactivate Repository
 
-AppService --> Controller: SessionResponse
+AppService --> Controller: void
 deactivate AppService
 
-Controller --> User: 200 OK
+Controller --> User: 204 No Content
 deactivate Controller
 
 end

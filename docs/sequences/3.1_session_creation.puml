@@ -8,6 +8,7 @@ participant "SessionController" as Controller
 participant "SessionService" as AppService
 participant "Session" as SessionDomain
 participant "CourseRepository" as Repository
+participant "TaskExecutor" as TaskExecutor
 
 User -> Controller: Create Session
 activate Validator
@@ -16,11 +17,16 @@ Validator --> User: 401 Unauthorized
 Validator --> User: 403 Forbidden
 deactivate Validator
 
-Controller -> AppService: createSession
+Controller -> TaskExecutor: supplyAsync
+activate TaskExecutor
+
+TaskExecutor -> AppService: createSession
 activate AppService
 alt Session Constraint Violation or Parent Entity Not Found
-    AppService --> Controller: ErrorResponse (400 Bad Request or 404 Not Found)
+    AppService --> TaskExecutor: ErrorResponse (400 Bad Request or 404 Not Found)
     deactivate AppService
+    TaskExecutor --> Controller: Error Response
+    deactivate TaskExecutor
     Controller --> User: Error Code
     deactivate Controller
 else Valid Session Creation
@@ -41,10 +47,13 @@ activate Repository
 Repository --> AppService: savedSession
 deactivate Repository
 
-AppService --> Controller: SessionResponse
+AppService --> TaskExecutor: SessionResponse
 deactivate AppService
 
-Controller --> User: 201 Created
+TaskExecutor --> Controller: CompletableFuture<SessionResponse>
+deactivate TaskExecutor
+
+Controller --> User: 201 Created (Async Response)
 deactivate Controller
 
 end
