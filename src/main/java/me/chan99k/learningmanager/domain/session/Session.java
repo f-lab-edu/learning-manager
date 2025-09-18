@@ -79,7 +79,7 @@ public class Session extends AbstractEntity {
 		SessionType type, SessionLocation location, String locationDetails, Clock clock
 	) {
 		Session session = new Session(title, scheduledAt, scheduledEndAt, type, location, locationDetails);
-		session.validate(clock);
+		session.validate();
 		return session;
 	}
 
@@ -90,7 +90,7 @@ public class Session extends AbstractEntity {
 		notNull(courseId, COURSE_ID_REQUIRED.getMessage());
 		Session session = new Session(title, scheduledAt, scheduledEndAt, type, location, locationDetails);
 		session.courseId = courseId;
-		session.validate(clock);
+		session.validate();
 		return session;
 	}
 
@@ -101,7 +101,7 @@ public class Session extends AbstractEntity {
 		Session session = new Session(title, scheduledAt, scheduledEndAt, type, location, locationDetails);
 		session.courseId = courseId;
 		session.curriculumId = curriculumId;
-		session.validate(clock);
+		session.validate();
 		return session;
 	}
 
@@ -116,7 +116,7 @@ public class Session extends AbstractEntity {
 		child.courseId = this.courseId;
 		child.curriculumId = this.curriculumId;
 
-		child.validate(clock); // 하위 세션 자체의 유효성 및 부모와의 관계 유효성 검증
+		child.validate(); // 하위 세션 자체의 유효성 및 부모와의 관계 유효성 검증
 		this.children.add(child);
 		return child;
 	}
@@ -158,7 +158,7 @@ public class Session extends AbstractEntity {
 		validateUpdatable(clock);
 		this.scheduledAt = newScheduledAt;
 		this.scheduledEndAt = newScheduledEndAt;
-		validate(clock);
+		validate();
 	}
 
 	/**
@@ -168,7 +168,7 @@ public class Session extends AbstractEntity {
 		validateUpdatable(clock);
 		this.title = newTitle;
 		this.type = newType;
-		validate(clock);
+		validate();
 	}
 
 	/**
@@ -178,11 +178,11 @@ public class Session extends AbstractEntity {
 		validateUpdatable(clock);
 		this.location = newLocation;
 		this.locationDetails = newLocationDetails;
-		validate(clock);
+		validate();
 	}
 
-	private void validate(Clock clock) {
-		validateSessionTime(clock);
+	private void validate() {
+		validateSessionTime();
 		validateLocation();
 		validateHierarchy();
 	}
@@ -202,7 +202,7 @@ public class Session extends AbstractEntity {
 		}
 	}
 
-	private void validateSessionTime(Clock clock) {
+	private void validateSessionTime() {
 		notNull(scheduledAt, SESSION_START_TIME_REQUIRED.getMessage());
 		notNull(scheduledEndAt, SESSION_END_TIME_REQUIRED.getMessage());
 		isTrue(scheduledAt.isBefore(scheduledEndAt), START_TIME_MUST_BE_BEFORE_END_TIME.getMessage());
@@ -227,6 +227,8 @@ public class Session extends AbstractEntity {
 				CHILD_SESSION_END_TIME_AFTER_PARENT.getMessage());
 		}
 	}
+
+	/* 접근자 로직 */
 
 	public Instant getScheduledAt() {
 		return scheduledAt;
