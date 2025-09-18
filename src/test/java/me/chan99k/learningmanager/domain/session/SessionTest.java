@@ -3,7 +3,9 @@ package me.chan99k.learningmanager.domain.session;
 import static me.chan99k.learningmanager.domain.session.SessionProblemCode.*;
 import static org.assertj.core.api.Assertions.*;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -17,10 +19,12 @@ import org.springframework.test.context.ActiveProfiles;
 class SessionTest {
 
 	private Instant now;
+	private Clock clock;
 
 	@BeforeEach
 	void setUp() {
 		now = Instant.parse("2030-01-01T09:00:00Z");
+		clock = Clock.fixed(now, ZoneId.of("Asia/Seoul"));
 	}
 
 	@Nested
@@ -35,7 +39,7 @@ class SessionTest {
 			Instant endTime = now.plus(2, ChronoUnit.HOURS);
 
 			Session session = Session.createStandaloneSession(title, startTime, endTime, SessionType.ONLINE,
-				SessionLocation.GOOGLE_MEET, null);
+				SessionLocation.GOOGLE_MEET, null, clock);
 
 			assertThat(session).isNotNull();
 			assertThat(session.getTitle()).isEqualTo(title);
@@ -49,7 +53,7 @@ class SessionTest {
 		void create_course_session_success() {
 			Long courseId = 1L;
 			Session session = Session.createCourseSession(courseId, "코스 전체 특강", now, now.plus(2, ChronoUnit.HOURS),
-				SessionType.ONLINE, SessionLocation.ZOOM, null);
+				SessionType.ONLINE, SessionLocation.ZOOM, null, clock);
 
 			assertThat(session).isNotNull();
 			assertThat(session.getCourseId()).isEqualTo(courseId);
@@ -62,7 +66,7 @@ class SessionTest {
 			Long courseId = 1L;
 			Long curriculumId = 10L;
 			Session session = Session.createCurriculumSession(courseId, curriculumId, "커리큘럼 정규 세션", now,
-				now.plus(2, ChronoUnit.HOURS), SessionType.ONLINE, SessionLocation.ZOOM, null);
+				now.plus(2, ChronoUnit.HOURS), SessionType.ONLINE, SessionLocation.ZOOM, null, clock);
 
 			assertThat(session).isNotNull();
 			assertThat(session.getCourseId()).isEqualTo(courseId);
@@ -72,11 +76,12 @@ class SessionTest {
 		@Test
 		@DisplayName("[Success] 세션 진행 시간이 24시간 미만이면 성공적으로 생성된다.")
 		void create_duration_edge_case_success() {
-			Instant startTime = now.truncatedTo(ChronoUnit.DAYS);
+			// Clock 타임존을 기준으로 같은 날의 시작과 끝 시간 설정
+			Instant startTime = now.atZone(clock.getZone()).toLocalDate().atStartOfDay(clock.getZone()).toInstant();
 			Instant endTime = startTime.plus(23, ChronoUnit.HOURS).plus(59, ChronoUnit.MINUTES);
 
 			Session session = Session.createStandaloneSession("23시간 59분 세션", startTime, endTime,
-				SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null);
+				SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null, clock);
 
 			assertThat(session).isNotNull();
 		}
@@ -88,28 +93,28 @@ class SessionTest {
 			Instant endTime = now.minus(1, ChronoUnit.SECONDS);
 
 			assertThatThrownBy(() -> Session.createStandaloneSession("잘못된 시간", startTime, endTime, SessionType.ONLINE,
-				SessionLocation.GOOGLE_MEET, null))
+				SessionLocation.GOOGLE_MEET, null, clock))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage(START_TIME_MUST_BE_BEFORE_END_TIME.getMessage());
 		}
 
 		@Test
-		@DisplayName("[Failure] 세션이 이틀에 걸쳐 진행되면 예외가 발생한다.")
-		void create_fail_due_to_crossing_day_boundary() {
-			Instant startTime = now.truncatedTo(ChronoUnit.DAYS).plus(23, ChronoUnit.HOURS);
-			Instant endTime = startTime.plus(2, ChronoUnit.HOURS);
+		@DisplayName("[Failure] 세션이 24시간 이상 진행되면 예외가 발생한다.")
+		void create_fail_due_to_exceeding_24_hours() {
+			Instant startTime = now;
+			Instant endTime = startTime.plus(25, ChronoUnit.HOURS); // 25시간
 
-			assertThatThrownBy(() -> Session.createStandaloneSession("이틀 걸친 세션", startTime, endTime, SessionType.ONLINE,
-				SessionLocation.ZOOM, null))
+			assertThatThrownBy(() -> Session.createStandaloneSession("25시간 세션", startTime, endTime, SessionType.ONLINE,
+				SessionLocation.ZOOM, null, clock))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage(SESSION_CANNOT_SPAN_MULTIPLE_DAYS.getMessage());
+				.hasMessage(SESSION_DURATION_EXCEEDS_24_HOURS.getMessage());
 		}
 
 		@Test
 		@DisplayName("[Failure] 오프라인 세션에 상세 장소가 없으면 예외가 발생한다.")
 		void create_fail_due_to_missing_location_details() {
 			assertThatThrownBy(() -> Session.createStandaloneSession("오프라인 스터디", now, now.plus(2, ChronoUnit.HOURS),
-				SessionType.OFFLINE, SessionLocation.SITE, null))
+				SessionType.OFFLINE, SessionLocation.SITE, null, clock))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage(OFFLINE_SESSION_LOCATION_DETAIL_REQUIRED.getMessage());
 		}
@@ -121,7 +126,7 @@ class SessionTest {
 			Instant endTime = now.plus(24, ChronoUnit.HOURS);
 
 			assertThatThrownBy(() -> Session.createStandaloneSession("24시간 세션", startTime, endTime, SessionType.ONLINE,
-				SessionLocation.ZOOM, null))
+				SessionLocation.ZOOM, null, clock))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage(SESSION_DURATION_EXCEEDS_24_HOURS.getMessage());
 		}
@@ -137,7 +142,7 @@ class SessionTest {
 		void createRootSession() {
 			// 하위 세션을 테스트하기 위한 부모 세션 생성
 			rootSession = Session.createStandaloneSession("메인 세션", now, now.plus(8, ChronoUnit.HOURS),
-				SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null);
+				SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null, clock);
 		}
 
 		@Test
@@ -149,7 +154,7 @@ class SessionTest {
 
 			// 위에서 제안한 createChildSession 메서드를 사용
 			Session childSession = rootSession.createChildSession(subTitle, subStartTime, subEndTime,
-				SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null);
+				SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null, clock);
 
 			assertThat(childSession).isNotNull();
 			assertThat(childSession.isChildSession()).isTrue();
@@ -161,10 +166,10 @@ class SessionTest {
 		@DisplayName("[Failure] 하위 세션 아래에 또 다른 하위 세션을 생성하면 예외가 발생한다.")
 		void create_fail_due_to_invalid_depth() {
 			Session childSession = rootSession.createChildSession("1차 하위 세션", now.plus(1, ChronoUnit.HOURS),
-				now.plus(2, ChronoUnit.HOURS), SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null);
+				now.plus(2, ChronoUnit.HOURS), SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null, clock);
 
 			assertThatThrownBy(() -> childSession.createChildSession("2차 하위 세션", now.plus(1, ChronoUnit.HOURS),
-				now.plus(2, ChronoUnit.HOURS), SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null))
+				now.plus(2, ChronoUnit.HOURS), SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null, clock))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage(INVALID_SESSION_HIERARCHY.getMessage());
 		}
@@ -176,7 +181,7 @@ class SessionTest {
 			Instant subEndTime = now.plus(9, ChronoUnit.HOURS); // 부모 종료 시간(8시간 뒤)보다 늦음
 
 			assertThatThrownBy(() -> rootSession.createChildSession("시간 초과 세션", subStartTime, subEndTime,
-				SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null))
+				SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null, clock))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage(CHILD_SESSION_END_TIME_AFTER_PARENT.getMessage());
 		}
@@ -192,7 +197,7 @@ class SessionTest {
 			// 수정이 가능한 미래의 세션으로 설정
 			Instant futureStartTime = now.plus(4, ChronoUnit.DAYS);
 			session = Session.createStandaloneSession("참여자 관리 테스트 세션", futureStartTime,
-				futureStartTime.plus(1, ChronoUnit.HOURS), SessionType.ONLINE, SessionLocation.ZOOM, null);
+				futureStartTime.plus(1, ChronoUnit.HOURS), SessionType.ONLINE, SessionLocation.ZOOM, null, clock);
 		}
 
 		@Test
@@ -238,7 +243,7 @@ class SessionTest {
 			Long memberId = 1L;
 			session.addParticipant(memberId, SessionParticipantRole.ATTENDEE);
 
-			session.changeParticipantRole(memberId, SessionParticipantRole.SPEAKER);
+			session.changeParticipantRole(memberId, SessionParticipantRole.SPEAKER, clock);
 
 			SessionParticipant participant = session.getParticipants().get(0);
 			assertThat(participant.getRole()).isEqualTo(SessionParticipantRole.SPEAKER);
@@ -252,7 +257,7 @@ class SessionTest {
 			session.addParticipant(memberId, SessionParticipantRole.ATTENDEE);
 			session.addParticipant(2L, SessionParticipantRole.SPEAKER);
 
-			session.changeParticipantRole(memberId, SessionParticipantRole.HOST);
+			session.changeParticipantRole(memberId, SessionParticipantRole.HOST, clock);
 
 			SessionParticipant participant = session.getParticipants().stream()
 				.filter(p -> p.getMemberId().equals(memberId)).findFirst().get();
@@ -267,7 +272,7 @@ class SessionTest {
 			session.addParticipant(2L, SessionParticipantRole.ATTENDEE);
 
 			// 여러 HOST가 허용되므로 예외가 발생하지 않아야 함
-			assertThatCode(() -> session.changeParticipantRole(2L, SessionParticipantRole.HOST))
+			assertThatCode(() -> session.changeParticipantRole(2L, SessionParticipantRole.HOST, clock))
 				.doesNotThrowAnyException();
 
 			// 두 참여자 모두 HOST 역할을 가져야 함
@@ -283,7 +288,7 @@ class SessionTest {
 			Long memberId = 1L;
 			session.addParticipant(memberId, SessionParticipantRole.SPEAKER);
 
-			assertThatThrownBy(() -> session.changeParticipantRole(memberId, SessionParticipantRole.SPEAKER))
+			assertThatThrownBy(() -> session.changeParticipantRole(memberId, SessionParticipantRole.SPEAKER, clock))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage(SAME_ROLE_PARTICIPANT_ALREADY.getMessage());
 		}
@@ -301,7 +306,7 @@ class SessionTest {
 			Instant futureStartTime = now.plus(4, ChronoUnit.DAYS);
 			Instant futureEndTime = futureStartTime.plus(2, ChronoUnit.HOURS);
 			updatableSession = Session.createStandaloneSession("수정 가능한 세션", futureStartTime, futureEndTime,
-				SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null);
+				SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null, clock);
 		}
 
 		@Test
@@ -310,7 +315,7 @@ class SessionTest {
 			String newTitle = "수정된 제목";
 			SessionType newType = SessionType.OFFLINE;
 
-			updatableSession.changeInfo(newTitle, newType);
+			updatableSession.changeInfo(newTitle, newType, clock);
 
 			assertThat(updatableSession.getTitle()).isEqualTo(newTitle);
 			assertThat(updatableSession.getType()).isEqualTo(newType);
@@ -322,7 +327,7 @@ class SessionTest {
 			Instant newStartTime = now.plus(5, ChronoUnit.DAYS);
 			Instant newEndTime = newStartTime.plus(3, ChronoUnit.HOURS);
 
-			updatableSession.reschedule(newStartTime, newEndTime);
+			updatableSession.reschedule(newStartTime, newEndTime, clock);
 
 			assertThat(updatableSession.getScheduledAt()).isEqualTo(newStartTime);
 			assertThat(updatableSession.getScheduledEndAt()).isEqualTo(newEndTime);
@@ -334,7 +339,7 @@ class SessionTest {
 			SessionLocation newLocation = SessionLocation.SITE;
 			String newDetails = "강남역 스터디룸";
 
-			updatableSession.changeLocation(newLocation, newDetails);
+			updatableSession.changeLocation(newLocation, newDetails, clock);
 
 			assertThat(updatableSession.getLocation()).isEqualTo(newLocation);
 			assertThat(updatableSession.getLocationDetails()).isEqualTo(newDetails);
@@ -346,7 +351,7 @@ class SessionTest {
 			Instant newStartTime = now.plus(5, ChronoUnit.DAYS);
 			Instant newEndTime = newStartTime.minus(1, ChronoUnit.SECONDS); // 종료시간이 더 빠름
 
-			assertThatThrownBy(() -> updatableSession.reschedule(newStartTime, newEndTime))
+			assertThatThrownBy(() -> updatableSession.reschedule(newStartTime, newEndTime, clock))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage(START_TIME_MUST_BE_BEFORE_END_TIME.getMessage());
 		}
@@ -354,14 +359,14 @@ class SessionTest {
 		@Test
 		@DisplayName("[Failure] 이미 시작된 세션을 수정하려 하면 예외가 발생한다.")
 		void update_fail_if_session_already_started() {
-			// 실제 현재 시간보다 과거로 설정
-			// TODO :: 세션 시작 플래그 등을 두어야 할 수 있음
-			Instant pastTime = Instant.now().minus(1, ChronoUnit.HOURS);
+			// Clock의 현재 시간보다 과거로 세션 시작 시간 설정
+			Instant pastTime = now.minus(1, ChronoUnit.HOURS);
+			Clock pastClock = Clock.fixed(pastTime, ZoneId.of("Asia/Seoul"));
 			Session startedSession = Session.createStandaloneSession("이미 시작된 세션", pastTime,
 				pastTime.plus(2, ChronoUnit.HOURS),
-				SessionType.ONLINE, SessionLocation.ZOOM, null);
+				SessionType.ONLINE, SessionLocation.ZOOM, null, pastClock);
 
-			assertThatThrownBy(() -> startedSession.changeInfo("수정 시도", SessionType.OFFLINE))
+			assertThatThrownBy(() -> startedSession.changeInfo("수정 시도", SessionType.OFFLINE, clock))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage(CANNOT_MODIFY_STARTED_SESSION.getMessage());
 		}
@@ -369,14 +374,14 @@ class SessionTest {
 		@Test
 		@DisplayName("[Failure] 루트 세션은 시작 3일 이내에는 수정할 수 없다.")
 		void update_fail_if_root_session_is_within_3_days_of_start() {
-			// 실제 현재 시간 기준으로 2일 후, 하지만 안전한 시간대로 설정
-			Instant soonTime = Instant.now().plus(2, ChronoUnit.DAYS)
-				.truncatedTo(ChronoUnit.DAYS).plus(10, ChronoUnit.HOURS); // 오전 10시
+			// Clock 기준으로 2일 후 세션 설정 (3일 전 수정 제한에 걸림)
+			Instant soonTime = now.plus(2, ChronoUnit.DAYS);
+			Clock soonClock = Clock.fixed(soonTime.minus(2, ChronoUnit.DAYS), ZoneId.of("Asia/Seoul"));
 			Session soonSession = Session.createStandaloneSession("곧 시작하는 세션", soonTime,
-				soonTime.plus(2, ChronoUnit.HOURS), // 오전 10시 ~ 12시
-				SessionType.ONLINE, SessionLocation.ZOOM, null);
+				soonTime.plus(2, ChronoUnit.HOURS),
+				SessionType.ONLINE, SessionLocation.ZOOM, null, soonClock);
 
-			assertThatThrownBy(() -> soonSession.changeInfo("수정 시도", SessionType.OFFLINE))
+			assertThatThrownBy(() -> soonSession.changeInfo("수정 시도", SessionType.OFFLINE, clock))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage(ROOT_SESSION_MODIFICATION_DEADLINE_EXCEEDED.getMessage());
 		}
@@ -384,32 +389,20 @@ class SessionTest {
 		@Test
 		@DisplayName("[Failure] 하위 세션은 시작 1시간 전부터는 수정할 수 없다.")
 		void update_fail_if_child_session_is_within_1_hour_of_start() {
-			// 현재 시간 + 30분 (1시간 전 제한에 걸림)
-			Instant childStartTime = Instant.now().plus(30, ChronoUnit.MINUTES);
-
-			// 같은 날 안전한 시간으로 부모 세션 설정 (오전 10시 시작)
-			Instant today = Instant.now().truncatedTo(ChronoUnit.DAYS);
-			Instant parentStart = today.plus(10, ChronoUnit.HOURS); // 오전 10시
-			Instant parentEnd = parentStart.plus(2, ChronoUnit.HOURS); // 오전 12시
-
-			// 부모 세션이 하위 세션을 포함하도록 조정
-			if (childStartTime.isBefore(parentStart)) {
-				parentStart = childStartTime.minus(30, ChronoUnit.MINUTES);
-				parentEnd = parentStart.plus(2, ChronoUnit.HOURS);
-			}
-			if (childStartTime.plus(30, ChronoUnit.MINUTES).isAfter(parentEnd)) {
-				parentEnd = childStartTime.plus(1, ChronoUnit.HOURS);
-			}
+			// Clock 기준으로 30분 후 시작하는 하위 세션 설정 (1시간 전 수정 제한에 걸림)
+			Instant childStartTime = now.plus(30, ChronoUnit.MINUTES);
+			Instant parentStart = now;
+			Instant parentEnd = now.plus(2, ChronoUnit.HOURS);
 
 			Session root = Session.createStandaloneSession("부모 세션", parentStart, parentEnd,
-				SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null);
+				SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null, clock);
 
-			// 하위 세션: 현재 + 30분 후 시작 (1시간 전 제한에 걸리므로 수정 불가)
+			// 하위 세션: 30분 후 시작 (1시간 전 제한에 걸리므로 수정 불가)
 			Session child = root.createChildSession("곧 시작하는 하위 세션", childStartTime,
 				childStartTime.plus(30, ChronoUnit.MINUTES),
-				SessionType.OFFLINE, SessionLocation.SITE, "주기율 카페");
+				SessionType.OFFLINE, SessionLocation.SITE, "주기율 카페", clock);
 
-			assertThatThrownBy(() -> child.changeInfo("수정 시도", SessionType.ONLINE))
+			assertThatThrownBy(() -> child.changeInfo("수정 시도", SessionType.ONLINE, clock))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage(CHILD_SESSION_MODIFICATION_DEADLINE_EXCEEDED.getMessage());
 		}

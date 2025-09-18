@@ -1,5 +1,7 @@
 package me.chan99k.learningmanager.application.session;
 
+import java.time.Clock;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,15 +30,18 @@ public class SessionCreationService implements SessionCreation {
 	private final SessionCommandRepository sessionCommandRepository;
 	private final CourseQueryRepository courseQueryRepository;
 	private final MemberQueryRepository memberQueryRepository;
+	private final Clock clock;
 
 	public SessionCreationService(SessionQueryRepository sessionQueryRepository,
 		SessionCommandRepository sessionCommandRepository,
 		CourseQueryRepository courseQueryRepository,
-		MemberQueryRepository memberQueryRepository) {
+		MemberQueryRepository memberQueryRepository,
+		Clock clock) {
 		this.sessionQueryRepository = sessionQueryRepository;
 		this.sessionCommandRepository = sessionCommandRepository;
 		this.courseQueryRepository = courseQueryRepository;
 		this.memberQueryRepository = memberQueryRepository;
+		this.clock = clock;
 	}
 
 	@Override
@@ -90,27 +95,27 @@ public class SessionCreationService implements SessionCreation {
 
 			return parent.createChildSession(
 				request.title(), request.scheduledAt(), request.scheduledEndAt(),
-				request.type(), request.location(), request.locationDetails()
+				request.type(), request.location(), request.locationDetails(), clock
 			);
 		} else if (request.curriculumId() != null) {
 			// 커리큘럼 세션 생성
 			return Session.createCurriculumSession(
 				request.courseId(), request.curriculumId(),
 				request.title(), request.scheduledAt(), request.scheduledEndAt(),
-				request.type(), request.location(), request.locationDetails()
+				request.type(), request.location(), request.locationDetails(), clock
 			);
 		} else if (request.courseId() != null) {
 			// 과정 세션 생성
 			return Session.createCourseSession(
 				request.courseId(),
 				request.title(), request.scheduledAt(), request.scheduledEndAt(),
-				request.type(), request.location(), request.locationDetails()
+				request.type(), request.location(), request.locationDetails(), clock
 			);
 		} else {
 			// 단독 세션 생성
 			return Session.createStandaloneSession(
 				request.title(), request.scheduledAt(), request.scheduledEndAt(),
-				request.type(), request.location(), request.locationDetails()
+				request.type(), request.location(), request.locationDetails(), clock
 			);
 		}
 	}

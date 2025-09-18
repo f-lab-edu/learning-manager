@@ -3,13 +3,16 @@ package me.chan99k.learningmanager.application.session;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,8 +36,18 @@ class SessionListServiceTest {
 	@Mock
 	private SessionQueryRepository sessionQueryRepository;
 
+	@Mock
+	private Clock clock;
+
 	@InjectMocks
 	private SessionListService sessionListService;
+
+	@BeforeEach
+	void setUp() {
+		Instant fixedInstant = Instant.parse("2024-03-15T12:00:00Z");
+		lenient().when(clock.instant()).thenReturn(fixedInstant);
+		lenient().when(clock.getZone()).thenReturn(ZoneId.of("Asia/Seoul"));
+	}
 
 	@Test
 	@DisplayName("전체 세션 목록 조회 - 성공")
@@ -155,9 +168,10 @@ class SessionListServiceTest {
 	@Test
 	@DisplayName("세션 상태 결정 - 완료")
 	void determineSessionStatus_Completed() {
-		// given
-		Instant pastStart = Instant.now().minusSeconds(7200);
-		Instant pastEnd = Instant.now().minusSeconds(3600);
+		// given - clock의 고정된 시간을 기준으로 과거 시간 설정
+		Instant fixedNow = clock.instant();
+		Instant pastStart = fixedNow.minusSeconds(7200);
+		Instant pastEnd = fixedNow.minusSeconds(3600);
 		var session = createMockSessionWithTime(1L, "과거 세션", pastStart, pastEnd);
 		var sessions = new PageImpl<>(List.of(session), PageRequest.of(0, 20), 1);
 
@@ -176,9 +190,10 @@ class SessionListServiceTest {
 	@Test
 	@DisplayName("세션 상태 결정 - 진행 중")
 	void determineSessionStatus_Ongoing() {
-		// given
-		Instant ongoingStart = Instant.now().minusSeconds(3600);
-		Instant ongoingEnd = Instant.now().plusSeconds(3600);
+		// given - clock의 고정된 시간을 기준으로 진행 중 시간 설정
+		Instant fixedNow = clock.instant();
+		Instant ongoingStart = fixedNow.minusSeconds(3600);
+		Instant ongoingEnd = fixedNow.plusSeconds(3600);
 		var session = createMockSessionWithTime(1L, "진행 중 세션", ongoingStart, ongoingEnd);
 		var sessions = new PageImpl<>(List.of(session), PageRequest.of(0, 20), 1);
 

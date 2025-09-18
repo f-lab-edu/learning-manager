@@ -7,6 +7,7 @@ participant "CredentialValidator" as Validator
 participant "SessionController" as Controller
 participant "SessionService" as AppService
 participant "Session" as SessionDomain
+participant "Clock" as Clock
 participant "CourseRepository" as Repository
 participant "TaskExecutor" as TaskExecutor
 
@@ -32,14 +33,25 @@ alt Session Constraint Violation or Parent Entity Not Found
 else Valid Session Creation
 
 alt createCommand is for Standalone Session
-    AppService -> SessionDomain: createStandaloneSession
+    AppService -> SessionDomain: createStandaloneSession(title, scheduledAt, scheduledEndAt, type, location, locationDetails, Clock)
 else createCommand is for Course Session
-    AppService -> SessionDomain: createCourseSession
+    AppService -> SessionDomain: createCourseSession(courseId, title, scheduledAt, scheduledEndAt, type, location, locationDetails, Clock)
 else createCommand is for Curriculum Session
-    AppService -> SessionDomain: createCurriculumSession
+    AppService -> SessionDomain: createCurriculumSession(courseId, curriculumId, title, scheduledAt, scheduledEndAt, type, location, locationDetails, Clock)
 end
 activate SessionDomain
-SessionDomain --> AppService: newSession
+
+note right of SessionDomain
+  Clock을 사용하여 Asia/Seoul 시간대 기준으로
+  24시간 미만 지속시간 검증 수행
+end note
+
+SessionDomain -> Clock: getZone(), instant()
+activate Clock
+Clock --> SessionDomain: Asia/Seoul 시간대 정보
+deactivate Clock
+
+SessionDomain --> AppService: newSession (또는 제약조건 위반 시 예외)
 deactivate SessionDomain
 
 AppService -> Repository: save

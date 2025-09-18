@@ -7,6 +7,7 @@ participant "CredentialValidator" as Validator
 participant "SessionController" as Controller
 participant "SessionService" as AppService
 participant "Session" as SessionDomain
+participant "Clock" as Clock
 participant "CourseRepository" as Repository
 
 User -> Controller: Add Participant to Session
@@ -109,8 +110,19 @@ activate Repository
 Repository --> AppService: session
 deactivate Repository
 
-AppService -> session: changeParticipantRole
+AppService -> session: changeParticipantRole(memberId, newRole, Clock)
 activate SessionDomain
+
+note right of SessionDomain
+  참여자 역할 변경 시 세션 수정 권한 검증을 위해
+  Clock을 사용하여 현재 시각과 세션 일정을 비교
+end note
+
+session -> Clock: instant()
+activate Clock
+Clock --> session: 현재 시각
+deactivate Clock
+
 deactivate SessionDomain
 
 AppService -> Repository: save

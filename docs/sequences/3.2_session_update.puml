@@ -7,6 +7,7 @@ participant "CredentialValidator" as Validator
 participant "SessionController" as Controller
 participant "SessionService" as AppService
 participant "Session" as SessionDomain
+participant "Clock" as Clock
 participant "CourseRepository" as Repository
 
 User -> Controller: Update Session
@@ -30,16 +31,35 @@ activate Repository
 Repository --> AppService: session
 deactivate Repository
 
-AppService -> session: reschedule
+AppService -> session: reschedule(newScheduledAt, newScheduledEndAt, Clock)
 activate SessionDomain
+
+note right of SessionDomain
+  Clock을 사용하여 Asia/Seoul 시간대 기준으로
+  24시간 미만 지속시간 검증 수행
+end note
+
+session -> Clock: getZone(), instant()
+activate Clock
+Clock --> session: Asia/Seoul 시간대 정보
+deactivate Clock
+
 deactivate SessionDomain
 
-AppService -> session: changeInfo
+AppService -> session: changeInfo(newTitle, newType, Clock)
 activate SessionDomain
+session -> Clock: instant()
+activate Clock
+Clock --> session: 현재 시각
+deactivate Clock
 deactivate SessionDomain
 
-AppService -> session: changeLocation
+AppService -> session: changeLocation(newLocation, newLocationDetails, Clock)
 activate SessionDomain
+session -> Clock: instant()
+activate Clock
+Clock --> session: 현재 시각
+deactivate Clock
 deactivate SessionDomain
 
 AppService -> Repository: save

@@ -3,6 +3,7 @@ package me.chan99k.learningmanager.domain.session;
 import static me.chan99k.learningmanager.domain.session.SessionProblemCode.*;
 import static org.springframework.util.Assert.*;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -75,7 +76,7 @@ public class Session extends AbstractEntity {
 	/* Domain Logic */
 
 	public static Session createStandaloneSession(String title, Instant scheduledAt, Instant scheduledEndAt,
-		SessionType type, SessionLocation location, String locationDetails
+		SessionType type, SessionLocation location, String locationDetails, Clock clock
 	) {
 		Session session = new Session(title, scheduledAt, scheduledEndAt, type, location, locationDetails);
 		session.validate();
@@ -84,7 +85,7 @@ public class Session extends AbstractEntity {
 
 	public static Session createCourseSession(Long courseId, String title,
 		Instant scheduledAt, Instant scheduledEndAt,
-		SessionType type, SessionLocation location, String locationDetails
+		SessionType type, SessionLocation location, String locationDetails, Clock clock
 	) {
 		notNull(courseId, COURSE_ID_REQUIRED.getMessage());
 		Session session = new Session(title, scheduledAt, scheduledEndAt, type, location, locationDetails);
@@ -94,7 +95,7 @@ public class Session extends AbstractEntity {
 	}
 
 	public static Session createCurriculumSession(Long courseId, Long curriculumId, String title, Instant scheduledAt,
-		Instant scheduledEndAt, SessionType type, SessionLocation location, String locationDetails) {
+		Instant scheduledEndAt, SessionType type, SessionLocation location, String locationDetails, Clock clock) {
 		notNull(courseId, COURSE_ID_REQUIRED.getMessage());
 		notNull(curriculumId, CURRICULUM_ID_REQUIRED.getMessage());
 		Session session = new Session(title, scheduledAt, scheduledEndAt, type, location, locationDetails);
@@ -105,7 +106,7 @@ public class Session extends AbstractEntity {
 	}
 
 	public Session createChildSession(String title, Instant scheduledAt, Instant scheduledEndAt,
-		SessionType type, SessionLocation location, String locationDetails
+		SessionType type, SessionLocation location, String locationDetails, Clock clock
 	) {
 		isTrue(this.isRootSession(), INVALID_SESSION_HIERARCHY.getMessage());
 
@@ -134,9 +135,9 @@ public class Session extends AbstractEntity {
 		isTrue(removed, MEMBER_NOT_PARTICIPATING.getMessage());
 	}
 
-	public void changeParticipantRole(Long memberId, SessionParticipantRole newRole) {
+	public void changeParticipantRole(Long memberId, SessionParticipantRole newRole, Clock clock) {
 		// 수정 가능 여부를 먼저 검증
-		validateUpdatable();
+		validateUpdatable(clock);
 
 		// 대상 참여자를 찾아서 실제 역할 변경을 위임
 		SessionParticipant participant = findParticipant(memberId);
@@ -153,8 +154,8 @@ public class Session extends AbstractEntity {
 	/**
 	 * 세션의 시간을 재조정합니다.
 	 */
-	public void reschedule(Instant newScheduledAt, Instant newScheduledEndAt) {
-		validateUpdatable();
+	public void reschedule(Instant newScheduledAt, Instant newScheduledEndAt, Clock clock) {
+		validateUpdatable(clock);
 		this.scheduledAt = newScheduledAt;
 		this.scheduledEndAt = newScheduledEndAt;
 		validate();
@@ -163,8 +164,8 @@ public class Session extends AbstractEntity {
 	/**
 	 * 세션의 기본 정보를 변경합니다.
 	 */
-	public void changeInfo(String newTitle, SessionType newType) {
-		validateUpdatable();
+	public void changeInfo(String newTitle, SessionType newType, Clock clock) {
+		validateUpdatable(clock);
 		this.title = newTitle;
 		this.type = newType;
 		validate();
@@ -173,8 +174,8 @@ public class Session extends AbstractEntity {
 	/**
 	 * 세션의 장소를 변경합니다.
 	 */
-	public void changeLocation(SessionLocation newLocation, String newLocationDetails) {
-		validateUpdatable();
+	public void changeLocation(SessionLocation newLocation, String newLocationDetails, Clock clock) {
+		validateUpdatable(clock);
 		this.location = newLocation;
 		this.locationDetails = newLocationDetails;
 		validate();
@@ -186,8 +187,8 @@ public class Session extends AbstractEntity {
 		validateHierarchy();
 	}
 
-	private void validateUpdatable() {
-		Instant now = Instant.now();
+	private void validateUpdatable(Clock clock) {
+		Instant now = clock.instant();
 		isTrue(now.isBefore(this.scheduledAt), CANNOT_MODIFY_STARTED_SESSION.getMessage());
 
 		if (isRootSession()) {
@@ -208,11 +209,6 @@ public class Session extends AbstractEntity {
 
 		long durationHours = Duration.between(scheduledAt, scheduledEndAt).toHours();
 		isTrue(durationHours < 24, SESSION_DURATION_EXCEEDS_24_HOURS.getMessage());
-
-		long startDay = scheduledAt.truncatedTo(ChronoUnit.DAYS).toEpochMilli();
-		long endDay = scheduledEndAt.truncatedTo(ChronoUnit.DAYS).toEpochMilli();
-
-		isTrue(startDay == endDay, SESSION_CANNOT_SPAN_MULTIPLE_DAYS.getMessage());
 	}
 
 	private void validateLocation() {
@@ -231,6 +227,8 @@ public class Session extends AbstractEntity {
 				CHILD_SESSION_END_TIME_AFTER_PARENT.getMessage());
 		}
 	}
+
+	/* 접근자 로직 */
 
 	public Instant getScheduledAt() {
 		return scheduledAt;

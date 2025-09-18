@@ -3,6 +3,7 @@ package me.chan99k.learningmanager.application.session;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +34,9 @@ import me.chan99k.learningmanager.domain.session.SessionProblemCode;
 
 @ExtendWith(MockitoExtension.class)
 class SessionParticipantServiceTest {
+
+	@Mock
+	private Clock clock;
 
 	private final Long sessionId = 1L;
 	private final Long courseId = 100L;
@@ -258,7 +262,7 @@ class SessionParticipantServiceTest {
 
 			assertThat(response).isNotNull();
 			assertThat(response.sessionId()).isEqualTo(sessionId);
-			verify(session).changeParticipantRole(memberId, SessionParticipantRole.SPEAKER);
+			verify(session).changeParticipantRole(memberId, SessionParticipantRole.SPEAKER, clock);
 			verify(sessionCommandRepository).save(session);
 		}
 	}
@@ -286,7 +290,7 @@ class SessionParticipantServiceTest {
 			var response = sessionParticipantService.changeParticipantRole(request);
 
 			assertThat(response).isNotNull();
-			verify(session).changeParticipantRole(memberId, SessionParticipantRole.ATTENDEE);
+			verify(session).changeParticipantRole(memberId, SessionParticipantRole.ATTENDEE, clock);
 		}
 	}
 
@@ -474,7 +478,7 @@ class SessionParticipantServiceTest {
 
 			// then
 			assertThat(response).isNotNull();
-			verify(session).changeParticipantRole(memberId, SessionParticipantRole.HOST);
+			verify(session).changeParticipantRole(memberId, SessionParticipantRole.HOST, clock);
 			verify(sessionCommandRepository).save(session);
 		}
 	}

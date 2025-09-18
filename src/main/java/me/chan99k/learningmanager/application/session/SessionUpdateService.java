@@ -1,5 +1,7 @@
 package me.chan99k.learningmanager.application.session;
 
+import java.time.Clock;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,15 +28,18 @@ public class SessionUpdateService implements SessionUpdate {
 	private final SessionCommandRepository sessionCommandRepository;
 	private final CourseQueryRepository courseQueryRepository;
 	private final MemberQueryRepository memberQueryRepository;
+	private final Clock clock;
 
 	public SessionUpdateService(SessionQueryRepository sessionQueryRepository,
 		SessionCommandRepository sessionCommandRepository,
 		CourseQueryRepository courseQueryRepository,
-		MemberQueryRepository memberQueryRepository) {
+		MemberQueryRepository memberQueryRepository,
+		Clock clock) {
 		this.sessionQueryRepository = sessionQueryRepository;
 		this.sessionCommandRepository = sessionCommandRepository;
 		this.courseQueryRepository = courseQueryRepository;
 		this.memberQueryRepository = memberQueryRepository;
+		this.clock = clock;
 	}
 
 	@Override
@@ -80,13 +85,13 @@ public class SessionUpdateService implements SessionUpdate {
 
 	private void updateSessionInfo(Session session, Request request) {
 		// 시간 변경
-		session.reschedule(request.scheduledAt(), request.scheduledEndAt());
+		session.reschedule(request.scheduledAt(), request.scheduledEndAt(), clock);
 
 		// 기본 정보 변경
-		session.changeInfo(request.title(), request.type());
+		session.changeInfo(request.title(), request.type(), clock);
 
 		// 장소 변경
-		session.changeLocation(request.location(), request.locationDetails());
+		session.changeLocation(request.location(), request.locationDetails(), clock);
 	}
 
 	private boolean isStandaloneSession(Session session) {

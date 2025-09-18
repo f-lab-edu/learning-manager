@@ -1,5 +1,7 @@
 package me.chan99k.learningmanager.application.session;
 
+import java.time.Clock;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,12 +25,15 @@ public class SessionParticipantService implements SessionParticipantManagement {
 	private final SessionQueryRepository sessionQueryRepository;
 	private final SessionCommandRepository sessionCommandRepository;
 	private final CourseQueryRepository courseQueryRepository;
+	private final Clock clock;
 
 	public SessionParticipantService(SessionQueryRepository sessionQueryRepository,
-		SessionCommandRepository sessionCommandRepository, CourseQueryRepository courseQueryRepository) {
+		SessionCommandRepository sessionCommandRepository, CourseQueryRepository courseQueryRepository,
+		Clock clock) {
 		this.sessionQueryRepository = sessionQueryRepository;
 		this.sessionCommandRepository = sessionCommandRepository;
 		this.courseQueryRepository = courseQueryRepository;
+		this.clock = clock;
 	}
 
 	@Override
@@ -61,7 +66,7 @@ public class SessionParticipantService implements SessionParticipantManagement {
 		Session session = getSessionById(request.sessionId());
 		validateSessionParticipantManagementPermission(session);
 
-		session.changeParticipantRole(request.memberId(), request.newRole());
+		session.changeParticipantRole(request.memberId(), request.newRole(), clock);
 		Session savedSession = sessionCommandRepository.save(session);
 
 		return toResponse(savedSession);

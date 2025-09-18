@@ -1,5 +1,6 @@
 package me.chan99k.learningmanager.application.session;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -23,9 +24,11 @@ import me.chan99k.learningmanager.domain.session.Session;
 public class SessionListService implements SessionListRetrieval {
 
 	private final SessionQueryRepository sessionQueryRepository;
+	private final Clock clock;
 
-	public SessionListService(SessionQueryRepository sessionQueryRepository) {
+	public SessionListService(SessionQueryRepository sessionQueryRepository, Clock clock) {
 		this.sessionQueryRepository = sessionQueryRepository;
+		this.clock = clock;
 	}
 
 	@Override
@@ -106,7 +109,7 @@ public class SessionListService implements SessionListRetrieval {
 
 		return sessions.stream()
 			.collect(Collectors.groupingBy(
-				session -> session.getScheduledAt().atOffset(java.time.ZoneOffset.UTC).toLocalDate(),
+				session -> session.getScheduledAt().atZone(clock.getZone()).toLocalDate(),
 				Collectors.mapping(this::toSessionCalendarResponse, Collectors.toList())
 			));
 	}
@@ -144,7 +147,7 @@ public class SessionListService implements SessionListRetrieval {
 	}
 
 	private SessionStatus determineSessionStatus(Instant scheduledAt, Instant scheduledEndAt) {
-		Instant now = Instant.now();
+		Instant now = clock.instant();
 
 		if (now.isBefore(scheduledAt)) {
 			return SessionStatus.UPCOMING;
