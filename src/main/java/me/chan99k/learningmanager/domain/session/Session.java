@@ -6,7 +6,6 @@ import static org.springframework.util.Assert.*;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -210,12 +209,6 @@ public class Session extends AbstractEntity {
 
 		long durationHours = Duration.between(scheduledAt, scheduledEndAt).toHours();
 		isTrue(durationHours < 24, SESSION_DURATION_EXCEEDS_24_HOURS.getMessage());
-
-		// Clock의 타임존을 사용하여 같은 날인지 검증
-		LocalDate startDay = scheduledAt.atZone(clock.getZone()).toLocalDate();
-		LocalDate endDay = scheduledEndAt.atZone(clock.getZone()).toLocalDate();
-
-		isTrue(startDay.equals(endDay), SESSION_CANNOT_SPAN_MULTIPLE_DAYS.getMessage());
 	}
 
 	private void validateLocation() {

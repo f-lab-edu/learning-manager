@@ -99,20 +99,15 @@ class SessionTest {
 		}
 
 		@Test
-		@DisplayName("[Failure] 세션이 이틀에 걸쳐 진행되면 예외가 발생한다.")
-		void create_fail_due_to_crossing_day_boundary() {
-			// Clock 타임존을 기준으로 날짜가 넘어가는 시간 설정
-			Instant startTime = now.atZone(clock.getZone())
-				.toLocalDate()
-				.atTime(23, 0)
-				.atZone(clock.getZone())
-				.toInstant();
-			Instant endTime = startTime.plus(2, ChronoUnit.HOURS);
+		@DisplayName("[Failure] 세션이 24시간 이상 진행되면 예외가 발생한다.")
+		void create_fail_due_to_exceeding_24_hours() {
+			Instant startTime = now;
+			Instant endTime = startTime.plus(25, ChronoUnit.HOURS); // 25시간
 
-			assertThatThrownBy(() -> Session.createStandaloneSession("이틀 걸친 세션", startTime, endTime, SessionType.ONLINE,
+			assertThatThrownBy(() -> Session.createStandaloneSession("25시간 세션", startTime, endTime, SessionType.ONLINE,
 				SessionLocation.ZOOM, null, clock))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage(SESSION_CANNOT_SPAN_MULTIPLE_DAYS.getMessage());
+				.hasMessage(SESSION_DURATION_EXCEEDS_24_HOURS.getMessage());
 		}
 
 		@Test
