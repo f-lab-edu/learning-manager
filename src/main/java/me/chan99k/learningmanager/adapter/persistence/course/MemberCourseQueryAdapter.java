@@ -4,11 +4,12 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
-import me.chan99k.learningmanager.application.member.requires.CourseQueryRepository;
+import me.chan99k.learningmanager.application.member.CourseParticipationInfo;
+import me.chan99k.learningmanager.application.member.requires.MemberCourseQueryRepository;
 import me.chan99k.learningmanager.domain.course.Course;
 
 @Repository
-public class MemberCourseQueryAdapter implements CourseQueryRepository {
+public class MemberCourseQueryAdapter implements MemberCourseQueryRepository {
 
 	private final JpaCourseRepository jpaCourseRepository;
 
@@ -19,5 +20,15 @@ public class MemberCourseQueryAdapter implements CourseQueryRepository {
 	@Override
 	public List<Course> findManagedCoursesByMemberId(Long memberId) {
 		return jpaCourseRepository.findManagedCoursesByMemberId(memberId);
+	}
+
+	@Override
+	public List<Course> findParticipatingCoursesByMemberId(Long memberId) {
+		return jpaCourseRepository.findParticipatingCoursesByMemberId(memberId);
+	}
+
+	@Override
+	public List<CourseParticipationInfo> findParticipatingCoursesWithRoleByMemberId(Long memberId) {
+		return jpaCourseRepository.findParticipatingCoursesWithRoleByMemberId(memberId);
 	}
 }
