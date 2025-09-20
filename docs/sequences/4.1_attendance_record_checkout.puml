@@ -1,24 +1,24 @@
 @startuml
 
-title 4.1 [P0] Attendance Record - Check-in
+title 4.1 [P0] Attendance Record - Check-out
 
 actor "User (Member)" as User
-participant "AttendanceCheckInController" as Controller
+participant "AttendanceCheckOutController" as Controller
 participant "QRCodeGenerator" as QRGenerator
-participant "AttendanceCheckInService" as AppService
+participant "AttendanceCheckOutService" as AppService
 participant "SessionQueryRepository" as SessionQueryRepo
 participant "AttendanceQueryRepository" as AttendQueryRepo
 participant "Attendance" as AttendanceDomain
 participant "AttendanceCommandRepository" as AttendCommandRepo
 
-User -> Controller: POST /api/v1/attendance/check-in/{token}
+User -> Controller: POST /api/v1/attendance/check-out/{token}
 activate Controller
 
 Controller -> QRGenerator: validateQrCode(token, sessionId)
 activate QRGenerator
 deactivate QRGenerator
 
-Controller -> AppService: checkIn(request)
+Controller -> AppService: checkOut(request)
 activate AppService
 
 note right of AppService
@@ -34,18 +34,20 @@ note right of AppService: Validate member is a participant in the session
 
 AppService -> AttendQueryRepo: findBySessionIdAndMemberId(...)
 activate AttendQueryRepo
-alt Attendance record exists
-    AttendQueryRepo --> AppService: Optional<Attendance>
-else No attendance record
+alt Attendance record not found
     AttendQueryRepo --> AppService: Optional.empty()
-    AppService -> AttendanceDomain: create(sessionId, memberId)
-    activate AttendanceDomain
-    deactivate AttendanceDomain
+    deactivate AttendQueryRepo
+    AppService --> Controller: IllegalArgumentException
+    deactivate AppService
+    Controller --> User: 400 Bad Request
+    deactivate Controller
+else Attendance record exists
+    AttendQueryRepo --> AppService: Optional<Attendance>
+    deactivate AttendQueryRepo
 end
-deactivate AttendQueryRepo
 
 
-AppService -> AttendanceDomain: checkIn(clock)
+AppService -> AttendanceDomain: checkOut(clock)
 activate AttendanceDomain
 deactivate AttendanceDomain
 
@@ -53,7 +55,7 @@ AppService -> AttendCommandRepo: save(attendance)
 activate AttendCommandRepo
 deactivate AttendCommandRepo
 
-AppService --> Controller: AttendanceCheckIn.Response
+AppService --> Controller: AttendanceCheckOut.Response
 deactivate AppService
 
 Controller --> User: 200 OK

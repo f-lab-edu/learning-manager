@@ -1,47 +1,53 @@
 @startuml
 
-title 2.4 [P1] Course Update
+title 2.4 [P1] Course Update : 스터디 과정 정보 수정
 
 actor "User (Manager)" as User
-participant "CredentialValidator" as Validator
-participant "CourseController" as Controller
-participant "CourseService" as AppService
+participant "JwtAuthenticationFilter" as Filter
+participant "CourseInfoUpdateController" as Controller
+participant "CourseInfoUpdateService" as AppService
+participant "CourseQueryRepository" as QueryRepo
 participant "Course" as CourseDomain
-participant "CourseRepository" as Repository
+participant "CourseCommandRepository" as CommandRepo
 
-User -> Controller: Update Course
-activate Validator
+User -> Controller: PUT /api/v1/courses/{courseId}
+note left: with Authorization header
 activate Controller
-Validator --> User: 401 Unauthorized
-Validator --> User: 403 Forbidden
-deactivate Validator
 
-Controller -> AppService: updateCourse
+Controller -> AppService: updateCourseInfo(courseId, request)
 activate AppService
 
-AppService -> Repository: findById
-activate Repository
-Repository --> AppService: course
-deactivate Repository
+AppService -> QueryRepo: findManagedCourseById(courseId, managerId)
+note left: managerId from AuthenticationContextHolder
+activate QueryRepo
+alt Not a Manager
+    QueryRepo --> AppService: Optional.empty()
+    deactivate QueryRepo
+    AppService --> Controller: AuthorizationException
+    deactivate AppService
+    Controller --> User: 403 Forbidden
+    deactivate Controller
+else Is a Manager
+    QueryRepo --> AppService: course
+    deactivate QueryRepo
 
-AppService -> CourseDomain: updateTitle
-activate CourseDomain
-CourseDomain --> AppService : ok
-deactivate CourseDomain
+    AppService -> CourseDomain: updateTitle(newTitle)
+    activate CourseDomain
+    deactivate CourseDomain
 
-AppService -> CourseDomain: updateDescription
-activate CourseDomain
-CourseDomain --> AppService : ok
-deactivate CourseDomain
+    AppService -> CourseDomain: updateDescription(newDescription)
+    activate CourseDomain
+    deactivate CourseDomain
 
-AppService -> Repository: save
-activate Repository
-deactivate Repository
+    AppService -> CommandRepo: save(course)
+    activate CommandRepo
+    deactivate CommandRepo
 
-AppService --> Controller: CourseResponse
-deactivate AppService
+    AppService --> Controller: void
+    deactivate AppService
 
-Controller --> User: 200 OK
-deactivate Controller
+    Controller --> User: 200 OK
+    deactivate Controller
+end
 
 @enduml

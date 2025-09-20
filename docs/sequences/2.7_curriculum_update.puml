@@ -3,39 +3,56 @@
 title 2.7 [P1] Curriculum Update : 스터디 커리큘럼 정보 수정
 
 actor "User (Manager)" as User
-participant "CredentialValidator" as Validator
-participant "CourseController" as Controller
-participant "CourseService" as AppService
+participant "JwtAuthenticationFilter" as Filter
+participant "CurriculumUpdateController" as Controller
+participant "CurriculumInfoUpdateService" as AppService
+participant "CourseQueryRepository" as QueryRepo
 participant "Course" as CourseDomain
-participant "CourseRepository" as Repository
+participant "Curriculum" as CurriculumDomain
+participant "CourseCommandRepository" as CommandRepo
 
-User -> Controller: Update Curriculum
-activate Validator
+User -> Controller: PUT /api/v1/courses/{courseId}/curriculums/{curriculumId}
+note left: with Authorization header
 activate Controller
-Validator --> User: 401 Unauthorized
-deactivate Validator
 
-Controller -> AppService: updateCurriculum
+Controller -> AppService: updateCurriculumInfo(courseId, curriculumId, request)
 activate AppService
 
-AppService -> Repository: findCourseById
-activate Repository
-Repository --> AppService: course
-deactivate Repository
+AppService -> QueryRepo: findManagedCourseById(courseId, managerId)
+activate QueryRepo
+alt Not a Manager
+    QueryRepo --> AppService: Optional.empty()
+    deactivate QueryRepo
+    AppService --> Controller: AuthorizationException
+    deactivate AppService
+    Controller --> User: 403 Forbidden
+    deactivate Controller
+else Is a Manager
+    QueryRepo --> AppService: course
+    deactivate QueryRepo
 
-AppService -> CourseDomain: updateCurriculum
-activate CourseDomain
-CourseDomain --> AppService
-deactivate CourseDomain
+    AppService -> CourseDomain: findCurriculumById(curriculumId)
+    activate CourseDomain
+    CourseDomain --> AppService: curriculum
+    deactivate CourseDomain
 
-AppService -> Repository: save
-activate Repository
-deactivate Repository
+    AppService -> CurriculumDomain: updateTitle()
+    activate CurriculumDomain
+    deactivate CurriculumDomain
 
-AppService --> Controller: CurriculumResponse
-deactivate AppService
+    AppService -> CurriculumDomain: updateDescription()
+    activate CurriculumDomain
+    deactivate CurriculumDomain
 
-Controller --> User: 200 OK
-deactivate Controller
+    AppService -> CommandRepo: save(course)
+    activate CommandRepo
+    deactivate CommandRepo
+
+    AppService --> Controller: void
+    deactivate AppService
+
+    Controller --> User: 200 OK
+    deactivate Controller
+end
 
 @enduml

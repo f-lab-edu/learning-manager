@@ -2,76 +2,62 @@
 
 title 3.2 [P1] Session Update
 
-actor "User (Manager)" as User
-participant "CredentialValidator" as Validator
+actor "User (Manager/Admin)" as User
 participant "SessionController" as Controller
-participant "SessionService" as AppService
+participant "SessionUpdateService" as AppService
+participant "SessionQueryRepository" as QueryRepo
+participant "MemberQueryRepository"
+participant "CourseQueryRepository"
 participant "Session" as SessionDomain
 participant "Clock" as Clock
-participant "CourseRepository" as Repository
+participant "SessionCommandRepository" as CommandRepo
 
-User -> Controller: Update Session
-activate Validator
+User -> Controller: PUT /api/v1/sessions/{sessionId}
 activate Controller
-Validator --> User: 401 Unauthorized
-Validator --> User: 403 Forbidden
-deactivate Validator
 
-Controller -> AppService: updateSession
+Controller -> AppService: updateSession(sessionId, request)
 activate AppService
-alt Session Constraint Violation
-    AppService --> Controller: ErrorResponse (400 Bad Request)
-    deactivate AppService
-    Controller --> User: Error Code
-    deactivate Controller
-else Valid Session Update
 
-AppService -> Repository: findSessionById
-activate Repository
-Repository --> AppService: session
-deactivate Repository
+AppService -> QueryRepo: findById(sessionId)
+activate QueryRepo
+QueryRepo --> AppService: session
+deactivate QueryRepo
 
-AppService -> session: reschedule(newScheduledAt, newScheduledEndAt, Clock)
-activate SessionDomain
-
-note right of SessionDomain
-  Clock을 사용하여 Asia/Seoul 시간대 기준으로
-  24시간 미만 지속시간 검증 수행
+note right of AppService
+  Permission is validated based on user role
+  and session type (standalone, course).
+  (e.g., calls MemberQueryRepository, CourseQueryRepository)
 end note
 
-session -> Clock: getZone(), instant()
-activate Clock
-Clock --> session: Asia/Seoul 시간대 정보
-deactivate Clock
-
-deactivate SessionDomain
-
-AppService -> session: changeInfo(newTitle, newType, Clock)
+AppService -> SessionDomain: reschedule(newScheduledAt, newScheduledEndAt, clock)
 activate SessionDomain
-session -> Clock: instant()
+SessionDomain -> Clock: instant()
 activate Clock
-Clock --> session: 현재 시각
 deactivate Clock
 deactivate SessionDomain
 
-AppService -> session: changeLocation(newLocation, newLocationDetails, Clock)
+AppService -> SessionDomain: changeInfo(newTitle, newType, clock)
 activate SessionDomain
-session -> Clock: instant()
+SessionDomain -> Clock: instant()
 activate Clock
-Clock --> session: 현재 시각
 deactivate Clock
 deactivate SessionDomain
 
-AppService -> Repository: save
-activate Repository
-deactivate Repository
+AppService -> SessionDomain: changeLocation(newLocation, newLocationDetails, clock)
+activate SessionDomain
+SessionDomain -> Clock: instant()
+activate Clock
+deactivate Clock
+deactivate SessionDomain
+
+AppService -> CommandRepo: save(session)
+activate CommandRepo
+deactivate CommandRepo
 
 AppService --> Controller: void
 deactivate AppService
 
 Controller --> User: 204 No Content
 deactivate Controller
-
-end
 
 @enduml

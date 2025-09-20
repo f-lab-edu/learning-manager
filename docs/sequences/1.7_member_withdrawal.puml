@@ -3,59 +3,61 @@
 title 1.7 [P2] Member Withdrawal : 회원 탈퇴
 
 actor "User (Member)" as User
-participant "CredentialValidator" as Validator
-participant "MemberController" as Controller
-participant "MemberService" as AppService
+participant "JwtAuthenticationFilter" as Filter
+participant "MemberProfileController" as Controller
+participant "MemberWithdrawalService" as AppService
+participant "CourseQueryRepository" as CourseQueryRepo
+participant "MemberQueryRepository" as MemberQueryRepo
 participant "Member" as MemberDomain
 participant "Account" as AccountDomain
-participant "MemberRepository" as MemberRepo
-participant "CourseRepository" as CourseRepo
+participant "MemberCommandRepository" as MemberCommandRepo
 
-User -> Controller: Request Member Withdrawal
-activate Validator
+User -> Controller: DELETE /api/v1/members/withdrawal
+note left: with Authorization header
 activate Controller
-Validator --> User: 401 Unauthorized
-deactivate Validator
 
-Controller -> AppService: withdraw
+Controller -> AppService: withdrawal()
+note left: memberId is from AuthenticationContextHolder
 activate AppService
-alt Active Courses Exist
-    AppService --> Controller: ErrorResponse (400 Bad Request or 409 Conflict)
+
+AppService -> CourseQueryRepo: findManagedCoursesByMemberId(memberId)
+activate CourseQueryRepo
+alt Has Managed Courses
+    CourseQueryRepo --> AppService: List<Course> (not empty)
+    deactivate CourseQueryRepo
+    AppService --> Controller: IllegalStateException
     deactivate AppService
-    Controller --> User: Error Code
+    Controller --> User: 400 Bad Request
     deactivate Controller
-else No Active Courses
+else No Managed Courses
+    CourseQueryRepo --> AppService: emptyList()
+    deactivate CourseQueryRepo
 
-AppService -> CourseRepo: hasActiveCoursesAsManager
-activate CourseRepo
-CourseRepo --> AppService: false
-deactivate CourseRepo
+    AppService -> MemberQueryRepo: findById(memberId)
+    activate MemberQueryRepo
+    MemberQueryRepo --> AppService: member
+    deactivate MemberQueryRepo
 
-AppService -> MemberRepo: findById
-activate MemberRepo
-MemberRepo --> AppService: member
-deactivate MemberRepo
+    AppService -> MemberDomain: withdraw()
+    activate MemberDomain
+    deactivate MemberDomain
 
-AppService -> member: withdraw
-activate MemberDomain
-MemberDomain --> AppService
-deactivate MemberDomain
+    loop for each account in member
+        AppService -> MemberDomain: deactivateAccount(accountId)
+        activate MemberDomain
+        MemberDomain -> AccountDomain: deactivate()
+        deactivate MemberDomain
+    end
 
-loop for each account in member
-    AppService -> account: deactivate
-    activate AccountDomain
-    deactivate AccountDomain
-end
+    AppService -> MemberCommandRepo: save(member)
+    activate MemberCommandRepo
+    deactivate MemberCommandRepo
 
-AppService -> MemberRepo: save
-activate MemberRepo
-deactivate MemberRepo
+    AppService --> Controller: void
+    deactivate AppService
 
-AppService --> Controller: void
-deactivate AppService
-
-Controller --> User: 204 No Content
-deactivate Controller
+    Controller --> User: 204 No Content
+    deactivate Controller
 end
 
 @enduml

@@ -1,56 +1,40 @@
 @startuml
 
-title 1.4 [P1] Profile Update : 회원 정보 관리
+title 1.4 [P1] Profile Update : 회원 프로필 수정
 
 actor "User (Member)" as User
-participant "CredentialValidator" as Validator
+participant "JwtAuthenticationFilter" as Filter
 participant "MemberProfileController" as Controller
 participant "MemberProfileService" as AppService
 participant "Member" as MemberDomain
-participant "MemberRepository" as Repository
+participant "MemberQueryRepository" as QueryRepo
+participant "MemberCommandRepository" as CommandRepo
 
-User -> Controller: Update Profile
-activate Validator
+User -> Controller: POST /api/v1/members/profile
+note left: with Authorization header
 activate Controller
-Validator --> User: 401 Unauthorized
-deactivate Validator
 
-Controller -> AppService: updateProfile
+Controller -> AppService: updateProfile(memberId, request)
+note left: memberId is from AuthenticationContextHolder
+activate AppService
 
-alt Duplicate Nickname
-    activate AppService
-    AppService --> Controller: ErrorResponse (409 Conflict)
-    deactivate AppService
-    Controller --> User: Error Code
-    deactivate Controller
-else Valid Profile Update
-    activate AppService
-    AppService -> Repository: findById
-    activate Repository
-    Repository --> AppService: member
-deactivate Repository
+AppService -> QueryRepo: findById(memberId)
+activate QueryRepo
+QueryRepo --> AppService: member
+deactivate QueryRepo
 
-AppService -> MemberDomain: updateProfile
+AppService -> MemberDomain: updateProfile(imageUrl, introduction)
 activate MemberDomain
-MemberDomain --> AppService
 deactivate MemberDomain
 
-AppService -> MemberDomain: changeNickname
-activate MemberDomain
-MemberDomain --> AppService
-deactivate MemberDomain
+AppService -> CommandRepo: save(member)
+activate CommandRepo
+deactivate CommandRepo
 
-AppService -> Repository: save
-activate Repository
-Repository --> AppService
-deactivate Repository
-
-AppService --> Controller: ProfileResponse
+AppService --> Controller: MemberProfileUpdate.Response
 deactivate AppService
-
 
 Controller --> User: 200 OK
 deactivate Controller
 
-end
 @enduml
