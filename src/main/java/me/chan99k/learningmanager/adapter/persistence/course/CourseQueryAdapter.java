@@ -3,8 +3,12 @@ package me.chan99k.learningmanager.adapter.persistence.course;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import me.chan99k.learningmanager.application.course.CourseDetailInfo;
+import me.chan99k.learningmanager.application.course.CourseMemberInfo;
 import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
 import me.chan99k.learningmanager.domain.course.Course;
 
@@ -35,5 +39,15 @@ public class CourseQueryAdapter implements CourseQueryRepository {
 	@Override
 	public List<Course> findManagedCoursesByMemberId(Long memberId) {
 		return jpaCourseRepository.findManagedCoursesByMemberId(memberId);
+	}
+
+	@Override
+	public Optional<CourseDetailInfo> findCourseDetailById(Long courseId) {
+		return jpaCourseRepository.findCourseBasicDetailsById(courseId);
+	}
+
+	@Override
+	public Page<CourseMemberInfo> findCourseMembersByCourseId(Long courseId, Pageable pageable) {
+		return jpaCourseRepository.findCourseMembersByCourseId(courseId, pageable);
 	}
 }
