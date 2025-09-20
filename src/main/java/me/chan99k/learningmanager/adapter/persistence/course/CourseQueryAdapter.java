@@ -1,6 +1,5 @@
 package me.chan99k.learningmanager.adapter.persistence.course;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,26 +43,7 @@ public class CourseQueryAdapter implements CourseQueryRepository {
 
 	@Override
 	public Optional<CourseDetailInfo> findCourseDetailById(Long courseId) {
-		Optional<Object[]> basicDetails = jpaCourseRepository.findCourseBasicDetailsById(courseId);
-		if (basicDetails.isEmpty()) {
-			return Optional.empty();
-		}
-
-		Object[] row = basicDetails.get();
-		Long id = ((Number)row[0]).longValue();
-		String title = (String)row[1];
-		String description = (String)row[2];
-		Instant createdAt = (Instant)row[3];
-		int totalMembers = ((Number)row[4]).intValue();
-		int totalCurricula = ((Number)row[5]).intValue();
-		int totalSessions = ((Number)row[6]).intValue();
-
-		CourseDetailInfo courseDetailInfo = new CourseDetailInfo(
-			id, title, description, createdAt,
-			totalMembers, totalCurricula, totalSessions
-		);
-
-		return Optional.of(courseDetailInfo);
+		return jpaCourseRepository.findCourseBasicDetailsById(courseId);
 	}
 
 	@Override

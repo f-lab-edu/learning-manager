@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import me.chan99k.learningmanager.application.course.CourseDetailInfo;
 import me.chan99k.learningmanager.application.course.CourseMemberInfo;
 import me.chan99k.learningmanager.application.member.CourseParticipationInfo;
 import me.chan99k.learningmanager.domain.course.Course;
@@ -35,16 +36,22 @@ public interface JpaCourseRepository extends JpaRepository<Course, Long> {
 		"WHERE cm.memberId = :memberId")
 	List<CourseParticipationInfo> findParticipatingCoursesWithRoleByMemberId(@Param("memberId") Long memberId);
 
-	@Query(value = "SELECT c.id, c.title, c.description, c.created_at, " +
-		"COUNT(DISTINCT cm.id) as totalMembers, " +
-		"COUNT(DISTINCT cur.id) as totalCurricula, " +
-		"(SELECT COUNT(*) FROM session s WHERE s.course_id = c.id) as totalSessions " +
-		"FROM course c " +
-		"LEFT JOIN course_member cm ON c.id = cm.course_id " +
-		"LEFT JOIN curriculum cur ON c.id = cur.course_id " +
-		"WHERE c.id = ?1 " +
-		"GROUP BY c.id, c.title, c.description, c.created_at", nativeQuery = true)
-	Optional<Object[]> findCourseBasicDetailsById(Long courseId);
+	@Query("""
+		SELECT new me.chan99k.learningmanager.application.course.CourseDetailInfo(
+		    c.id,
+		    c.title,
+		    c.description,
+		    c.createdAt,
+		    COUNT(DISTINCT cm.id),
+		    COUNT(DISTINCT cur.id)
+		)
+		FROM Course c
+		LEFT JOIN c.courseMemberList cm
+		LEFT JOIN c.curriculumList cur
+		WHERE c.id = :courseId
+		GROUP BY c.id, c.title, c.description, c.createdAt
+		""")
+	Optional<CourseDetailInfo> findCourseBasicDetailsById(Long courseId);
 
 	@Query("SELECT new me.chan99k.learningmanager.application.course.CourseMemberInfo(" +
 		"cm.memberId, m.nickname.value, a.email.address, cm.courseRole, cm.createdAt) " +

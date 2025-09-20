@@ -6,6 +6,7 @@ import static org.mockito.BDDMockito.*;
 import java.time.Instant;
 import java.util.List;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,8 +36,8 @@ class CourseDetailControllerTest {
 		Long courseId = 1L;
 		CourseDetailInfo courseDetail = new CourseDetailInfo(
 			courseId, "Spring Boot 기초", "스프링 부트 학습 과정",
-			Instant.now(), 10, 5, 15
-		);
+			Instant.now(), 10L, 5L);
+
 		CourseDetailRetrieval.CourseDetailResponse response =
 			new CourseDetailRetrieval.CourseDetailResponse(courseDetail);
 
@@ -47,6 +48,7 @@ class CourseDetailControllerTest {
 			controller.getCourseDetail(courseId).get();
 
 		assertThat(result.getStatusCode().value()).isEqualTo(200);
+		Assertions.assertNotNull(result.getBody());
 		assertThat(result.getBody().courseDetail()).isEqualTo(courseDetail);
 		verify(courseDetailRetrieval).getCourseDetail(courseId);
 	}
@@ -70,6 +72,7 @@ class CourseDetailControllerTest {
 			controller.getCourseMembers(courseId, pageable).get();
 
 		assertThat(result.getStatusCode().value()).isEqualTo(200);
+		Assertions.assertNotNull(result.getBody());
 		assertThat(result.getBody().getContent()).hasSize(2);
 		assertThat(result.getBody().getContent().get(0).nickname()).isEqualTo("사용자1");
 		assertThat(result.getBody().getTotalElements()).isEqualTo(2);

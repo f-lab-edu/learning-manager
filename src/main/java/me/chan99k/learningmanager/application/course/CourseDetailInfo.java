@@ -7,8 +7,7 @@ public record CourseDetailInfo(
 	String title,
 	String description,
 	Instant createdAt,
-	int totalMembers,
-	int totalCurricula,
-	int totalSessions
+	Long totalMembers,
+	Long totalCurricula
 ) {
 }
