@@ -3,38 +3,33 @@
 title 3.5 [P0] Session List Retrieval : 스터디 세션 목록 조회
 
 actor "User (Member)" as User
-participant "CredentialValidator" as Validator
 participant "SessionController" as Controller
+participant "sessionTaskExecutor" as Executor
 participant "SessionListService" as AppService
 participant "SessionQueryRepository" as Repository
-participant "TaskExecutor" as Executor
 
-User -> Controller: Get Session List
-activate Validator
+User -> Controller: GET /api/v1/sessions
 activate Controller
-Validator --> User: 401 Unauthorized
-deactivate Validator
 
 Controller -> Executor: supplyAsync
 activate Executor
 
-Executor -> AppService: getSessionList
+Executor -> AppService: getSessionList(request)
 activate AppService
 
-AppService -> Repository: findAllWithFilters
+AppService -> Repository: findAllWithFilters(...)
 activate Repository
 Repository --> AppService: Page<Session>
 deactivate Repository
 
 loop for each Session
     AppService -> AppService: toSessionListResponse
-    AppService -> AppService: determineSessionStatus
 end
 
 AppService --> Executor: Page<SessionListResponse>
 deactivate AppService
 
-Executor --> Controller: CompletableFuture<Page<SessionListResponse>>
+Executor --> Controller: CompletableFuture<Page<...>>
 deactivate Executor
 
 Controller --> User: 200 OK (Async Response)

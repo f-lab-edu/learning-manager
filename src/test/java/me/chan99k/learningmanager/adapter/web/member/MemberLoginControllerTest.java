@@ -3,7 +3,6 @@ package me.chan99k.learningmanager.adapter.web.member;
 import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
 import java.util.concurrent.Executor;
 
@@ -16,7 +15,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
 import me.chan99k.learningmanager.adapter.auth.BcryptPasswordEncoder;
 import me.chan99k.learningmanager.adapter.auth.JwtCredentialProvider;
@@ -66,13 +64,9 @@ class MemberLoginControllerTest {
 			}
 			""";
 
-		MvcResult mvcResult = mockMvc.perform(post("/api/v1/members/auth/token")
+		mockMvc.perform(post("/api/v1/members/auth/token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(validRequest))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.accessToken").value("jwt_token_123"));
 	}

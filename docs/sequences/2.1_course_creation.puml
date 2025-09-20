@@ -2,38 +2,46 @@
 
 title 2.1 [P0] Course Creation : 스터디 과정 생성
 
-actor "User (Manager)" as User
-participant "CredentialValidator" as Validator
-participant "CourseController" as Controller
-participant "CourseService" as AppService
+actor "User (Admin)" as User
+participant "JwtAuthenticationFilter" as Filter
+participant "CourseCreateController" as Controller
+participant "CourseCreationService" as AppService
+participant "MemberQueryRepository" as MemberQueryRepo
 participant "Course" as CourseDomain
-participant "CourseRepository" as Repository
+participant "CourseCommandRepository" as CommandRepo
 
-User -> Controller: Create Course
-activate Validator
+User -> Controller: POST /api/v1/courses
+note left: with Authorization header
 activate Controller
-Validator --> User: 401 Unauthorized
-Validator --> User: 403 Forbidden
-deactivate Validator
 
-Controller -> AppService: createCourse
+Controller -> AppService: createCourse(request)
 activate AppService
 
-AppService -> CourseDomain: create
+AppService -> MemberQueryRepo: findById(adminId)
+note left: adminId from AuthenticationContextHolder
+activate MemberQueryRepo
+MemberQueryRepo --> AppService: adminMember
+deactivate MemberQueryRepo
+
+note right of AppService: Verify user is ADMIN
+
+AppService -> CourseDomain: create(title, description)
 activate CourseDomain
-CourseDomain --> AppService: newCourse
 deactivate CourseDomain
 
-AppService -> Repository: save
-activate Repository
-Repository --> AppService: savedCourse
-deactivate Repository
+AppService -> CourseDomain: addMember(adminId, MANAGER)
+activate CourseDomain
+deactivate CourseDomain
 
-AppService --> Controller: CourseResponse
+AppService -> CommandRepo: create(newCourse)
+activate CommandRepo
+CommandRepo --> AppService: savedCourse
+deactivate CommandRepo
+
+AppService --> Controller: CourseCreation.Response
 deactivate AppService
 
 Controller --> User: 201 Created
 deactivate Controller
-deactivate Validator
 
 @enduml

@@ -1,8 +1,5 @@
 package me.chan99k.learningmanager.adapter.web.course;
 
-import java.util.concurrent.CompletableFuture;
-
-import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,21 +14,18 @@ import me.chan99k.learningmanager.application.course.provides.CourseCreation;
 @RestController
 @RequestMapping("/api/v1/courses")
 public class CourseCreateController {
-	private final CourseCreationService courseCreationService;
-	private final TaskExecutor courseTaskExecutor;
 
-	public CourseCreateController(CourseCreationService courseCreationService, TaskExecutor courseTaskExecutor) {
+	private final CourseCreationService courseCreationService;
+
+	public CourseCreateController(CourseCreationService courseCreationService) {
 		this.courseCreationService = courseCreationService;
-		this.courseTaskExecutor = courseTaskExecutor;
 	}
 
 	@PostMapping
-	public CompletableFuture<ResponseEntity<CourseCreation.Response>> createCourse(
+	public ResponseEntity<CourseCreation.Response> createCourse(
 		@Valid @RequestBody CourseCreation.Request request
 	) {
-		return CompletableFuture.supplyAsync(() -> {
-			CourseCreation.Response response = courseCreationService.createCourse(request);
-			return ResponseEntity.status(HttpStatus.CREATED).body(response);
-		}, courseTaskExecutor);
+		CourseCreation.Response response = courseCreationService.createCourse(request);
+		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 }

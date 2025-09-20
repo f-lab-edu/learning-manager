@@ -2,30 +2,45 @@
 
 title 3.4 [P2] Session Deletion
 
-actor "User (Manager)" as User
-participant "CredentialValidator" as Validator
+actor "User (Manager/Admin)" as User
 participant "SessionController" as Controller
-participant "SessionService" as AppService
-participant "CourseRepository" as Repository
+participant "SessionDeletionService" as AppService
+participant "SessionQueryRepository" as QueryRepo
+participant "SessionCommandRepository" as CommandRepo
 
-User -> Controller: Delete Session
-activate Validator
+User -> Controller: DELETE /api/v1/sessions/{sessionId}
 activate Controller
-Validator --> User: 401 Unauthorized
-Validator --> User: 403 Forbidden
-deactivate Validator
 
-Controller -> AppService: deleteSession
+Controller -> AppService: deleteSession(sessionId)
 activate AppService
 
-AppService -> Repository: deleteSessionById
-activate Repository
-deactivate Repository
+AppService -> QueryRepo: findById(sessionId)
+activate QueryRepo
+alt Session Not Found
+    QueryRepo --> AppService: Optional.empty()
+    deactivate QueryRepo
+    AppService --> Controller: DomainException (SESSION_NOT_FOUND)
+    deactivate AppService
+    Controller --> User: 400 Bad Request
+    deactivate Controller
+else Session Found
+    QueryRepo --> AppService: session
+    deactivate QueryRepo
 
-AppService --> Controller: void
-deactivate AppService
+    note right of AppService
+      - Validate user has permission (is Admin or Course Manager)
+      - Validate session has no children
+    end note
 
-Controller --> User: 204 No Content
-deactivate Controller
+    AppService -> CommandRepo: delete(session)
+    activate CommandRepo
+    deactivate CommandRepo
+
+    AppService --> Controller: void
+    deactivate AppService
+
+    Controller --> User: 204 No Content
+    deactivate Controller
+end
 
 @enduml

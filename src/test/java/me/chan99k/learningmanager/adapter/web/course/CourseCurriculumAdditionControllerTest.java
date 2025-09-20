@@ -4,7 +4,6 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +15,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -69,14 +67,10 @@ class CourseCurriculumAdditionControllerTest {
 		given(curriculumCreation.createCurriculum(eq(courseId), any(CurriculumCreation.Request.class)))
 			.willReturn(response);
 
-		MvcResult mvcResult = mockMvc.perform(post("/api/v1/courses/{courseId}/curriculums", courseId)
+		mockMvc.perform(post("/api/v1/courses/{courseId}/curriculums", courseId)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isCreated())
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 			.andExpect(jsonPath("$.curriculumId").value(101L))
@@ -109,14 +103,10 @@ class CourseCurriculumAdditionControllerTest {
 		given(curriculumCreation.createCurriculum(eq(courseId), any(CurriculumCreation.Request.class)))
 			.willThrow(new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED));
 
-		MvcResult mvcResult = mockMvc.perform(post("/api/v1/courses/{courseId}/curriculums", courseId)
+		mockMvc.perform(post("/api/v1/courses/{courseId}/curriculums", courseId)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isForbidden())
 			.andExpect(jsonPath("$.code").value(AuthProblemCode.AUTHORIZATION_REQUIRED.getCode()));
 	}
@@ -160,14 +150,10 @@ class CourseCurriculumAdditionControllerTest {
 		given(curriculumCreation.createCurriculum(eq(courseId), any(CurriculumCreation.Request.class)))
 			.willReturn(response);
 
-		MvcResult mvcResult = mockMvc.perform(post("/api/v1/courses/{courseId}/curriculums", courseId)
+		mockMvc.perform(post("/api/v1/courses/{courseId}/curriculums", courseId)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isCreated())
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 			.andExpect(jsonPath("$.curriculumId").value(102L))
@@ -184,14 +170,10 @@ class CourseCurriculumAdditionControllerTest {
 		given(curriculumCreation.createCurriculum(eq(courseId), any(CurriculumCreation.Request.class)))
 			.willReturn(response);
 
-		MvcResult mvcResult = mockMvc.perform(post("/api/v1/courses/{courseId}/curriculums", courseId)
+		mockMvc.perform(post("/api/v1/courses/{courseId}/curriculums", courseId)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isCreated())
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 			.andExpect(jsonPath("$.curriculumId").value(103L))
@@ -243,14 +225,10 @@ class CourseCurriculumAdditionControllerTest {
 		given(curriculumCreation.createCurriculum(eq(courseId), any(CurriculumCreation.Request.class)))
 			.willThrow(new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED));
 
-		MvcResult mvcResult = mockMvc.perform(post("/api/v1/courses/{courseId}/curriculums", courseId)
+		mockMvc.perform(post("/api/v1/courses/{courseId}/curriculums", courseId)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isForbidden());
 	}
 }
