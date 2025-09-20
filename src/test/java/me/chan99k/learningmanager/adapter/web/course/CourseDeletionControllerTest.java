@@ -4,7 +4,6 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +14,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
 import me.chan99k.learningmanager.adapter.auth.AccessTokenProvider;
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
@@ -58,12 +56,8 @@ class CourseDeletionControllerTest {
 
 		willDoNothing().given(courseDeletion).deleteCourse(courseId);
 
-		MvcResult mvcResult = mockMvc.perform(delete("/api/v1/courses/{courseId}", courseId)
+		mockMvc.perform(delete("/api/v1/courses/{courseId}", courseId)
 				.header("Authorization", "Bearer valid-token"))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isNoContent());
 	}
 
@@ -75,12 +69,8 @@ class CourseDeletionControllerTest {
 		willThrow(new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED))
 			.given(courseDeletion).deleteCourse(courseId);
 
-		MvcResult mvcResult = mockMvc.perform(delete("/api/v1/courses/{courseId}", courseId)
+		mockMvc.perform(delete("/api/v1/courses/{courseId}", courseId)
 				.header("Authorization", "Bearer valid-token"))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isForbidden())
 			.andExpect(jsonPath("$.code").value(AuthProblemCode.AUTHORIZATION_REQUIRED.getCode()));
 	}
@@ -114,12 +104,8 @@ class CourseDeletionControllerTest {
 		willThrow(new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED))
 			.given(courseDeletion).deleteCourse(courseId);
 
-		MvcResult mvcResult = mockMvc.perform(delete("/api/v1/courses/{courseId}", courseId)
+		mockMvc.perform(delete("/api/v1/courses/{courseId}", courseId)
 				.header("Authorization", "Bearer valid-token"))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isForbidden());
 	}
 
@@ -131,12 +117,8 @@ class CourseDeletionControllerTest {
 		willThrow(new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED))
 			.given(courseDeletion).deleteCourse(courseId);
 
-		MvcResult mvcResult = mockMvc.perform(delete("/api/v1/courses/{courseId}", courseId)
+		mockMvc.perform(delete("/api/v1/courses/{courseId}", courseId)
 				.header("Authorization", "Bearer valid-token"))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isForbidden())
 			.andExpect(jsonPath("$.code").value(AuthProblemCode.AUTHORIZATION_REQUIRED.getCode()));
 	}

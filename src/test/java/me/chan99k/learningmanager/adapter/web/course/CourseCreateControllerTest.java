@@ -5,7 +5,6 @@ import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
 import java.util.concurrent.Executor;
 
@@ -17,10 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -63,8 +60,6 @@ class CourseCreateControllerTest {
 	@MockBean(name = "memberTaskExecutor")
 	Executor memberTaskExecutor;
 
-	@MockBean(name = "courseTaskExecutor")
-	AsyncTaskExecutor courseTaskExecutor;
 
 	@BeforeEach
 	void setUp() {
@@ -75,11 +70,6 @@ class CourseCreateControllerTest {
 			return null;
 		}).given(memberTaskExecutor).execute(any(Runnable.class));
 
-		willAnswer(invocation -> {
-			Runnable task = invocation.getArgument(0);
-			task.run(); // 즉시 실행
-			return null;
-		}).given(courseTaskExecutor).execute(any(Runnable.class));
 
 		// 인증 컨텍스트 설정
 		AuthenticationContextHolder.setCurrentMemberId(1L);
@@ -105,15 +95,10 @@ class CourseCreateControllerTest {
 			.willReturn(response);
 
 		// when & then
-		MvcResult mvcResult = mockMvc.perform(post("/api/v1/courses")
+		mockMvc.perform(post("/api/v1/courses")
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andDo(print())
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andDo(print())
 			.andExpect(status().isCreated())
 			.andExpect(jsonPath("$.courseId").value(100L));
@@ -166,15 +151,10 @@ class CourseCreateControllerTest {
 					me.chan99k.learningmanager.adapter.auth.AuthProblemCode.AUTHORIZATION_REQUIRED));
 
 		// when & then
-		MvcResult mvcResult = mockMvc.perform(post("/api/v1/courses")
+		mockMvc.perform(post("/api/v1/courses")
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andDo(print())
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andDo(print())
 			.andExpect(status().isForbidden())
 			.andExpect(content().contentType("application/problem+json;charset=UTF-8"));
