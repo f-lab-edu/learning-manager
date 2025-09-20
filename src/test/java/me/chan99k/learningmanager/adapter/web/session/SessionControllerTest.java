@@ -123,14 +123,10 @@ class SessionControllerTest {
 		given(sessionCreationService.createSession(any(SessionCreation.Request.class)))
 			.willReturn(mockSession);
 
-		MvcResult mvcResult = mockMvc.perform(post("/api/v1/sessions")
+		mockMvc.perform(post("/api/v1/sessions")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andDo(print())
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isCreated())
 			.andExpect(jsonPath("$.id").value(1L))
 			.andExpect(jsonPath("$.title").value("테스트 세션"))
@@ -153,14 +149,10 @@ class SessionControllerTest {
 		given(sessionCreationService.createSession(any(SessionCreation.Request.class)))
 			.willThrow(new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED));
 
-		MvcResult mvcResult = mockMvc.perform(post("/api/v1/sessions")
+		mockMvc.perform(post("/api/v1/sessions")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andDo(print())
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isForbidden());
 	}
 
@@ -178,14 +170,10 @@ class SessionControllerTest {
 		given(sessionCreationService.createSession(any(SessionCreation.Request.class)))
 			.willThrow(new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
 
-		MvcResult mvcResult = mockMvc.perform(post("/api/v1/sessions")
+		mockMvc.perform(post("/api/v1/sessions")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andDo(print())
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isUnauthorized());
 	}
 
@@ -203,14 +191,10 @@ class SessionControllerTest {
 		given(sessionCreationService.createSession(any(SessionCreation.Request.class)))
 			.willThrow(new DomainException(SessionProblemCode.SESSION_NOT_FOUND));
 
-		MvcResult mvcResult = mockMvc.perform(post("/api/v1/sessions")
+		mockMvc.perform(post("/api/v1/sessions")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andDo(print())
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isBadRequest());
 	}
 

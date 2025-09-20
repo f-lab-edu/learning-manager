@@ -1,7 +1,5 @@
 package me.chan99k.learningmanager.adapter.web.member;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,32 +20,24 @@ import me.chan99k.learningmanager.application.member.provides.SignUpConfirmation
 public class MemberRegisterController {
 
 	private final MemberRegisterService memberRegisterService;
-	private final Executor memberTaskExecutor;
 
-	public MemberRegisterController(MemberRegisterService memberRegisterService, Executor memberTaskExecutor) {
+	public MemberRegisterController(MemberRegisterService memberRegisterService) {
 		this.memberRegisterService = memberRegisterService;
-		this.memberTaskExecutor = memberTaskExecutor;
 	}
 
 	@PostMapping("/register")
-	public CompletableFuture<ResponseEntity<MemberRegistration.Response>> register(
+	public ResponseEntity<MemberRegistration.Response> register(
 		@Valid @RequestBody MemberRegistration.Request request
 	) {
-		return CompletableFuture.supplyAsync(() -> {
-				MemberRegistration.Response response = memberRegisterService.register(request);
-				return ResponseEntity.status(HttpStatus.CREATED).body(response);
-			}, memberTaskExecutor
-		);
-
+		MemberRegistration.Response response = memberRegisterService.register(request);
+		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
 	@GetMapping("/activate")
-	public CompletableFuture<ResponseEntity<Void>> activateMember(
+	public ResponseEntity<Void> activateMember(
 		@RequestParam String token
 	) {
-		return CompletableFuture.supplyAsync(() -> {
-			memberRegisterService.activateSignUpMember(new SignUpConfirmation.Request(token));
-			return ResponseEntity.ok().build();
-		}, memberTaskExecutor);
+		memberRegisterService.activateSignUpMember(new SignUpConfirmation.Request(token));
+		return ResponseEntity.ok().build();
 	}
 }

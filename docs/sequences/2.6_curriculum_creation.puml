@@ -3,41 +3,47 @@
 title 2.6 [P1] Curriculum Creation : 커리큘럼 생성
 
 actor "User (Manager)" as User
-participant "CredentialValidator" as Validator
-participant "CourseController" as Controller
-participant "CourseService" as AppService
+participant "JwtAuthenticationFilter" as Filter
+participant "CourseCurriculumAdditionController" as Controller
+participant "CurriculumCreationService" as AppService
+participant "CourseQueryRepository" as QueryRepo
 participant "Course" as CourseDomain
-participant "CourseRepository" as Repository
+participant "CourseCommandRepository" as CommandRepo
 
-User -> Controller: Create Curriculum
-activate Validator
+User -> Controller: POST /api/v1/courses/{courseId}/curriculums
+note left: with Authorization header
 activate Controller
-Validator --> User: 401 Unauthorized
-Validator --> User: 403 Forbidden
-deactivate Validator
 
-Controller -> AppService: addCurriculumToCourse
+Controller -> AppService: createCurriculum(courseId, request)
 activate AppService
 
-AppService -> Repository: findById
-activate Repository
-Repository --> AppService: course
-deactivate Repository
+AppService -> QueryRepo: findManagedCourseById(courseId, managerId)
+note left: managerId from AuthenticationContextHolder
+activate QueryRepo
+alt Not a Manager
+    QueryRepo --> AppService: Optional.empty()
+    deactivate QueryRepo
+    AppService --> Controller: AuthorizationException
+    deactivate AppService
+    Controller --> User: 403 Forbidden
+    deactivate Controller
+else Is a Manager
+    QueryRepo --> AppService: course
+    deactivate QueryRepo
 
-AppService -> CourseDomain: addCurriculum
-activate CourseDomain
-CourseDomain --> AppService : ok
-deactivate CourseDomain
+    AppService -> CourseDomain: addCurriculum(title, description)
+    activate CourseDomain
+    deactivate CourseDomain
 
-AppService -> Repository: save
-activate Repository
-Repository --> AppService : ok
-deactivate Repository
+    AppService -> CommandRepo: save(course)
+    activate CommandRepo
+    deactivate CommandRepo
 
-AppService --> Controller: CurriculumResponse
-deactivate AppService
+    AppService --> Controller: CurriculumCreation.Response
+    deactivate AppService
 
-Controller --> User: 201 Created
-deactivate Controller
+    Controller --> User: 201 Created
+    deactivate Controller
+end
 
 @enduml

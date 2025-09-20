@@ -3,53 +3,50 @@
 title 2.9 [P2] Curriculum Deletion : 스터디 커리큘럼 삭제
 
 actor "User (Manager)" as User
-participant "CredentialValidator" as Validator
-participant "CourseController" as Controller
-participant "CourseService" as AppService
+participant "JwtAuthenticationFilter" as Filter
+participant "CurriculumDeletionController" as Controller
+participant "CurriculumDeletionService" as AppService
+participant "CourseQueryRepository" as QueryRepo
 participant "Course" as CourseDomain
-participant "CourseRepository" as Repository
-participant "CourseRepository" as SessionRepo
+participant "CourseCommandRepository" as CommandRepo
 
-User -> Controller: Delete Curriculum
-activate Validator
+User -> Controller: DELETE /api/v1/courses/{courseId}/curriculums/{curriculumId}
+note left: with Authorization header
 activate Controller
-Validator --> User: 401 Unauthorized
-Validator --> User: 403 Forbidden
-deactivate Validator
 
-Controller -> AppService: deleteCurriculum
+Controller -> AppService: deleteCurriculum(courseId, curriculumId)
 activate AppService
-alt Sessions Exist for Curriculum
-    AppService --> Controller: ErrorResponse (400 Bad Request or 409 Conflict)
+
+AppService -> QueryRepo: findManagedCourseById(courseId, managerId)
+activate QueryRepo
+alt Not a Manager
+    QueryRepo --> AppService: Optional.empty()
+    deactivate QueryRepo
+    AppService --> Controller: AuthorizationException
     deactivate AppService
-    Controller --> User: Error Code
+    Controller --> User: 403 Forbidden
     deactivate Controller
-else No Sessions for Curriculum
+else Is a Manager
+    QueryRepo --> AppService: course
+    deactivate QueryRepo
 
-AppService -> SessionRepo: hasCurriculumSessions
-activate SessionRepo
-SessionRepo --> AppService: false
-deactivate SessionRepo
+    AppService -> CourseDomain: findCurriculumById(curriculumId)
+    activate CourseDomain
+    deactivate CourseDomain
 
-AppService -> Repository: findById
-activate Repository
-Repository --> AppService: course
-deactivate Repository
+    AppService -> CourseDomain: removeCurriculum(curriculum)
+    activate CourseDomain
+    deactivate CourseDomain
 
-AppService -> course: removeCurriculum
-activate CourseDomain
-deactivate CourseDomain
+    AppService -> CommandRepo: save(course)
+    activate CommandRepo
+    deactivate CommandRepo
 
-AppService -> Repository: save
-activate Repository
-deactivate Repository
+    AppService --> Controller: void
+    deactivate AppService
 
-AppService --> Controller: void
-deactivate AppService
-
-Controller --> User: 204 No Content
-deactivate Controller
-
+    Controller --> User: 204 No Content
+    deactivate Controller
 end
 
 @enduml

@@ -3,45 +3,66 @@
 title 1.1 [P0] Member Registration - (2) 인증 이메일을 통한 회원 활성화
 
 actor "User (Guest)" as User
-participant "MemberController" as Controller
-participant "MemberActivationService" as AppService
+participant "MemberRegisterController" as Controller
+participant "MemberRegisterService" as AppService
+participant "SignUpConfirmer" as Confirmer
+participant "MemberQueryRepository" as QueryRepo
+participant "Member" as MemberDomain
 participant "Account" as AccountDomain
-participant "MemberRepository" as Repository
+participant "MemberCommandRepository" as CommandRepo
 
-User -> Controller: Activate Member
+User -> Controller: GET /api/v1/members/activate?token=...
 activate Controller
 
-Controller -> AppService: activate
+Controller -> AppService: activateSignUpMember(request)
 activate AppService
 
-alt Invalid Activation Link
-    AppService --> Controller: ErrorResponse (400 Bad Request)
+AppService -> Confirmer: validateToken(token)
+activate Confirmer
+alt Invalid or Expired Token
+    Confirmer --> AppService: false
+    deactivate Confirmer
+    AppService --> Controller: DomainException (EXPIRED_ACTIVATION_TOKEN)
     deactivate AppService
-    Controller --> User: Error Code
+    Controller --> User: 400 Bad Request
     deactivate Controller
-else Valid Activation Link
+else Valid Token
+    Confirmer --> AppService: true
+    deactivate Confirmer
 
-AppService -> Repository: findByAccountActivationToken
-activate Repository
-Repository --> AppService: member (PENDING)
-deactivate Repository
+    AppService -> Confirmer: getMemberIdByToken(token)
+    activate Confirmer
+    Confirmer --> AppService: memberId
+    deactivate Confirmer
 
-AppService -> AccountDomain: activate
-activate AccountDomain
-AccountDomain --> AppService: member (ACTIVE)
-deactivate AccountDomain
+    AppService -> QueryRepo: findById(memberId)
+    activate QueryRepo
+    QueryRepo --> AppService: member (PENDING)
+    deactivate QueryRepo
 
-AppService -> Repository: save(member)
-activate Repository
-Repository --> AppService
-deactivate Repository
+    AppService -> MemberDomain: activate()
+    activate MemberDomain
+    deactivate MemberDomain
 
-AppService --> Controller: void
-deactivate AppService
+    AppService -> MemberDomain: activateAccount(accountId)
+    activate MemberDomain
+    MemberDomain -> AccountDomain: activate()
+    deactivate MemberDomain
 
-Controller --> User: 302 Redirect (to Login Page)
-deactivate Controller
+    AppService -> CommandRepo: save(member)
+    activate CommandRepo
+    CommandRepo --> AppService
+    deactivate CommandRepo
 
+    AppService -> Confirmer: removeToken(token)
+    activate Confirmer
+    deactivate Confirmer
+
+    AppService --> Controller: void
+    deactivate AppService
+
+    Controller --> User: 200 OK
+    deactivate Controller
 end
 
 @enduml

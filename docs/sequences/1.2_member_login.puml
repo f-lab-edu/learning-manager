@@ -3,45 +3,60 @@
 title 1.2 [P0] Member Login
 
 actor "User (Guest)" as User
-participant "LoginController" as Controller
-participant "MemberAuthenticationService" as AppService
-participant "MemberRepository" as Repository
+participant "MemberLoginController" as Controller
+participant "MemberLoginService" as AppService
+participant "MemberQueryRepository" as QueryRepo
+participant "Member" as MemberDomain
 participant "PasswordEncoder" as Encoder
 participant "CredentialProvider" as CredentialProvider
 
-User -> Controller: Request Login
+User -> Controller: POST /api/v1/members/auth/token
 activate Controller
 
-Controller -> AppService: login
+Controller -> AppService: login(request)
 activate AppService
-alt Invalid Credentials or Inactive Account
-    AppService --> Controller: ErrorResponse (401 Unauthorized or 403 Forbidden)
+
+AppService -> QueryRepo: findByEmail(email)
+activate QueryRepo
+alt Account Not Found
+    QueryRepo --> AppService: Optional.empty()
+    deactivate QueryRepo
+    AppService --> Controller: DomainException (ACCOUNT_NOT_FOUND)
     deactivate AppService
-    Controller --> User: Error Code
+    Controller --> User: 404 Not Found
     deactivate Controller
-else Valid Credentials
+else Account Found
+    QueryRepo --> AppService: member
+    deactivate QueryRepo
 
-AppService -> Repository: findByAccountEmail
-activate Repository
-Repository --> AppService: member
-deactivate Repository
+    AppService -> MemberDomain: validateLogin(email, password, encoder)
+    activate MemberDomain
+    MemberDomain -> Encoder: matches(password, encodedPassword)
+    activate Encoder
+    Encoder --> MemberDomain: true/false
+    deactivate Encoder
+    alt Invalid Credentials or Inactive Account
+        MemberDomain --> AppService: false or throws Exception
+        deactivate MemberDomain
+        AppService --> Controller: DomainException (INVALID_CREDENTIAL or MEMBER_NOT_ACTIVE)
+        deactivate AppService
+        Controller --> User: 400 Bad Request
+        deactivate Controller
+    else Valid Credentials
+        MemberDomain --> AppService: true
+        deactivate MemberDomain
 
-AppService -> Encoder: match password
-activate Encoder
-Encoder --> AppService: true
-deactivate Encoder
+        AppService -> CredentialProvider: issueCredential(member)
+        activate CredentialProvider
+        CredentialProvider --> AppService: accessToken
+        deactivate CredentialProvider
 
-AppService -> CredentialProvider: issueCredential
-activate CredentialProvider
-CredentialProvider --> AppService: credential
-deactivate CredentialProvider
+        AppService --> Controller: MemberLogin.Response
+        deactivate AppService
 
-AppService --> Controller: LoginResponse (credential)
-deactivate AppService
-
-Controller --> User: 200 OK (credential)
-deactivate Controller
-
+        Controller --> User: 200 OK
+        deactivate Controller
+    end
 end
 
 @enduml

@@ -5,7 +5,6 @@ import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
 import java.util.concurrent.Executor;
 
@@ -18,7 +17,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -75,14 +73,10 @@ class MemberPasswordControllerTest {
 			given(passwordChangeService.changePassword(any(AccountPasswordChange.Request.class)))
 				.willReturn(new AccountPasswordChange.Response());
 
-			MvcResult result = mockMvc.perform(put("/api/v1/members/change-password")
+			mockMvc.perform(put("/api/v1/members/change-password")
 					.contentType(MediaType.APPLICATION_JSON)
 					.header("Authorization", "Bearer mock-token")
 					.content(objectMapper.writeValueAsString(request)))
-				.andExpect(request().asyncStarted())
-				.andReturn();
-
-			mockMvc.perform(asyncDispatch(result))
 				.andExpect(status().isOk());
 		}
 	}
@@ -107,8 +101,7 @@ class MemberPasswordControllerTest {
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
-				.andExpect(request().asyncStarted())
-				.andReturn();
+				.andExpect(status().isOk());
 		}
 
 		@Test
@@ -123,8 +116,7 @@ class MemberPasswordControllerTest {
 			mockMvc.perform(post("/api/v1/members/reset-password")
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(request)))
-				.andExpect(request().asyncStarted())
-				.andReturn();
+				.andExpect(status().isBadRequest());
 
 		}
 
@@ -144,13 +136,8 @@ class MemberPasswordControllerTest {
 
 			given(passwordResetService.verifyResetToken(token)).willReturn(response);
 
-			MvcResult result = mockMvc.perform(get("/api/v1/members/reset-password")
+			mockMvc.perform(get("/api/v1/members/reset-password")
 					.param("token", token))
-				.andExpect(request().asyncStarted())
-				.andReturn();
-
-			// 비동기 완료 후 JSON 응답 검증
-			mockMvc.perform(asyncDispatch(result))
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.tokenValid").value(true))
@@ -167,13 +154,8 @@ class MemberPasswordControllerTest {
 			given(passwordResetService.verifyResetToken(invalidToken))
 				.willThrow(new DomainException(MemberProblemCode.INVALID_PASSWORD_RESET_TOKEN));
 
-			MvcResult result = mockMvc.perform(get("/api/v1/members/reset-password")
+			mockMvc.perform(get("/api/v1/members/reset-password")
 					.param("token", invalidToken))
-				.andExpect(request().asyncStarted())
-				.andReturn();
-
-			// 비동기 완료 후 JSON 에러 응답 검증
-			mockMvc.perform(asyncDispatch(result))
 				.andExpect(status().isBadRequest())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.tokenValid").value(false))
@@ -190,14 +172,9 @@ class MemberPasswordControllerTest {
 			given(passwordResetService.confirmReset(any(AccountPasswordReset.ConfirmResetRequest.class)))
 				.willReturn(new AccountPasswordReset.ConfirmResetResponse());
 
-			MvcResult result = mockMvc.perform(post("/api/v1/members/confirm-reset-password")
+			mockMvc.perform(post("/api/v1/members/confirm-reset-password")
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(request)))
-				.andExpect(request().asyncStarted())
-				.andReturn();
-
-			// 비동기 완료 후 성공 상태 검증
-			mockMvc.perform(asyncDispatch(result))
 				.andExpect(status().isNoContent()); // 204 No Content
 		}
 
@@ -226,8 +203,7 @@ class MemberPasswordControllerTest {
 			mockMvc.perform(post("/api/v1/members/confirm-reset-password")
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(request)))
-				.andExpect(request().asyncStarted())
-				.andReturn();
+				.andExpect(status().isBadRequest());
 		}
 
 		@Test

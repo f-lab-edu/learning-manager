@@ -3,41 +3,46 @@
 title 2.8 [P2] Course Member Removal : 스터디 과정 멤버 제외
 
 actor "User (Manager)" as User
-participant "CredentialValidator" as Validator
-participant "CourseController" as Controller
-participant "CourseService" as AppService
+participant "JwtAuthenticationFilter" as Filter
+participant "CourseMemberController" as Controller
+participant "CourseMemberService" as AppService
+participant "CourseQueryRepository" as QueryRepo
 participant "Course" as CourseDomain
-participant "CourseRepository" as Repository
+participant "CourseCommandRepository" as CommandRepo
 
-User -> Controller: Remove Member from Course
-activate Validator
+User -> Controller: DELETE /api/v1/courses/{courseId}/members/{memberId}
+note left: with Authorization header
 activate Controller
-Validator --> User: 401 Unauthorized
-Validator --> User: 403 Forbidden
-deactivate Validator
 
-Controller -> AppService: removeMemberFromCourse
+Controller -> AppService: removeMemberFromCourse(courseId, memberId)
 activate AppService
 
-AppService -> Repository: findById
-activate Repository
-Repository --> AppService: course
-deactivate Repository
+AppService -> QueryRepo: findManagedCourseById(courseId, managerId)
+activate QueryRepo
+alt Not a Manager
+    QueryRepo --> AppService: Optional.empty()
+    deactivate QueryRepo
+    AppService --> Controller: AuthorizationException
+    deactivate AppService
+    Controller --> User: 403 Forbidden
+    deactivate Controller
+else Is a Manager
+    QueryRepo --> AppService: course
+    deactivate QueryRepo
 
-AppService -> CourseDomain: removeMember
-activate CourseDomain
-CourseDomain --> AppService : ok
-deactivate CourseDomain
+    AppService -> CourseDomain: removeMember(memberId)
+    activate CourseDomain
+    deactivate CourseDomain
 
-AppService -> Repository: save
-activate Repository
-Repository --> AppService : ok
-deactivate Repository
+    AppService -> CommandRepo: save(course)
+    activate CommandRepo
+    deactivate CommandRepo
 
-AppService --> Controller: void
-deactivate AppService
+    AppService --> Controller: void
+    deactivate AppService
 
-Controller --> User: 204 No Content
-deactivate Controller
+    Controller --> User: 204 No Content
+    deactivate Controller
+end
 
 @enduml

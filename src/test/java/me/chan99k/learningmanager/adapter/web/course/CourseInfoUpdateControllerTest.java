@@ -4,7 +4,6 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
 import java.util.concurrent.Executor;
 
@@ -18,7 +17,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -79,16 +77,11 @@ class CourseInfoUpdateControllerTest {
 		doNothing().when(courseInfoUpdate)
 			.updateCourseInfo(anyLong(), any(CourseInfoUpdate.Request.class));
 
-		// when
-		MvcResult mvcResult = mockMvc.perform(put("/api/v1/courses/{courseId}", 1L)
+		// when & then
+		mockMvc.perform(put("/api/v1/courses/{courseId}", 1L)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		// then
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isOk());
 
 		verify(courseInfoUpdate).updateCourseInfo(1L, request);
@@ -102,16 +95,11 @@ class CourseInfoUpdateControllerTest {
 		doNothing().when(courseInfoUpdate)
 			.updateCourseInfo(anyLong(), any(CourseInfoUpdate.Request.class));
 
-		// when
-		MvcResult mvcResult = mockMvc.perform(put("/api/v1/courses/{courseId}", 1L)
+		// when & then
+		mockMvc.perform(put("/api/v1/courses/{courseId}", 1L)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		// then
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isOk());
 	}
 
@@ -123,16 +111,11 @@ class CourseInfoUpdateControllerTest {
 		doNothing().when(courseInfoUpdate)
 			.updateCourseInfo(anyLong(), any(CourseInfoUpdate.Request.class));
 
-		// when
-		MvcResult mvcResult = mockMvc.perform(put("/api/v1/courses/{courseId}", 1L)
+		// when & then
+		mockMvc.perform(put("/api/v1/courses/{courseId}", 1L)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		// then
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isOk());
 	}
 
@@ -145,16 +128,11 @@ class CourseInfoUpdateControllerTest {
 			.when(courseInfoUpdate)
 			.updateCourseInfo(anyLong(), any(CourseInfoUpdate.Request.class));
 
-		// when
-		MvcResult mvcResult = mockMvc.perform(put("/api/v1/courses/{courseId}", 1L)
+		// when & then
+		mockMvc.perform(put("/api/v1/courses/{courseId}", 1L)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		// then
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isBadRequest());
 	}
 
@@ -167,16 +145,11 @@ class CourseInfoUpdateControllerTest {
 			.when(courseInfoUpdate)
 			.updateCourseInfo(anyLong(), any(CourseInfoUpdate.Request.class));
 
-		// when
-		MvcResult mvcResult = mockMvc.perform(put("/api/v1/courses/{courseId}", 1L)
+		// when & then
+		mockMvc.perform(put("/api/v1/courses/{courseId}", 1L)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		// then
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isUnauthorized())
 			.andExpect(jsonPath("$.code").value(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND.getCode()));
 	}
@@ -190,16 +163,11 @@ class CourseInfoUpdateControllerTest {
 			.when(courseInfoUpdate)
 			.updateCourseInfo(anyLong(), any(CourseInfoUpdate.Request.class));
 
-		// when
-		MvcResult mvcResult = mockMvc.perform(put("/api/v1/courses/{courseId}", 1L)
+		// when & then
+		mockMvc.perform(put("/api/v1/courses/{courseId}", 1L)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		// then
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isForbidden())
 			.andExpect(jsonPath("$.code").value(AuthProblemCode.AUTHORIZATION_REQUIRED.getCode()));
 	}
@@ -213,16 +181,11 @@ class CourseInfoUpdateControllerTest {
 			.when(courseInfoUpdate)
 			.updateCourseInfo(anyLong(), any(CourseInfoUpdate.Request.class));
 
-		// when
-		MvcResult mvcResult = mockMvc.perform(put("/api/v1/courses/{courseId}", 1L)
+		// when & then
+		mockMvc.perform(put("/api/v1/courses/{courseId}", 1L)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		// then
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isBadRequest());
 	}
 }

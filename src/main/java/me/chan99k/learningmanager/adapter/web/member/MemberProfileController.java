@@ -41,15 +41,13 @@ public class MemberProfileController {
 	}
 
 	@PostMapping("/profile")
-	public CompletableFuture<ResponseEntity<MemberProfileUpdate.Response>> updateProfile(
+	public ResponseEntity<MemberProfileUpdate.Response> updateProfile(
 		@RequestBody MemberProfileUpdate.Request request
 	) {
 		final Long memberId = extractMemberIdFromAuthentication();
+		MemberProfileUpdate.Response response = memberProfileUpdate.updateProfile(memberId, request);
 
-		return CompletableFuture.supplyAsync(() -> {
-			MemberProfileUpdate.Response response = memberProfileUpdate.updateProfile(memberId, request);
-			return ResponseEntity.ok(response);
-		}, memberTaskExecutor);
+		return ResponseEntity.ok(response);
 	}
 
 	@GetMapping("/profile")

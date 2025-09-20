@@ -59,43 +59,39 @@ public class SessionController {
 		this.sessionTaskExecutor = sessionTaskExecutor;
 	}
 
-	@GetMapping
-	public CompletableFuture<ResponseEntity<Page<SessionListRetrieval.SessionListResponse>>> getSessionList(
-		@RequestParam(defaultValue = "0") int page,
-		@RequestParam(defaultValue = "20") int size,
-		@RequestParam(defaultValue = "scheduledAt,desc") String sort,
-		@RequestParam(required = false) SessionType type,
-		@RequestParam(required = false) SessionLocation location,
-		@RequestParam(required = false) Instant startDate,
-		@RequestParam(required = false) Instant endDate
-	) {
-		return CompletableFuture.supplyAsync(() -> {
-			var request = new SessionListRetrieval.SessionListRequest(page, size, sort, type, location, startDate,
-				endDate);
-			Page<SessionListRetrieval.SessionListResponse> response = sessionListRetrieval.getSessionList(request);
-			return ResponseEntity.ok(response);
-		}, sessionTaskExecutor);
-	}
-
 	@PostMapping
-	public CompletableFuture<ResponseEntity<SessionCreation.Response>> createSession(
+	public ResponseEntity<SessionCreation.Response> createSession(
 		@Valid @RequestBody SessionCreation.Request request
 	) {
-		return CompletableFuture.supplyAsync(() -> {
-			Session session = sessionCreationService.createSession(request);
-			SessionCreation.Response response = new SessionCreation.Response(
-				session.getId(),
-				session.getTitle(),
-				session.getScheduledAt(),
-				session.getScheduledEndAt(),
-				session.getType(),
-				session.getLocation(),
-				session.getLocationDetails(),
-				session.getCourseId(),
-				session.getCurriculumId()
-			);
-			return ResponseEntity.status(HttpStatus.CREATED).body(response);
-		}, sessionTaskExecutor);
+		Session session = sessionCreationService.createSession(request);
+
+		SessionCreation.Response response = new SessionCreation.Response(
+			session.getId(),
+			session.getTitle(),
+			session.getScheduledAt(),
+			session.getScheduledEndAt(),
+			session.getType(),
+			session.getLocation(),
+			session.getLocationDetails(),
+			session.getCourseId(),
+			session.getCurriculumId()
+		);
+
+		return ResponseEntity.status(HttpStatus.CREATED).body(response);
+	}
+
+	@PutMapping("/{sessionId}")
+	public ResponseEntity<Void> updateSession(
+		@PathVariable Long sessionId,
+		@Valid @RequestBody SessionUpdate.Request request) {
+		sessionUpdate.updateSession(sessionId, request);
+		return ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping("/{sessionId}")
+	public ResponseEntity<Void> deleteSession(@PathVariable Long sessionId) {
+		sessionDeletion.deleteSession(sessionId);
+		return ResponseEntity.noContent().build();
 	}
 
 	@GetMapping("/{id}")
@@ -124,18 +120,22 @@ public class SessionController {
 		}, sessionTaskExecutor);
 	}
 
-	@PutMapping("/{sessionId}")
-	public ResponseEntity<Void> updateSession(
-		@PathVariable Long sessionId,
-		@Valid @RequestBody SessionUpdate.Request request) {
-		sessionUpdate.updateSession(sessionId, request);
-		return ResponseEntity.noContent().build();
-	}
-
-	@DeleteMapping("/{sessionId}")
-	public ResponseEntity<Void> deleteSession(@PathVariable Long sessionId) {
-		sessionDeletion.deleteSession(sessionId);
-		return ResponseEntity.noContent().build();
+	@GetMapping
+	public CompletableFuture<ResponseEntity<Page<SessionListRetrieval.SessionListResponse>>> getSessionList(
+		@RequestParam(defaultValue = "0") int page,
+		@RequestParam(defaultValue = "20") int size,
+		@RequestParam(defaultValue = "scheduledAt,desc") String sort,
+		@RequestParam(required = false) SessionType type,
+		@RequestParam(required = false) SessionLocation location,
+		@RequestParam(required = false) Instant startDate,
+		@RequestParam(required = false) Instant endDate
+	) {
+		return CompletableFuture.supplyAsync(() -> {
+			var request = new SessionListRetrieval.SessionListRequest(page, size, sort, type, location, startDate,
+				endDate);
+			Page<SessionListRetrieval.SessionListResponse> response = sessionListRetrieval.getSessionList(request);
+			return ResponseEntity.ok(response);
+		}, sessionTaskExecutor);
 	}
 
 	@GetMapping("/courses/{courseId}")

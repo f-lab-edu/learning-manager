@@ -3,49 +3,42 @@
 title 2.10 [P2] Course Deletion : 스터디 과정 삭제
 
 actor "User (Manager)" as User
-participant "CredentialValidator" as Validator
-participant "CourseController" as Controller
-participant "CourseService" as AppService
-participant "CourseRepository" as Repository
+participant "JwtAuthenticationFilter" as Filter
+participant "CourseDeletionController" as Controller
+participant "CourseDeletionService" as AppService
+participant "CourseQueryRepository" as QueryRepo
+participant "CourseCommandRepository" as CommandRepo
 
-User -> Controller: Delete Course
-activate Validator
+User -> Controller: DELETE /api/v1/courses/{courseId}
+note left: with Authorization header
 activate Controller
-Validator --> User: 401 Unauthorized
-Validator --> User: 403 Forbidden
-deactivate Validator
 
-Controller -> AppService: deleteCourse
+Controller -> AppService: deleteCourse(courseId)
 activate AppService
-alt Members Exist in Course
-    AppService --> Controller: ErrorResponse (400 Bad Request or 409 Conflict)
+
+AppService -> QueryRepo: findManagedCourseById(courseId, managerId)
+activate QueryRepo
+alt Not a Manager
+    QueryRepo --> AppService: Optional.empty()
+    deactivate QueryRepo
+    AppService --> Controller: AuthorizationException
     deactivate AppService
-    Controller --> User: Error Code
+    Controller --> User: 403 Forbidden
     deactivate Controller
-else No Members in Course
+else Is a Manager
+    QueryRepo --> AppService: course
+    deactivate QueryRepo
 
-AppService -> Repository: findById
-activate Repository
-Repository --> AppService: course
-deactivate Repository
+    AppService -> CommandRepo: delete(course)
+    activate CommandRepo
+    note right: CourseMember, Curriculum 등\n연관 엔티티는 orphanRemoval=true\n또는 DB CASCADE에 의해 함께 삭제됨
+    deactivate CommandRepo
 
-' 과정에 코스-멤버가 남아 있다면,
-' 함께 삭제한다.
-note right of AppService
-  과정에 코스-멤버가 남아 있다면,
-  함께 삭제한다. (CourseMember는 Member 와는 별도의 엔티티임)
-end note
+    AppService --> Controller: void
+    deactivate AppService
 
-AppService -> Repository: delete
-activate Repository
-deactivate Repository
-
-AppService --> Controller: void
-deactivate AppService
-
-Controller --> User: 204 No Content
-deactivate Controller
-
+    Controller --> User: 204 No Content
+    deactivate Controller
 end
 
 @enduml

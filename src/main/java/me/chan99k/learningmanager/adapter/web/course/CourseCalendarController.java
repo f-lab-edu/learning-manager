@@ -31,7 +31,8 @@ public class CourseCalendarController {
 	}
 
 	@GetMapping("/{courseId}/calendar")
-	public CompletableFuture<ResponseEntity<Map<LocalDate, List<SessionListRetrieval.SessionCalendarResponse>>>> getCourseCalendar(
+	public CompletableFuture<ResponseEntity<Map<LocalDate, List<SessionListRetrieval.SessionCalendarResponse>>>>
+	getCourseCalendar(
 		@PathVariable Long courseId,
 		@RequestParam int year,
 		@RequestParam int month,
@@ -50,7 +51,8 @@ public class CourseCalendarController {
 	}
 
 	@GetMapping("/{courseId}/curricula/{curriculumId}/calendar")
-	public CompletableFuture<ResponseEntity<Map<LocalDate, List<SessionListRetrieval.SessionCalendarResponse>>>> getCurriculumCalendar(
+	public CompletableFuture<ResponseEntity<Map<LocalDate, List<SessionListRetrieval.SessionCalendarResponse>>>>
+	getCurriculumCalendar(
 		@PathVariable Long courseId,
 		@PathVariable Long curriculumId,
 		@RequestParam int year,

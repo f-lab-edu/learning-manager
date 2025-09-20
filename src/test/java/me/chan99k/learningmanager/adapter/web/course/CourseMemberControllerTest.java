@@ -4,7 +4,6 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -19,7 +18,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -86,15 +84,11 @@ class CourseMemberControllerTest {
 		doNothing().when(courseMemberService)
 			.addSingleMember(anyLong(), any(CourseMemberAddition.MemberAdditionItem.class));
 
-		// when
-		MvcResult mvcResult = mockMvc.perform(post("/api/v1/courses/{courseId}/members", 1L)
+		// when & then
+		mockMvc.perform(post("/api/v1/courses/{courseId}/members", 1L)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.totalCount").value(1))
 			.andExpect(jsonPath("$.successCount").value(1))
@@ -133,14 +127,10 @@ class CourseMemberControllerTest {
 		);
 		when(courseMemberService.addMultipleMembers(anyLong(), anyList())).thenReturn(response);
 
-		MvcResult mvcResult = mockMvc.perform(post("/api/v1/courses/{courseId}/members", 1L)
+		mockMvc.perform(post("/api/v1/courses/{courseId}/members", 1L)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isMultiStatus())
 			.andExpect(jsonPath("$.totalCount").value(2))
 			.andExpect(jsonPath("$.successCount").value(2))
@@ -157,14 +147,10 @@ class CourseMemberControllerTest {
 		doThrow(new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED))
 			.when(courseMemberService).addSingleMember(anyLong(), any(CourseMemberAddition.MemberAdditionItem.class));
 
-		MvcResult mvcResult = mockMvc.perform(post("/api/v1/courses/{courseId}/members", 1L)
+		mockMvc.perform(post("/api/v1/courses/{courseId}/members", 1L)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isForbidden())
 			.andExpect(jsonPath("$.code").value(AuthProblemCode.AUTHORIZATION_REQUIRED.getCode()));
 	}
@@ -179,14 +165,10 @@ class CourseMemberControllerTest {
 		doThrow(new DomainException(CourseProblemCode.COURSE_NOT_FOUND))
 			.when(courseMemberService).addSingleMember(anyLong(), any(CourseMemberAddition.MemberAdditionItem.class));
 
-		MvcResult mvcResult = mockMvc.perform(post("/api/v1/courses/{courseId}/members", 999L)
+		mockMvc.perform(post("/api/v1/courses/{courseId}/members", 999L)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isBadRequest())
 			.andExpect(jsonPath("$.code").value(CourseProblemCode.COURSE_NOT_FOUND.getCode()));
 	}

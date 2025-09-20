@@ -1,53 +1,56 @@
 @startuml
 
-title 1.8 [P2] Member Status Change by Admin: 회원 상태 변경 (회원 활성화/휴면/정지 등)
+title 1.8 [P2] Member Status Change by Admin
 
 actor "User (Admin)" as User
-participant "CredentialValidator" as Validator
-participant "AdminController" as Controller
-participant "MemberManagementService" as AppService
+participant "JwtAuthenticationFilter" as Filter
+participant "MemberAdminController" as Controller
+participant "MemberStatusChangeService" as AppService
+participant "MemberQueryRepository" as QueryRepo
 participant "Member" as MemberDomain
-participant "MemberRepository" as Repository
+participant "MemberCommandRepository" as CommandRepo
 
-User -> Controller: Change Member Status
-activate Validator
+User -> Controller: PUT /api/v1/admin/members/{memberId}/status
+note left: with Authorization header
 activate Controller
-Validator --> User: 401 Unauthorized
-Validator --> User: 403 Forbidden
-deactivate Validator
 
-Controller -> AppService: changeMemberStatus
+Controller -> AppService: changeStatus(request)
 activate AppService
 
-AppService -> Repository: findById
-activate Repository
-Repository --> AppService: member
-deactivate Repository
+AppService -> QueryRepo: findById(adminId)
+note left: adminId from AuthenticationContextHolder
+activate QueryRepo
+QueryRepo --> AppService: adminMember
+deactivate QueryRepo
 
-alt newStatus is "ACTIVE"
-    AppService -> MemberDomain: activate()
-else newStatus is "INACTIVE"
-    AppService -> MemberDomain: deactivate()
-else newStatus is "BANNED"
-    AppService -> MemberDomain: ban()
+note right of AppService: Verify user is ADMIN
 
+AppService -> QueryRepo: findById(targetMemberId)
+activate QueryRepo
+QueryRepo --> AppService: targetMember
+deactivate QueryRepo
+
+alt newStatus
+    case ACTIVE
+        AppService -> MemberDomain: activate()
+    case INACTIVE
+        AppService -> MemberDomain: deactivate()
+    case BANNED
+        AppService -> MemberDomain: ban()
+    case WITHDRAWN
+        AppService -> MemberDomain: withdraw()
+end
 activate MemberDomain
 deactivate MemberDomain
 
-AppService -> Repository: save
-activate Repository
-deactivate Repository
-
-AppService -> Repository: saveStatusHistory
-activate Repository
-deactivate Repository
+AppService -> CommandRepo: save(targetMember)
+activate CommandRepo
+deactivate CommandRepo
 
 AppService --> Controller: void
 deactivate AppService
 
-Controller --> User: 200 OK
+Controller --> User: 204 No Content
 deactivate Controller
 
-
-end
 @enduml

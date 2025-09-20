@@ -3,54 +3,62 @@
 title 2.2 [P0] Add Member to Course : 스터디 멤버 추가
 
 actor "User (Manager)" as User
-participant "CredentialValidator" as Validator
-participant "CourseController" as Controller
-participant "CourseService" as AppService
+participant "JwtAuthenticationFilter" as Filter
+participant "CourseMemberController" as Controller
+participant "CourseMemberService" as AppService
+participant "CourseQueryRepository" as CourseQueryRepo
+participant "MemberQueryRepository" as MemberQueryRepo
 participant "Course" as CourseDomain
-participant "CourseRepository" as CourseRepo
-participant "MemberRepository" as MemberRepo
+participant "CourseCommandRepository" as CourseCommandRepo
 
-User -> Controller: Add Member to Course
-activate Validator
+User -> Controller: POST /api/v1/courses/{courseId}/members
+note left: with Authorization header
 activate Controller
-Validator --> User: 401 Unauthorized
-Validator --> User: 403 Forbidden
-deactivate Validator
 
-Controller -> AppService: addMemberToCourse
+Controller -> AppService: addSingleMember(courseId, item)
 activate AppService
-alt Member Not Found or Already Participating
-    AppService --> Controller: ErrorResponse (404 Not Found or 409 Conflict)
+
+AppService -> CourseQueryRepo: findManagedCourseById(courseId, managerId)
+note left: managerId from AuthenticationContextHolder
+activate CourseQueryRepo
+alt Not a Manager
+    CourseQueryRepo --> AppService: Optional.empty()
+    deactivate CourseQueryRepo
+    AppService --> Controller: AuthorizationException
     deactivate AppService
-    Controller --> User: Error Code
+    Controller --> User: 403 Forbidden
     deactivate Controller
-else Valid Member Addition
+else Is a Manager
+    CourseQueryRepo --> AppService: course
+    deactivate CourseQueryRepo
 
-AppService -> CourseRepo: findById
-activate CourseRepo
-CourseRepo --> AppService: course
-deactivate CourseRepo
+    AppService -> MemberQueryRepo: findByEmail(email)
+    activate MemberQueryRepo
+    alt Member Not Found
+        MemberQueryRepo --> AppService: Optional.empty()
+        deactivate MemberQueryRepo
+        AppService --> Controller: DomainException (MEMBER_NOT_FOUND)
+        deactivate AppService
+        Controller --> User: 400 Bad Request
+        deactivate Controller
+    else Member Found
+        MemberQueryRepo --> AppService: member
+        deactivate MemberQueryRepo
 
-AppService -> MemberRepo: findByEmail
-activate MemberRepo
-MemberRepo --> AppService: member
-deactivate MemberRepo
+        AppService -> CourseDomain: addMember(memberId, role)
+        activate CourseDomain
+        deactivate CourseDomain
 
-AppService -> CourseDomain: addMember
-activate CourseDomain
-CourseDomain --> AppService : ok
-deactivate CourseDomain
+        AppService -> CourseCommandRepo: save(course)
+        activate CourseCommandRepo
+        deactivate CourseCommandRepo
 
-AppService -> CourseRepo: save
-activate CourseRepo
-deactivate CourseRepo
+        AppService --> Controller: (returns)
+        deactivate AppService
 
-AppService --> Controller: void
-deactivate AppService
-
-Controller --> User: 200 OK
-deactivate Controller
-
+        Controller --> User: 200 OK or 207 Multi-Status
+        deactivate Controller
+    end
 end
 
 @enduml

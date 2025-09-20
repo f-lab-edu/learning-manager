@@ -1,140 +1,46 @@
 @startuml
 
-title 3.3 [P2] Session Participant Management : 스터디 세션 참여자 관리
+title 3.3 [P2] Session Participant Management - Add Participant
 
-actor "User (Manager)" as User
-participant "CredentialValidator" as Validator
-participant "SessionController" as Controller
-participant "SessionService" as AppService
+actor "User (Manager/Host)" as User
+participant "SessionParticipantController" as Controller
+participant "SessionParticipantService" as AppService
+participant "SessionQueryRepository" as SessionQueryRepo
+participant "CourseQueryRepository" as CourseQueryRepo
 participant "Session" as SessionDomain
-participant "Clock" as Clock
-participant "CourseRepository" as Repository
+participant "SessionCommandRepository" as SessionCommandRepo
 
-User -> Controller: Add Participant to Session
-activate Validator
+User -> Controller: POST /api/v1/sessions/{sessionId}/participants
 activate Controller
-Validator --> User: 401 Unauthorized
-Validator --> User: 403 Forbidden
-deactivate Validator
 
-Controller -> AppService: addParticipant
-activate AppService
-alt Role Constraint Violation
-    AppService --> Controller: ErrorResponse (400 Bad Request)
-    deactivate AppService
-    Controller --> User: Error Code
-    deactivate Controller
-else Valid Participant Addition
-
-AppService -> Repository: findSessionById
-activate Repository
-Repository --> AppService: session
-deactivate Repository
-
-AppService -> session: addParticipant
-activate SessionDomain
-deactivate SessionDomain
-
-AppService -> Repository: save
-activate Repository
-deactivate Repository
-
-AppService --> Controller: void
-deactivate AppService
-
-Controller --> User: 200 OK
-deactivate Controller
-
-end
-
-User -> Controller: Remove Participant from Session
-activate Validator
-activate Controller
-Validator --> User: 401 Unauthorized
-Validator --> User: 403 Forbidden
-deactivate Validator
-
-Controller -> AppService: removeParticipant
-activate AppService
-alt Role Constraint Violation
-    AppService --> Controller: ErrorResponse (400 Bad Request)
-    deactivate AppService
-    Controller --> User: Error Code
-    deactivate Controller
-else Valid Participant Removal
-
-AppService -> Repository: findSessionById
-activate Repository
-Repository --> AppService: session
-deactivate Repository
-
-
-
-AppService -> session: removeParticipant
-activate SessionDomain
-deactivate SessionDomain
-
-AppService -> Repository: save
-activate Repository
-deactivate Repository
-
-
-AppService --> Controller: void
-deactivate AppService
-
-Controller --> User: 204 No Content
-deactivate Controller
-
-end
-
-User -> Controller: Change Participant Role in Session
-activate Validator
-activate Controller
-Validator --> User: 401 Unauthorized
-Validator --> User: 403 Forbidden
-deactivate Validator
-
-Controller -> AppService: changeParticipantRole
+Controller -> AppService: addParticipant(sessionId, request)
 activate AppService
 
-alt Role Constraint Violation
-    AppService --> Controller: ErrorResponse (400 Bad Request)
-    deactivate AppService
-    Controller --> User: Error Code
-    deactivate Controller
+AppService -> SessionQueryRepo: findById(sessionId)
+activate SessionQueryRepo
+SessionQueryRepo --> AppService: session
+deactivate SessionQueryRepo
 
-else Valid Role Change
-
-AppService -> Repository: findSessionById
-activate Repository
-Repository --> AppService: session
-deactivate Repository
-
-AppService -> session: changeParticipantRole(memberId, newRole, Clock)
-activate SessionDomain
-
-note right of SessionDomain
-  참여자 역할 변경 시 세션 수정 권한 검증을 위해
-  Clock을 사용하여 현재 시각과 세션 일정을 비교
+note right of AppService
+  Permission is validated:
+  - Is user a Course Manager? (calls CourseQueryRepo)
+  - Or is user a Session HOST?
 end note
 
-session -> Clock: instant()
-activate Clock
-Clock --> session: 현재 시각
-deactivate Clock
+AppService -> CourseQueryRepo: findManagedCourseById()
 
+AppService -> SessionDomain: addParticipant(memberId, role)
+activate SessionDomain
 deactivate SessionDomain
 
-AppService -> Repository: save
-activate Repository
-deactivate Repository
+AppService -> SessionCommandRepo: save(session)
+activate SessionCommandRepo
+deactivate SessionCommandRepo
 
-AppService --> Controller: void
+AppService --> Controller: SessionParticipantResponse
 deactivate AppService
 
-Controller --> User: 200 OK
+Controller --> User: 201 Created
 deactivate Controller
-
-end
 
 @enduml

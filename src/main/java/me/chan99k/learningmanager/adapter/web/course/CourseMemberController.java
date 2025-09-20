@@ -1,9 +1,7 @@
 package me.chan99k.learningmanager.adapter.web.course;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
-import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,40 +18,35 @@ import me.chan99k.learningmanager.application.course.provides.CourseMemberAdditi
 @RestController
 @RequestMapping("/api/v1/courses")
 public class CourseMemberController {
-	private final CourseMemberService courseMemberService;
-	private final AsyncTaskExecutor courseTaskExecutor;
 
-	public CourseMemberController(CourseMemberService courseMemberService, AsyncTaskExecutor courseTaskExecutor) {
+	private final CourseMemberService courseMemberService;
+
+	public CourseMemberController(CourseMemberService courseMemberService) {
 		this.courseMemberService = courseMemberService;
-		this.courseTaskExecutor = courseTaskExecutor;
 	}
 
 	@PostMapping("/{courseId}/members")
-	public CompletableFuture<ResponseEntity<CourseMemberAddition.Response>> addMembersToCourse(
+	public ResponseEntity<CourseMemberAddition.Response> addMembersToCourse(
 		@PathVariable Long courseId,
 		@Valid @RequestBody CourseMemberAddition.Request request
 	) {
-		return CompletableFuture.supplyAsync(() -> {
-			if (request.members().size() == 1) {    // 단일 요청: 예외 발생 시 전역 핸들러가 처리
-				CourseMemberAddition.MemberAdditionItem item = request.members().get(0);
+		if (request.members().size() == 1) {    // 단일 요청: 예외 발생 시 전역 핸들러가 처리
+			CourseMemberAddition.MemberAdditionItem item = request.members().get(0);
 
-				courseMemberService.addSingleMember(courseId, item);
+			courseMemberService.addSingleMember(courseId, item);
 
-				CourseMemberAddition.Response response = new CourseMemberAddition.Response(
-					1, 1, 0,
-					List.of(new CourseMemberAddition.MemberResult(item.email(), item.role(), "SUCCESS", "과정 멤버 추가 성공"))
-				);
+			CourseMemberAddition.Response response = new CourseMemberAddition.Response(
+				1, 1, 0,
+				List.of(new CourseMemberAddition.MemberResult(item.email(), item.role(), "SUCCESS", "과정 멤버 추가 성공"))
+			);
 
-				return ResponseEntity.ok(response);
-			} else {    // 벌크 요청: 207 Multi-Status
-				CourseMemberAddition.Response response = courseMemberService.addMultipleMembers(courseId,
-					request.members());
+			return ResponseEntity.ok(response);
+		} else {    // 벌크 요청: 207 Multi-Status
+			CourseMemberAddition.Response response = courseMemberService.addMultipleMembers(courseId,
+				request.members());
 
-				return ResponseEntity.status(HttpStatus.MULTI_STATUS).body(response);
-			}
-
-		}, courseTaskExecutor);
-
+			return ResponseEntity.status(HttpStatus.MULTI_STATUS).body(response);
+		}
 	}
 
 	@DeleteMapping("/{courseId}/members/{memberId}")
