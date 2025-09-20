@@ -162,14 +162,10 @@ class MemberProfileControllerTest {
 		given(memberProfileUpdate.updateProfile(eq(5L), any(MemberProfileUpdate.Request.class)))
 			.willReturn(new MemberProfileUpdate.Response(5L));
 
-		MvcResult mvcResult = mockMvc.perform(post("/api/v1/members/profile")
+		mockMvc.perform(post("/api/v1/members/profile")
 				.header("Authorization", "Bearer " + token)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("{\"profileImageUrl\":\"img\",\"selfIntroduction\":\"intro\"}"))
-			.andExpect(request().asyncStarted())
-			.andReturn();
-
-		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.memberId").value(5));
 

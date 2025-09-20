@@ -3,11 +3,13 @@ package me.chan99k.learningmanager.adapter.web.member;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.Executor;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import me.chan99k.learningmanager.adapter.auth.AccessTokenProvider;
 import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
@@ -40,6 +43,16 @@ class MemberCourseParticipationControllerTest {
 	@MockBean(name = "memberTaskExecutor")
 	private Executor memberTaskExecutor;
 
+	@BeforeEach
+	void setUp() {
+		// 비동기 작업을 동기적으로 실행하도록 설정
+		doAnswer(invocation -> {
+			Runnable task = invocation.getArgument(0);
+			task.run();
+			return null;
+		}).when(memberTaskExecutor).execute(any(Runnable.class));
+	}
+
 	@Test
 	@DisplayName("멤버가 참여한 과정 목록을 성공적으로 조회한다")
 	void getParticipatingCourses_success() throws Exception {
@@ -61,8 +74,12 @@ class MemberCourseParticipationControllerTest {
 			.thenReturn(mockResponse);
 
 		// when & then
-		mockMvc.perform(get("/members/{memberId}/courses", memberId)
+		MvcResult mvcResult = mockMvc.perform(get("/members/{memberId}/courses", memberId)
 				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(request().asyncStarted())
+			.andReturn();
+
+		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isOk())
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 			.andExpect(jsonPath("$.courses").isArray())
@@ -92,8 +109,12 @@ class MemberCourseParticipationControllerTest {
 			.thenReturn(mockResponse);
 
 		// when & then
-		mockMvc.perform(get("/members/{memberId}/courses", memberId)
+		MvcResult mvcResult = mockMvc.perform(get("/members/{memberId}/courses", memberId)
 				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(request().asyncStarted())
+			.andReturn();
+
+		mockMvc.perform(asyncDispatch(mvcResult))
 			.andExpect(status().isOk())
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 			.andExpect(jsonPath("$.courses").isArray())

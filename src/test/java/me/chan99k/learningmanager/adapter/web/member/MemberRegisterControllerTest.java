@@ -5,7 +5,6 @@ import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
 import java.util.concurrent.Executor;
 
@@ -19,7 +18,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -76,16 +74,9 @@ public class MemberRegisterControllerTest {
 			}).given(memberTaskExecutor).execute(any(Runnable.class));
 
 			// 요청 시작 및 결과 검증
-			MvcResult mvcResult = mockMvc.perform(post("/api/v1/members/register")
+			mockMvc.perform(post("/api/v1/members/register")
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(request)))
-				.andDo(print())
-				.andExpect(request().asyncStarted())
-				.andReturn();
-
-			// asyncDispatch() : Spring MVC가 관리하는 비동기 요청의 최종 결과를 MockMvc가 가져오는 단계, async 완료 신호를 처리
-			// MockMvc 는 Servlet/DispatcherServlet 내부 상태를 기준으로 async 처리를 완료해야 응답을 읽을 수 있음
-			mockMvc.perform(asyncDispatch(mvcResult))
 				.andDo(print())
 				.andExpect(status().isCreated())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -220,12 +211,8 @@ public class MemberRegisterControllerTest {
 				return null;
 			}).given(memberTaskExecutor).execute(any(Runnable.class));
 
-			MvcResult result = mockMvc.perform(get("/api/v1/members/activate")
+			mockMvc.perform(get("/api/v1/members/activate")
 					.param("token", invalidToken))
-				.andExpect(request().asyncStarted())
-				.andReturn();
-
-			mockMvc.perform(asyncDispatch(result))
 				.andDo(print())
 				.andExpect(status().isInternalServerError());
 		}
@@ -245,12 +232,8 @@ public class MemberRegisterControllerTest {
 				return null;
 			}).given(memberTaskExecutor).execute(any(Runnable.class));
 
-			MvcResult result = mockMvc.perform(get("/api/v1/members/activate")
+			mockMvc.perform(get("/api/v1/members/activate")
 					.param("token", expiredToken))
-				.andExpect(request().asyncStarted())
-				.andReturn();
-
-			mockMvc.perform(asyncDispatch(result))
 				.andDo(print())
 				.andExpect(status().isInternalServerError());
 		}
@@ -270,12 +253,8 @@ public class MemberRegisterControllerTest {
 				return null;
 			}).given(memberTaskExecutor).execute(any(Runnable.class));
 
-			MvcResult result = mockMvc.perform(get("/api/v1/members/activate")
+			mockMvc.perform(get("/api/v1/members/activate")
 					.param("token", nonExistentToken))
-				.andExpect(request().asyncStarted())
-				.andReturn();
-
-			mockMvc.perform(asyncDispatch(result))
 				.andDo(print())
 				.andExpect(status().isInternalServerError());
 		}
