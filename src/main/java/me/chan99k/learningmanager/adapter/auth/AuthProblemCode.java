@@ -2,7 +2,6 @@ package me.chan99k.learningmanager.adapter.auth;
 
 import me.chan99k.learningmanager.common.exception.ProblemCode;
 
-// TODO ::Auth 는 도메인의 관심사가 아니라 시스템의 관심사 이다. 모듈화 해서 도메인과 분리해야 한다.
 public enum AuthProblemCode implements ProblemCode {
 	// 인증 관련
 	FAILED_TO_AUTHENTICATE("IAUTH100", "[System] 인증에 실패하였습니다"),
