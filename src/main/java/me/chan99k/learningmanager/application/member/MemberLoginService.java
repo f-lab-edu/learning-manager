@@ -6,9 +6,10 @@ import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
 import me.chan99k.learningmanager.application.member.provides.MemberLogin;
+import me.chan99k.learningmanager.application.member.requires.AccessTokenProvider;
 import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
+import me.chan99k.learningmanager.application.member.requires.RefreshTokenProvider;
 import me.chan99k.learningmanager.common.exception.DomainException;
-import me.chan99k.learningmanager.domain.member.CredentialProvider;
 import me.chan99k.learningmanager.domain.member.Email;
 import me.chan99k.learningmanager.domain.member.Member;
 import me.chan99k.learningmanager.domain.member.PasswordEncoder;
@@ -18,13 +19,15 @@ import me.chan99k.learningmanager.domain.member.PasswordEncoder;
 public class MemberLoginService implements MemberLogin {
 	private final MemberQueryRepository memberQueryRepository;
 	private final PasswordEncoder passwordEncoder;
-	private final CredentialProvider credentialProvider;
+	private final AccessTokenProvider accessTokenProvider;
+	private final RefreshTokenProvider refreshTokenProvider;
 
 	public MemberLoginService(MemberQueryRepository memberQueryRepository, PasswordEncoder passwordEncoder,
-		CredentialProvider credentialProvider) {
+		AccessTokenProvider accessTokenProvider, RefreshTokenProvider refreshTokenProvider) {
 		this.memberQueryRepository = memberQueryRepository;
 		this.passwordEncoder = passwordEncoder;
-		this.credentialProvider = credentialProvider;
+		this.accessTokenProvider = accessTokenProvider;
+		this.refreshTokenProvider = refreshTokenProvider;
 	}
 
 	@Override
@@ -40,7 +43,9 @@ public class MemberLoginService implements MemberLogin {
 			throw new DomainException(INVALID_CREDENTIAL);
 		}
 
-		String issuedCredential = credentialProvider.issueCredential(member);
-		return new MemberLogin.Response(issuedCredential);
+		String accessToken = accessTokenProvider.generateAccessToken(member.getId(), email.address());
+		String refreshToken = refreshTokenProvider.generateRefreshToken(member.getId(), email.address());
+
+		return new MemberLogin.Response(accessToken, refreshToken, member.getId(), email.address());
 	}
 }

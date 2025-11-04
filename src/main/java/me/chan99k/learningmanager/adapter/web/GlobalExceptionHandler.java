@@ -34,6 +34,15 @@ public class GlobalExceptionHandler {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).headers(createProblemJsonHeaders()).body(problem);
 		}
 
+		if (e.getProblemCode() == MemberProblemCode.EMAIL_ALREADY_EXISTS) { // 이메일 중복 예외의 경우
+			ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.CONFLICT);
+			problem.setDetail(e.getMessage());
+			problem.setType(URI.create("https://api.lm.com/errors/" + e.getProblemCode().getCode()));
+			problem.setTitle("Domain Error");
+			problem.setProperty("code", e.getProblemCode().getCode());
+			return ResponseEntity.status(HttpStatus.CONFLICT).headers(createProblemJsonHeaders()).body(problem);
+		}
+
 		ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
 			HttpStatus.BAD_REQUEST,
 			e.getProblemCode().getMessage()

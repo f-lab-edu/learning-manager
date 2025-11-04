@@ -11,11 +11,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
+import me.chan99k.learningmanager.application.UserContext;
 import me.chan99k.learningmanager.application.course.provides.CurriculumInfoUpdate;
 import me.chan99k.learningmanager.application.course.requires.CourseCommandRepository;
 import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
@@ -39,13 +38,15 @@ class CurriculumInfoUpdateServiceTest {
 	@Mock
 	private CourseCommandRepository commandRepository;
 	@Mock
+	private UserContext userContext;
+	@Mock
 	private Course course;
 	@Mock
 	private Curriculum curriculum;
 
 	@BeforeEach
 	void setUp() {
-		service = new CurriculumInfoUpdateService(queryRepository, commandRepository);
+		service = new CurriculumInfoUpdateService(queryRepository, commandRepository, userContext);
 	}
 
 	@Test
@@ -53,20 +54,17 @@ class CurriculumInfoUpdateServiceTest {
 	void updateCurriculumInfo_Success() {
 		// given
 		CurriculumInfoUpdate.Request request = new CurriculumInfoUpdate.Request(newTitle, newDescription);
+		when(userContext.getCurrentMemberId()).thenReturn(managerId);
+		when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
+		when(course.findCurriculumById(curriculumId)).thenReturn(curriculum);
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
-			when(course.findCurriculumById(curriculumId)).thenReturn(curriculum);
+		// when
+		service.updateCurriculumInfo(courseId, curriculumId, request);
 
-			// when
-			service.updateCurriculumInfo(courseId, curriculumId, request);
-
-			// then
-			verify(curriculum).updateTitle(newTitle);
-			verify(curriculum).updateDescription(newDescription);
-			verify(commandRepository).save(course);
-		}
+		// then
+		verify(curriculum).updateTitle(newTitle);
+		verify(curriculum).updateDescription(newDescription);
+		verify(commandRepository).save(course);
 	}
 
 	@Test
@@ -74,20 +72,17 @@ class CurriculumInfoUpdateServiceTest {
 	void updateCurriculumInfo_TitleOnly() {
 		// given
 		CurriculumInfoUpdate.Request request = new CurriculumInfoUpdate.Request(newTitle, null);
+		when(userContext.getCurrentMemberId()).thenReturn(managerId);
+		when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
+		when(course.findCurriculumById(curriculumId)).thenReturn(curriculum);
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
-			when(course.findCurriculumById(curriculumId)).thenReturn(curriculum);
+		// when
+		service.updateCurriculumInfo(courseId, curriculumId, request);
 
-			// when
-			service.updateCurriculumInfo(courseId, curriculumId, request);
-
-			// then
-			verify(curriculum).updateTitle(newTitle);
-			verify(curriculum, never()).updateDescription(any());
-			verify(commandRepository).save(course);
-		}
+		// then
+		verify(curriculum).updateTitle(newTitle);
+		verify(curriculum, never()).updateDescription(any());
+		verify(commandRepository).save(course);
 	}
 
 	@Test
@@ -95,20 +90,17 @@ class CurriculumInfoUpdateServiceTest {
 	void updateCurriculumInfo_DescriptionOnly() {
 		// given
 		CurriculumInfoUpdate.Request request = new CurriculumInfoUpdate.Request(null, newDescription);
+		when(userContext.getCurrentMemberId()).thenReturn(managerId);
+		when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
+		when(course.findCurriculumById(curriculumId)).thenReturn(curriculum);
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
-			when(course.findCurriculumById(curriculumId)).thenReturn(curriculum);
+		// when
+		service.updateCurriculumInfo(courseId, curriculumId, request);
 
-			// when
-			service.updateCurriculumInfo(courseId, curriculumId, request);
-
-			// then
-			verify(curriculum, never()).updateTitle(any());
-			verify(curriculum).updateDescription(newDescription);
-			verify(commandRepository).save(course);
-		}
+		// then
+		verify(curriculum, never()).updateTitle(any());
+		verify(curriculum).updateDescription(newDescription);
+		verify(commandRepository).save(course);
 	}
 
 	@Test
@@ -116,15 +108,13 @@ class CurriculumInfoUpdateServiceTest {
 	void updateCurriculumInfo_Fail_Unauthenticated() {
 		// given
 		CurriculumInfoUpdate.Request request = new CurriculumInfoUpdate.Request(newTitle, newDescription);
+		when(userContext.getCurrentMemberId()).thenThrow(
+			new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.empty());
-
-			// when & then
-			assertThatThrownBy(() -> service.updateCurriculumInfo(courseId, curriculumId, request))
-				.isInstanceOf(AuthenticationException.class)
-				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND);
-		}
+		// when & then
+		assertThatThrownBy(() -> service.updateCurriculumInfo(courseId, curriculumId, request))
+			.isInstanceOf(AuthenticationException.class)
+			.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND);
 	}
 
 	@Test
@@ -132,16 +122,13 @@ class CurriculumInfoUpdateServiceTest {
 	void updateCurriculumInfo_Fail_CourseNotFoundOrNotManager() {
 		// given
 		CurriculumInfoUpdate.Request request = new CurriculumInfoUpdate.Request(newTitle, newDescription);
+		when(userContext.getCurrentMemberId()).thenReturn(managerId);
+		when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.empty());
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.empty());
-
-			// when & then
-			assertThatThrownBy(() -> service.updateCurriculumInfo(courseId, curriculumId, request))
-				.isInstanceOf(AuthorizationException.class)
-				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
-		}
+		// when & then
+		assertThatThrownBy(() -> service.updateCurriculumInfo(courseId, curriculumId, request))
+			.isInstanceOf(AuthorizationException.class)
+			.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
 	}
 
 	@Test
@@ -149,18 +136,15 @@ class CurriculumInfoUpdateServiceTest {
 	void updateCurriculumInfo_Fail_CurriculumNotFound() {
 		// given
 		CurriculumInfoUpdate.Request request = new CurriculumInfoUpdate.Request(newTitle, newDescription);
+		when(userContext.getCurrentMemberId()).thenReturn(managerId);
+		when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
+		when(course.findCurriculumById(curriculumId))
+			.thenThrow(new IllegalArgumentException("커리큘럼을 찾을 수 없습니다"));
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
-			when(course.findCurriculumById(curriculumId))
-				.thenThrow(new IllegalArgumentException("커리큘럼을 찾을 수 없습니다"));
-
-			// when & then
-			assertThatThrownBy(() -> service.updateCurriculumInfo(courseId, curriculumId, request))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessageContaining("커리큘럼을 찾을 수 없습니다");
-		}
+		// when & then
+		assertThatThrownBy(() -> service.updateCurriculumInfo(courseId, curriculumId, request))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessageContaining("커리큘럼을 찾을 수 없습니다");
 	}
 
 	@Test
@@ -180,18 +164,15 @@ class CurriculumInfoUpdateServiceTest {
 	void updateCurriculumInfo_Fail_InvalidTitle() {
 		// given
 		CurriculumInfoUpdate.Request request = new CurriculumInfoUpdate.Request("", newDescription);
+		when(userContext.getCurrentMemberId()).thenReturn(managerId);
+		when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
+		when(course.findCurriculumById(curriculumId)).thenReturn(curriculum);
+		doThrow(new IllegalArgumentException("커리큘럼 제목은 필수입니다"))
+			.when(curriculum).updateTitle("");
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
-			when(course.findCurriculumById(curriculumId)).thenReturn(curriculum);
-			doThrow(new IllegalArgumentException("커리큘럼 제목은 필수입니다"))
-				.when(curriculum).updateTitle("");
-
-			// when & then
-			assertThatThrownBy(() -> service.updateCurriculumInfo(courseId, curriculumId, request))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessageContaining("커리큘럼 제목은 필수입니다");
-		}
+		// when & then
+		assertThatThrownBy(() -> service.updateCurriculumInfo(courseId, curriculumId, request))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessageContaining("커리큘럼 제목은 필수입니다");
 	}
 }

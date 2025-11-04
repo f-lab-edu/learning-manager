@@ -7,12 +7,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
+import me.chan99k.learningmanager.application.UserContext;
 import me.chan99k.learningmanager.application.attendance.provides.AttendanceCheckOut;
 import me.chan99k.learningmanager.application.attendance.requires.AttendanceCommandRepository;
 import me.chan99k.learningmanager.application.attendance.requires.AttendanceQueryRepository;
 import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
-import me.chan99k.learningmanager.common.exception.AuthenticationException;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
 import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.attendance.Attendance;
@@ -28,23 +27,22 @@ public class AttendanceCheckOutService implements AttendanceCheckOut {
 	private final AttendanceCommandRepository attendanceCommandRepository;
 	private final SessionQueryRepository sessionQueryRepository;
 	private final Clock clock;
+	private final UserContext userContext;
 
 	public AttendanceCheckOutService(AttendanceQueryRepository attendanceQueryRepository,
 		AttendanceCommandRepository attendanceCommandRepository, SessionQueryRepository sessionQueryRepository,
-		Clock clock) {
+		Clock clock, UserContext userContext) {
 		this.attendanceQueryRepository = attendanceQueryRepository;
 		this.attendanceCommandRepository = attendanceCommandRepository;
 		this.sessionQueryRepository = sessionQueryRepository;
 		this.clock = clock;
+		this.userContext = userContext;
 	}
 
 	@Override
 	public Response checkOut(Request request) {
 		// 1. 멤버 아이디 확보
-		Long currentMemberId = AuthenticationContextHolder.getCurrentMemberId()
-			.orElseThrow(() -> new AuthenticationException(
-				AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND)
-			);
+		Long currentMemberId = userContext.getCurrentMemberId();
 
 		// 2. 대상 세션 확보
 		Session session = sessionQueryRepository.findById(request.sessionId())

@@ -19,7 +19,10 @@ public interface MemberLogin {
 	}
 
 	record Response(
-		String accessToken
+		String accessToken,
+		String refreshToken,
+		Long memberId,
+		String email
 	) {
 	}
 }

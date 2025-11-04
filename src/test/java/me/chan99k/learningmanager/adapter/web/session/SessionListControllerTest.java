@@ -9,7 +9,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.Instant;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,13 +22,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import me.chan99k.learningmanager.adapter.auth.AccessTokenProvider;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
-import me.chan99k.learningmanager.adapter.auth.BcryptPasswordEncoder;
-import me.chan99k.learningmanager.adapter.auth.JwtCredentialProvider;
-import me.chan99k.learningmanager.adapter.auth.jwt.AccessJwtTokenProvider;
-import me.chan99k.learningmanager.adapter.auth.jwt.InMemoryJwtTokenRevocationProvider;
 import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.application.UserContext;
 import me.chan99k.learningmanager.application.session.SessionCreationService;
 import me.chan99k.learningmanager.application.session.provides.SessionDeletion;
 import me.chan99k.learningmanager.application.session.provides.SessionListRetrieval;
@@ -38,18 +32,17 @@ import me.chan99k.learningmanager.application.session.requires.SessionQueryRepos
 import me.chan99k.learningmanager.domain.session.SessionLocation;
 import me.chan99k.learningmanager.domain.session.SessionType;
 
-@WebMvcTest(SessionController.class)
+@WebMvcTest(controllers = SessionController.class,
+	excludeAutoConfiguration = {
+		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}
+)
 @Import({
-	GlobalExceptionHandler.class,
-	JwtCredentialProvider.class,
-	AccessJwtTokenProvider.class,
-	InMemoryJwtTokenRevocationProvider.class,
-	BcryptPasswordEncoder.class
+	GlobalExceptionHandler.class
 })
 class SessionListControllerTest {
 
 	@MockBean
-	AccessTokenProvider<Long> accessTokenProvider;
+	UserContext userContext;
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -74,10 +67,8 @@ class SessionListControllerTest {
 
 	@BeforeEach
 	void setUp() {
-		AuthenticationContextHolder.setCurrentMemberId(1L);
-
-		given(accessTokenProvider.validateAccessToken("valid-token")).willReturn(true);
-		given(accessTokenProvider.getIdFromAccessToken("valid-token")).willReturn(1L);
+		given(userContext.getCurrentMemberId()).willReturn(1L);
+		given(userContext.isAuthenticated()).willReturn(true);
 
 		// TaskExecutor가 동기적으로 실행하도록 설정 - CompletableFuture.supplyAsync 지원
 		willAnswer(invocation -> {
@@ -91,10 +82,6 @@ class SessionListControllerTest {
 		}).given(sessionTaskExecutor).execute(any(Runnable.class));
 	}
 
-	@AfterEach
-	void tearDown() {
-		AuthenticationContextHolder.clear();
-	}
 
 	@Test
 	@DisplayName("전체 세션 목록 조회 API - 성공")

@@ -18,13 +18,16 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.adapter.auth.AccessTokenProvider;
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
 import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
 import me.chan99k.learningmanager.application.course.provides.CurriculumCreation;
+import me.chan99k.learningmanager.common.exception.AuthenticationException;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
 
-@WebMvcTest(CourseCurriculumAdditionController.class)
+@WebMvcTest(controllers = CourseCurriculumAdditionController.class,
+	excludeAutoConfiguration = {
+		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}
+)
 @Import(GlobalExceptionHandler.class)
 class CourseCurriculumAdditionControllerTest {
 
@@ -41,7 +44,7 @@ class CourseCurriculumAdditionControllerTest {
 	private AsyncTaskExecutor courseTaskExecutor;
 
 	@MockBean
-	private AccessTokenProvider<Long> accessTokenProvider;
+	private me.chan99k.learningmanager.application.UserContext userContext;
 
 	@BeforeEach
 	void setUp() {
@@ -52,9 +55,9 @@ class CourseCurriculumAdditionControllerTest {
 			return null;
 		}).given(courseTaskExecutor).execute(any(Runnable.class));
 
-		// JwtAuthenticationFilter를 통과하기 위한 Mock 설정
-		given(accessTokenProvider.validateAccessToken("valid-token")).willReturn(true);
-		given(accessTokenProvider.getIdFromAccessToken("valid-token")).willReturn(1L);
+		// 인증된 사용자 설정
+		given(userContext.getCurrentMemberId()).willReturn(1L);
+		given(userContext.isAuthenticated()).willReturn(true);
 	}
 
 	@Test
@@ -112,10 +115,14 @@ class CourseCurriculumAdditionControllerTest {
 	}
 
 	@Test
-	@DisplayName("[Failure] 인증 헤더 없이 요청 시 401 Unauthorized를 반환한다")
+	@DisplayName("[Failure] 인증 헤더 없이 요청 시 403 Forbidden를 반환한다")
 	void createCurriculum_Fail_Unauthorized() throws Exception {
 		long courseId = 1L;
 		CurriculumCreation.Request request = new CurriculumCreation.Request("JPA 기초", "설명");
+
+		// 서비스에서 인증 예외 발생하도록 설정
+		given(curriculumCreation.createCurriculum(eq(courseId), any(CurriculumCreation.Request.class)))
+			.willThrow(new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
 
 		// Authorization 헤더 없이 요청
 		mockMvc.perform(post("/api/v1/courses/{courseId}/curriculums", courseId)
@@ -130,14 +137,16 @@ class CourseCurriculumAdditionControllerTest {
 		long courseId = 1L;
 		CurriculumCreation.Request request = new CurriculumCreation.Request("JPA 기초", "설명");
 
-		// 유효하지 않은 토큰 설정
-		given(accessTokenProvider.validateAccessToken("invalid-token")).willReturn(false);
+		// 서비스에서 인증 예외 발생하도록 설정
+		given(curriculumCreation.createCurriculum(eq(courseId), any(CurriculumCreation.Request.class)))
+			.willThrow(new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
 
 		mockMvc.perform(post("/api/v1/courses/{courseId}/curriculums", courseId)
 				.header("Authorization", "Bearer invalid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(status().isUnauthorized());
+			.andExpect(status().isUnauthorized())
+			.andExpect(content().contentType("application/problem+json;charset=UTF-8"));
 	}
 
 	@Test

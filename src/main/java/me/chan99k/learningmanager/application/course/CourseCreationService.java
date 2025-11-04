@@ -4,11 +4,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
+import me.chan99k.learningmanager.application.UserContext;
 import me.chan99k.learningmanager.application.course.provides.CourseCreation;
 import me.chan99k.learningmanager.application.course.requires.CourseCommandRepository;
 import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
-import me.chan99k.learningmanager.common.exception.AuthenticationException;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
 import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.course.Course;
@@ -22,18 +21,18 @@ import me.chan99k.learningmanager.domain.member.SystemRole;
 public class CourseCreationService implements CourseCreation {
 	private final CourseCommandRepository commandRepository;
 	private final MemberQueryRepository memberQueryRepository;
+	private final UserContext userContext;
 
 	public CourseCreationService(CourseCommandRepository commandRepository,
-		MemberQueryRepository memberQueryRepository) {
+		MemberQueryRepository memberQueryRepository, UserContext userContext) {
 		this.commandRepository = commandRepository;
 		this.memberQueryRepository = memberQueryRepository;
+		this.userContext = userContext;
 	}
 
 	@Override
 	public Response createCourse(Request request) {
-		Long currentMemberId = AuthenticationContextHolder.getCurrentMemberId()
-			.orElseThrow(() -> new AuthenticationException(
-				AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
+		Long currentMemberId = userContext.getCurrentMemberId();
 
 		Member member = memberQueryRepository.findById(currentMemberId)
 			.orElseThrow(() -> new DomainException(MemberProblemCode.MEMBER_NOT_FOUND));

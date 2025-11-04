@@ -20,13 +20,15 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.adapter.auth.AccessTokenProvider;
 import me.chan99k.learningmanager.application.member.provides.AccountPasswordChange;
 import me.chan99k.learningmanager.application.member.provides.AccountPasswordReset;
 import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.MemberProblemCode;
 
-@WebMvcTest(value = MemberPasswordController.class)
+@WebMvcTest(controllers = MemberPasswordController.class,
+	excludeAutoConfiguration = {
+		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}
+)
 class MemberPasswordControllerTest {
 
 	@Autowired
@@ -36,7 +38,7 @@ class MemberPasswordControllerTest {
 	private ObjectMapper objectMapper;
 
 	@MockBean
-	private AccessTokenProvider<Long> accessTokenProvider;
+	private me.chan99k.learningmanager.application.UserContext userContext;
 
 	@MockBean
 	private AccountPasswordChange passwordChangeService;
@@ -67,8 +69,8 @@ class MemberPasswordControllerTest {
 		void test01() throws Exception {
 			var request = new AccountPasswordChange.Request("test@example.com", "NewSecurePass456@");
 
-			given(accessTokenProvider.validateAccessToken(anyString())).willReturn(true);
-			given(accessTokenProvider.getIdFromAccessToken(anyString())).willReturn(1L);
+			given(userContext.getCurrentMemberId()).willReturn(1L);
+			given(userContext.isAuthenticated()).willReturn(true);
 
 			given(passwordChangeService.changePassword(any(AccountPasswordChange.Request.class)))
 				.willReturn(new AccountPasswordChange.Response());

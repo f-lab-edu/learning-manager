@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,14 +19,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.adapter.auth.AccessTokenProvider;
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
-import me.chan99k.learningmanager.adapter.auth.BcryptPasswordEncoder;
-import me.chan99k.learningmanager.adapter.auth.JwtCredentialProvider;
-import me.chan99k.learningmanager.adapter.auth.jwt.AccessJwtTokenProvider;
-import me.chan99k.learningmanager.adapter.auth.jwt.InMemoryJwtTokenRevocationProvider;
 import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.application.UserContext;
 import me.chan99k.learningmanager.application.session.SessionParticipantService;
 import me.chan99k.learningmanager.application.session.provides.SessionParticipantManagement.AddParticipantRequest;
 import me.chan99k.learningmanager.application.session.provides.SessionParticipantManagement.ChangeParticipantRoleRequest;
@@ -41,20 +35,19 @@ import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.session.SessionParticipantRole;
 import me.chan99k.learningmanager.domain.session.SessionProblemCode;
 
-@WebMvcTest(SessionParticipantController.class)
+@WebMvcTest(controllers = SessionParticipantController.class,
+	excludeAutoConfiguration = {
+		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}
+)
 @Import({
-	GlobalExceptionHandler.class,
-	JwtCredentialProvider.class,
-	AccessJwtTokenProvider.class,
-	InMemoryJwtTokenRevocationProvider.class,
-	BcryptPasswordEncoder.class
+	GlobalExceptionHandler.class
 })
 class SessionParticipantControllerTest {
 
 	private final Long sessionId = 1L;
 	private final Long memberId = 100L;
 	@MockBean
-	AccessTokenProvider<Long> accessTokenProvider;
+	UserContext userContext;
 	@Autowired
 	private MockMvc mockMvc;
 	@Autowired
@@ -64,16 +57,10 @@ class SessionParticipantControllerTest {
 
 	@BeforeEach
 	void setUp() {
-		AuthenticationContextHolder.setCurrentMemberId(1L);
-
-		given(accessTokenProvider.validateAccessToken("valid-token")).willReturn(true);
-		given(accessTokenProvider.getIdFromAccessToken("valid-token")).willReturn(1L);
+		given(userContext.getCurrentMemberId()).willReturn(1L);
+		given(userContext.isAuthenticated()).willReturn(true);
 	}
 
-	@AfterEach
-	void tearDown() {
-		AuthenticationContextHolder.clear();
-	}
 
 	@Test
 	@DisplayName("참여자 추가 API - 성공")

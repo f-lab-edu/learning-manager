@@ -12,7 +12,6 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,14 +26,9 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.adapter.auth.AccessTokenProvider;
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
-import me.chan99k.learningmanager.adapter.auth.BcryptPasswordEncoder;
-import me.chan99k.learningmanager.adapter.auth.JwtCredentialProvider;
-import me.chan99k.learningmanager.adapter.auth.jwt.AccessJwtTokenProvider;
-import me.chan99k.learningmanager.adapter.auth.jwt.InMemoryJwtTokenRevocationProvider;
 import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.application.UserContext;
 import me.chan99k.learningmanager.application.session.SessionCreationService;
 import me.chan99k.learningmanager.application.session.provides.SessionCreation;
 import me.chan99k.learningmanager.application.session.provides.SessionUpdate;
@@ -47,13 +41,12 @@ import me.chan99k.learningmanager.domain.session.SessionLocation;
 import me.chan99k.learningmanager.domain.session.SessionProblemCode;
 import me.chan99k.learningmanager.domain.session.SessionType;
 
-@WebMvcTest(controllers = SessionController.class)
+@WebMvcTest(controllers = SessionController.class,
+	excludeAutoConfiguration = {
+		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}
+)
 @Import({
-	GlobalExceptionHandler.class,
-	JwtCredentialProvider.class,
-	AccessJwtTokenProvider.class,
-	InMemoryJwtTokenRevocationProvider.class,
-	BcryptPasswordEncoder.class
+	GlobalExceptionHandler.class
 })
 class SessionControllerTest {
 
@@ -82,7 +75,7 @@ class SessionControllerTest {
 	AsyncTaskExecutor sessionTaskExecutor;
 
 	@MockBean
-	AccessTokenProvider accessTokenProvider;
+	UserContext userContext;
 
 	@BeforeEach
 	void setUp() {
@@ -91,11 +84,6 @@ class SessionControllerTest {
 			task.run(); // 즉시 실행
 			return null;
 		}).given(sessionTaskExecutor).execute(any(Runnable.class));
-	}
-
-	@AfterEach
-	void tearDown() {
-		AuthenticationContextHolder.clear();
 	}
 
 	@Test

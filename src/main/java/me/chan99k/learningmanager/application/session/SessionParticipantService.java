@@ -6,12 +6,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
+import me.chan99k.learningmanager.application.UserContext;
 import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
 import me.chan99k.learningmanager.application.session.provides.SessionParticipantManagement;
 import me.chan99k.learningmanager.application.session.requires.SessionCommandRepository;
 import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
-import me.chan99k.learningmanager.common.exception.AuthenticationException;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
 import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.session.Session;
@@ -26,14 +25,17 @@ public class SessionParticipantService implements SessionParticipantManagement {
 	private final SessionCommandRepository sessionCommandRepository;
 	private final CourseQueryRepository courseQueryRepository;
 	private final Clock clock;
+	private final UserContext userContext;
 
 	public SessionParticipantService(SessionQueryRepository sessionQueryRepository,
 		SessionCommandRepository sessionCommandRepository, CourseQueryRepository courseQueryRepository,
-		Clock clock) {
+		Clock clock,
+		UserContext userContext) {
 		this.sessionQueryRepository = sessionQueryRepository;
 		this.sessionCommandRepository = sessionCommandRepository;
 		this.courseQueryRepository = courseQueryRepository;
 		this.clock = clock;
+		this.userContext = userContext;
 	}
 
 	@Override
@@ -88,8 +90,7 @@ public class SessionParticipantService implements SessionParticipantManagement {
 	 * @throws AuthorizationException  if the member has no permission to manage session participants
 	 */
 	private void validateSessionParticipantManagementPermission(Session session) {
-		Long currentMemberId = AuthenticationContextHolder.getCurrentMemberId()
-			.orElseThrow(() -> new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
+		Long currentMemberId = userContext.getCurrentMemberId();
 
 		// Course MANAGER 권한 확인 (세션이 Course에 속한 경우)
 		boolean isCourseManager = false;
@@ -118,8 +119,7 @@ public class SessionParticipantService implements SessionParticipantManagement {
 	 * @throws AuthorizationException HOST가 혼자 남은 상태에서 자신을 제거하려고 할 때
 	 */
 	private void validateHostSelfRemoval(Session session, Long memberId) {
-		Long currentMemberId = AuthenticationContextHolder.getCurrentMemberId()
-			.orElseThrow(() -> new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
+		Long currentMemberId = userContext.getCurrentMemberId();
 
 		// 현재 사용자가 제거하려는 대상이 아닌 경우 검증 불필요
 		if (!currentMemberId.equals(memberId)) {
@@ -151,8 +151,7 @@ public class SessionParticipantService implements SessionParticipantManagement {
 			throw new DomainException(SessionProblemCode.ROOT_SESSION_SELF_LEAVE_NOT_ALLOWED);
 		}
 
-		Long currentMemberId = AuthenticationContextHolder.getCurrentMemberId()
-			.orElseThrow(() -> new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
+		Long currentMemberId = userContext.getCurrentMemberId();
 
 		// HOST 자신을 제거하는 경우 검증
 		validateHostSelfRemoval(session, currentMemberId);
