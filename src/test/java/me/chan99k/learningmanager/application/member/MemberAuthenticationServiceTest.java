@@ -14,9 +14,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import me.chan99k.learningmanager.application.member.provides.MemberLogin;
+import me.chan99k.learningmanager.application.member.requires.AccessTokenProvider;
 import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
+import me.chan99k.learningmanager.application.member.requires.RefreshTokenProvider;
 import me.chan99k.learningmanager.common.exception.DomainException;
-import me.chan99k.learningmanager.domain.member.CredentialProvider;
 import me.chan99k.learningmanager.domain.member.Email;
 import me.chan99k.learningmanager.domain.member.Member;
 import me.chan99k.learningmanager.domain.member.PasswordEncoder;
@@ -30,7 +31,9 @@ class MemberAuthenticationServiceTest {
 	@Mock
 	private PasswordEncoder passwordEncoder;
 	@Mock
-	private CredentialProvider credentialProvider;
+	private AccessTokenProvider accessTokenProvider;
+	@Mock
+	private RefreshTokenProvider refreshTokenProvider;
 	@Mock
 	private Member member;
 	@InjectMocks
@@ -44,15 +47,25 @@ class MemberAuthenticationServiceTest {
 
 		when(memberQueryRepository.findByEmail(any(Email.class))).thenReturn(Optional.of(member));
 		when(member.validateLogin(eq(inputEmail), eq(testPassword), eq(passwordEncoder))).thenReturn(true);
-		String testToken = "jwt_token_123";
-		when(credentialProvider.issueCredential(member)).thenReturn(testToken);
+		String testAccessToken = "access_token_123";
+		String testRefreshToken = "refresh_token_123";
+		Long memberId = 1L;
+		String emailAddress = "test@example.com";
+
+		when(member.getId()).thenReturn(memberId);
+		when(accessTokenProvider.generateAccessToken(memberId, emailAddress)).thenReturn(testAccessToken);
+		when(refreshTokenProvider.generateRefreshToken(memberId, emailAddress)).thenReturn(testRefreshToken);
 
 		MemberLogin.Response response = memberAuthenticationService.login(request);
 
-		assertThat(response.accessToken()).isEqualTo(testToken);
+		assertThat(response.accessToken()).isEqualTo(testAccessToken);
+		assertThat(response.refreshToken()).isEqualTo(testRefreshToken);
+		assertThat(response.memberId()).isEqualTo(memberId);
+		assertThat(response.email()).isEqualTo(emailAddress);
 		verify(memberQueryRepository).findByEmail(any(Email.class));
 		verify(member).validateLogin(inputEmail, testPassword, passwordEncoder);
-		verify(credentialProvider).issueCredential(member);
+		verify(accessTokenProvider).generateAccessToken(memberId, emailAddress);
+		verify(refreshTokenProvider).generateRefreshToken(memberId, emailAddress);
 	}
 
 	@Test
@@ -66,7 +79,7 @@ class MemberAuthenticationServiceTest {
 		});
 
 		verify(memberQueryRepository).findByEmail(any(Email.class)); // 이메일 값 객체로 호출 했는지 검증
-		verifyNoInteractions(member, credentialProvider); // 그 이전에 실패하여 자격 증명 제공자 호출이 없음을 검증
+		verifyNoInteractions(member, accessTokenProvider, refreshTokenProvider); // 그 이전에 실패하여 자격 증명 제공자 호출이 없음을 검증
 	}
 
 	@Test
@@ -84,7 +97,7 @@ class MemberAuthenticationServiceTest {
 
 		verify(memberQueryRepository).findByEmail(any(Email.class));
 		verify(member).validateLogin(inputEmail, testPassword, passwordEncoder);
-		verifyNoInteractions(credentialProvider); // 그 이전에 실패하여 자격 증명 제공자 호출이 없음을 검증
+		verifyNoInteractions(accessTokenProvider, refreshTokenProvider); // 그 이전에 실패하여 자격 증명 제공자 호출이 없음을 검증
 	}
 
 }

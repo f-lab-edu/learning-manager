@@ -8,7 +8,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.concurrent.Executor;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,24 +20,18 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.adapter.auth.AccessTokenProvider;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
-import me.chan99k.learningmanager.adapter.auth.BcryptPasswordEncoder;
-import me.chan99k.learningmanager.adapter.auth.JwtCredentialProvider;
-import me.chan99k.learningmanager.adapter.auth.jwt.AccessJwtTokenProvider;
-import me.chan99k.learningmanager.adapter.auth.jwt.InMemoryJwtTokenRevocationProvider;
 import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.application.UserContext;
 import me.chan99k.learningmanager.application.course.provides.CourseCreation;
 import me.chan99k.learningmanager.common.exception.AuthenticationException;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
 
-@WebMvcTest(controllers = CourseCreateController.class)
+@WebMvcTest(controllers = CourseCreateController.class,
+	excludeAutoConfiguration = {
+		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}
+)
 @Import({
-	GlobalExceptionHandler.class,
-	JwtCredentialProvider.class,
-	AccessJwtTokenProvider.class,
-	InMemoryJwtTokenRevocationProvider.class,
-	BcryptPasswordEncoder.class
+	GlobalExceptionHandler.class
 })
 class CourseCreateControllerTest {
 
@@ -55,7 +48,7 @@ class CourseCreateControllerTest {
 	me.chan99k.learningmanager.application.course.CourseCreationService courseCreationService;
 
 	@MockBean
-	AccessTokenProvider<Long> accessTokenProvider;
+	UserContext userContext;
 
 	@MockBean(name = "memberTaskExecutor")
 	Executor memberTaskExecutor;
@@ -70,19 +63,11 @@ class CourseCreateControllerTest {
 			return null;
 		}).given(memberTaskExecutor).execute(any(Runnable.class));
 
-
-		// 인증 컨텍스트 설정
-		AuthenticationContextHolder.setCurrentMemberId(1L);
-
-		// AccessTokenProvider 모킹
-		given(accessTokenProvider.validateAccessToken("valid-token")).willReturn(true);
-		given(accessTokenProvider.getIdFromAccessToken("valid-token")).willReturn(1L);
+		// UserContext 모킹
+		given(userContext.getCurrentMemberId()).willReturn(1L);
+		given(userContext.isAuthenticated()).willReturn(true);
 	}
 
-	@AfterEach
-	void tearDown() {
-		AuthenticationContextHolder.clear();
-	}
 
 	@Test
 	@DisplayName("[Success] 유효한 요청으로 과정 생성에 성공한다")
@@ -161,12 +146,12 @@ class CourseCreateControllerTest {
 	}
 
 	@Test
-	@DisplayName("[Failure] 인증되지 않은 사용자가 과정 생성 시도 시 401 Unauthorized를 반환한다")
+	@DisplayName("[Failure] 인증되지 않은 사용자가 과정 생성 시도 시 403 Forbidden를 반환한다")
 	void createCourse_failure_unauthenticated() throws Exception {
 		// given
 		CourseCreation.Request request = new CourseCreation.Request("Spring Boot 스터디", "Spring Boot 심화 과정");
 
-		given(courseCreation.createCourse(any(CourseCreation.Request.class)))
+		given(courseCreationService.createCourse(any(CourseCreation.Request.class)))
 			.willThrow(new AuthenticationException(
 				me.chan99k.learningmanager.adapter.auth.AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
 

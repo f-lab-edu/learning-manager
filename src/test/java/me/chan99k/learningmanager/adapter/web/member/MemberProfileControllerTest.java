@@ -9,7 +9,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.concurrent.Executor;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,15 +20,19 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import me.chan99k.learningmanager.adapter.auth.AccessTokenProvider;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
+import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
 import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.application.UserContext;
 import me.chan99k.learningmanager.application.member.provides.MemberProfileRetrieval;
 import me.chan99k.learningmanager.application.member.provides.MemberProfileUpdate;
 import me.chan99k.learningmanager.application.member.provides.MemberWithdrawal;
+import me.chan99k.learningmanager.common.exception.AuthenticationException;
 import me.chan99k.learningmanager.common.exception.DomainException;
 
-@WebMvcTest(controllers = MemberProfileController.class)
+@WebMvcTest(controllers = MemberProfileController.class,
+	excludeAutoConfiguration = {
+		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}
+)
 @Import(GlobalExceptionHandler.class)
 class MemberProfileControllerTest {
 
@@ -46,7 +49,7 @@ class MemberProfileControllerTest {
 	MemberWithdrawal memberWithdrawal;
 
 	@MockBean
-	AccessTokenProvider<Long> accessTokenProvider;
+	UserContext userContext;
 
 	@MockBean(name = "memberTaskExecutor")
 	Executor memberTaskExecutor;
@@ -60,10 +63,6 @@ class MemberProfileControllerTest {
 		}).given(memberTaskExecutor).execute(any(Runnable.class));
 	}
 
-	@AfterEach
-	void clearAuthContext() {
-		AuthenticationContextHolder.clear();
-	}
 
 	@Test
 	@DisplayName("공개 프로필 조회 성공")
@@ -105,14 +104,8 @@ class MemberProfileControllerTest {
 	@Test
 	@DisplayName("내 프로필 조회시, 인증 성공하여 200을 반환")
 	void test03() throws Exception {
-		// JWT 토큰 검증 모킹 - 이 테스트에서만 성공하도록 설정
-		given(accessTokenProvider.validateAccessToken(
-			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1In0.test")).willReturn(
-			true);
-		given(accessTokenProvider.getIdFromAccessToken(
-			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1In0.test")).willReturn(5L);
-		
-		setAuthenticatedUser(5L);
+		given(userContext.getCurrentMemberId()).willReturn(5L);
+		given(userContext.isAuthenticated()).willReturn(true);
 		given(memberProfileRetrieval.getProfile(5L))
 			.willReturn(new MemberProfileRetrieval.Response("img", "intro"));
 
@@ -133,6 +126,8 @@ class MemberProfileControllerTest {
 	@Test
 	@DisplayName("내 프로필 조회 - 미인증 시 401 반환")
 	void test04() throws Exception {
+		given(userContext.getCurrentMemberId())
+			.willThrow(new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
 
 		mockMvc.perform(get("/api/v1/members/profile"))
 			.andExpect(status().isUnauthorized());
@@ -141,6 +136,8 @@ class MemberProfileControllerTest {
 	@Test
 	@DisplayName("프로필 수정 - Authorization 헤더 없을 때 401")
 	void test05() throws Exception {
+		given(userContext.getCurrentMemberId())
+			.willThrow(new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
 
 		mockMvc.perform(
 				post("/api/v1/members/profile")
@@ -153,12 +150,9 @@ class MemberProfileControllerTest {
 	@Test
 	@DisplayName("프로필 수정 - 인증 성공 200")
 	void test06() throws Exception {
-		// JWT 토큰 검증 모킹 - 이 테스트에서만 성공하도록 설정
 		String token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1In0.validToken";
-		given(accessTokenProvider.validateAccessToken(token)).willReturn(true);
-		given(accessTokenProvider.getIdFromAccessToken(token)).willReturn(5L);
-		
-		setAuthenticatedUser(5L);
+		given(userContext.getCurrentMemberId()).willReturn(5L);
+		given(userContext.isAuthenticated()).willReturn(true);
 		given(memberProfileUpdate.updateProfile(eq(5L), any(MemberProfileUpdate.Request.class)))
 			.willReturn(new MemberProfileUpdate.Response(5L));
 
@@ -186,8 +180,5 @@ class MemberProfileControllerTest {
 		verify(memberWithdrawal).withdrawal();
 	}
 
-	private void setAuthenticatedUser(Long memberId) {
-		AuthenticationContextHolder.setCurrentMemberId(memberId);
-	}
 
 }

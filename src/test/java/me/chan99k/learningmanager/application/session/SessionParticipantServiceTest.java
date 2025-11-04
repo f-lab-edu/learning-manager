@@ -502,12 +502,10 @@ class SessionParticipantServiceTest {
 	@DisplayName("루트 세션에서 자가 탈퇴는 실패한다")
 	void leaveSession_RootSession_ThrowsDomainException() {
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(memberId);
+		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
+		when(session.isRootSession()).thenReturn(true); // 루트 세션
 
-			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-			when(session.isRootSession()).thenReturn(true); // 루트 세션
-
-			var request = new LeaveSessionRequest(sessionId);
+		var request = new LeaveSessionRequest(sessionId);
 
 		// when & then
 		assertThatThrownBy(() -> sessionParticipantService.leaveSession(request))

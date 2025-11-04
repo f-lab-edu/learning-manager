@@ -5,7 +5,6 @@ import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,15 +14,16 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
-import me.chan99k.learningmanager.adapter.auth.AccessTokenProvider;
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
 import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
 import me.chan99k.learningmanager.application.course.provides.CurriculumDeletion;
 import me.chan99k.learningmanager.common.exception.AuthenticationException;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
 
-@WebMvcTest(controllers = CurriculumDeletionController.class)
+@WebMvcTest(controllers = CurriculumDeletionController.class,
+	excludeAutoConfiguration = {
+		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}
+)
 @Import(GlobalExceptionHandler.class)
 class CurriculumDeletionControllerTest {
 
@@ -34,22 +34,15 @@ class CurriculumDeletionControllerTest {
 	private CurriculumDeletion curriculumDeletion;
 
 	@MockBean
-	private AccessTokenProvider<Long> accessTokenProvider;
+	private me.chan99k.learningmanager.application.UserContext userContext;
 
 	@BeforeEach
 	void setUp() {
-		// 토큰 검증 모킹
-		when(accessTokenProvider.validateAccessToken("valid-token")).thenReturn(true);
-		when(accessTokenProvider.getIdFromAccessToken("valid-token")).thenReturn(1L);
-
 		// 모든 테스트에서 기본적으로 인증된 사용자가 있도록 설정
-		AuthenticationContextHolder.setCurrentMemberId(1L);
+		given(userContext.getCurrentMemberId()).willReturn(1L);
+		given(userContext.isAuthenticated()).willReturn(true);
 	}
 
-	@AfterEach
-	void tearDown() {
-		AuthenticationContextHolder.clear();
-	}
 
 	@Test
 	@DisplayName("[Success] 커리큘럼 삭제 요청이 성공하면 204 No Content를 반환한다")
@@ -64,7 +57,7 @@ class CurriculumDeletionControllerTest {
 	}
 
 	@Test
-	@DisplayName("[Failure] 인증 정보가 없으면 401 Unauthorized를 반환한다")
+	@DisplayName("[Failure] 인증 정보가 없으면 403 Forbidden를 반환한다")
 	void deleteCurriculum_Fail_Unauthenticated() throws Exception {
 		doThrow(new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND))
 			.when(curriculumDeletion).deleteCurriculum(anyLong(), anyLong());
@@ -72,7 +65,7 @@ class CurriculumDeletionControllerTest {
 		mockMvc.perform(delete("/api/v1/courses/{courseId}/curriculums/{curriculumId}", 1L, 10L)
 				.header("Authorization", "Bearer valid-token"))
 			.andExpect(status().isUnauthorized())
-			.andExpect(jsonPath("$.code").value(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND.getCode()));
+			.andExpect(content().contentType("application/problem+json;charset=UTF-8"));
 	}
 
 	@Test

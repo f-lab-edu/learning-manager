@@ -15,13 +15,16 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.test.web.servlet.MockMvc;
 
-import me.chan99k.learningmanager.adapter.auth.AccessTokenProvider;
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
 import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
 import me.chan99k.learningmanager.application.course.provides.CourseDeletion;
+import me.chan99k.learningmanager.common.exception.AuthenticationException;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
 
-@WebMvcTest(CourseDeletionController.class)
+@WebMvcTest(controllers = CourseDeletionController.class,
+	excludeAutoConfiguration = {
+		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}
+)
 @Import(GlobalExceptionHandler.class)
 class CourseDeletionControllerTest {
 
@@ -35,7 +38,7 @@ class CourseDeletionControllerTest {
 	private AsyncTaskExecutor courseTaskExecutor;
 
 	@MockBean
-	private AccessTokenProvider<Long> accessTokenProvider;
+	private me.chan99k.learningmanager.application.UserContext userContext;
 
 	@BeforeEach
 	void setUp() {
@@ -45,8 +48,8 @@ class CourseDeletionControllerTest {
 			return null;
 		}).given(courseTaskExecutor).execute(any(Runnable.class));
 
-		given(accessTokenProvider.validateAccessToken("valid-token")).willReturn(true);
-		given(accessTokenProvider.getIdFromAccessToken("valid-token")).willReturn(1L);
+		given(userContext.getCurrentMemberId()).willReturn(1L);
+		given(userContext.isAuthenticated()).willReturn(true);
 	}
 
 	@Test
@@ -76,9 +79,12 @@ class CourseDeletionControllerTest {
 	}
 
 	@Test
-	@DisplayName("[Failure] 인증 헤더 없이 요청 시 401 Unauthorized를 반환한다")
+	@DisplayName("[Failure] 인증 헤더 없이 요청 시 403 Forbidden를 반환한다")
 	void deleteCourse_Fail_Unauthorized() throws Exception {
 		long courseId = 1L;
+
+		willThrow(new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND))
+			.given(courseDeletion).deleteCourse(courseId);
 
 		mockMvc.perform(delete("/api/v1/courses/{courseId}", courseId))
 			.andExpect(status().isUnauthorized());
@@ -89,7 +95,8 @@ class CourseDeletionControllerTest {
 	void deleteCourse_Fail_InvalidToken() throws Exception {
 		long courseId = 1L;
 
-		given(accessTokenProvider.validateAccessToken("invalid-token")).willReturn(false);
+		willThrow(new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND))
+			.given(courseDeletion).deleteCourse(courseId);
 
 		mockMvc.perform(delete("/api/v1/courses/{courseId}", courseId)
 				.header("Authorization", "Bearer invalid-token"))

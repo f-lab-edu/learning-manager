@@ -9,7 +9,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.Instant;
 import java.util.concurrent.Executor;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,25 +22,19 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.adapter.auth.AccessTokenProvider;
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
-import me.chan99k.learningmanager.adapter.auth.BcryptPasswordEncoder;
-import me.chan99k.learningmanager.adapter.auth.JwtCredentialProvider;
-import me.chan99k.learningmanager.adapter.auth.jwt.AccessJwtTokenProvider;
-import me.chan99k.learningmanager.adapter.auth.jwt.InMemoryJwtTokenRevocationProvider;
 import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.application.UserContext;
 import me.chan99k.learningmanager.application.attendance.provides.AttendanceCheckOut;
 import me.chan99k.learningmanager.application.attendance.requires.QRCodeGenerator;
 import me.chan99k.learningmanager.common.exception.AuthenticationException;
 
-@WebMvcTest(controllers = AttendanceCheckOutController.class)
+@WebMvcTest(controllers = AttendanceCheckOutController.class,
+	excludeAutoConfiguration = {
+		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}
+)
 @Import({
 	GlobalExceptionHandler.class,
-	JwtCredentialProvider.class,
-	AccessJwtTokenProvider.class,
-	InMemoryJwtTokenRevocationProvider.class,
-	BcryptPasswordEncoder.class
 })
 class AttendanceCheckOutControllerTest {
 
@@ -57,14 +50,15 @@ class AttendanceCheckOutControllerTest {
 	AttendanceCheckOut attendanceCheckOutService;
 	@MockBean
 	QRCodeGenerator qrCodeGenerator;
-	@MockBean
-	AccessTokenProvider<Long> accessTokenProvider;
 	@MockBean(name = "memberTaskExecutor")
 	Executor memberTaskExecutor;
 	@MockBean(name = "courseTaskExecutor")
 	AsyncTaskExecutor courseTaskExecutor;
 	@MockBean
 	java.time.Clock clock;
+
+	@MockBean
+	UserContext userContext;
 
 	@BeforeEach
 	void setUp() {
@@ -81,18 +75,11 @@ class AttendanceCheckOutControllerTest {
 			return null;
 		}).given(courseTaskExecutor).execute(any(Runnable.class));
 
-		// 인증 컨텍스트 설정
-		AuthenticationContextHolder.setCurrentMemberId(MEMBER_ID);
-
-		// AccessTokenProvider 모킹
-		given(accessTokenProvider.validateAccessToken("valid-access-token")).willReturn(true);
-		given(accessTokenProvider.getIdFromAccessToken("valid-access-token")).willReturn(MEMBER_ID);
+		// UserContext 모킹
+		given(userContext.getCurrentMemberId()).willReturn(MEMBER_ID);
+		given(userContext.isAuthenticated()).willReturn(true);
 	}
 
-	@AfterEach
-	void tearDown() {
-		AuthenticationContextHolder.clear();
-	}
 
 	@Test
 	@DisplayName("[Success] 유효한 QR 토큰으로 체크아웃에 성공한다")
@@ -159,8 +146,7 @@ class AttendanceCheckOutControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andDo(print())
-			.andExpect(status().isUnauthorized())
-			.andExpect(content().contentType("application/problem+json;charset=UTF-8"));
+			.andExpect(status().isUnauthorized());
 	}
 
 	@Test

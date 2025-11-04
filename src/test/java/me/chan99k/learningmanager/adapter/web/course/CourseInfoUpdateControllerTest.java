@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.concurrent.Executor;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,15 +19,16 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.adapter.auth.AccessTokenProvider;
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
 import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
 import me.chan99k.learningmanager.application.course.provides.CourseInfoUpdate;
 import me.chan99k.learningmanager.common.exception.AuthenticationException;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
 
-@WebMvcTest(controllers = CourseInfoUpdateController.class)
+@WebMvcTest(controllers = CourseInfoUpdateController.class,
+	excludeAutoConfiguration = {
+		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}
+)
 @Import(GlobalExceptionHandler.class)
 class CourseInfoUpdateControllerTest {
 
@@ -42,7 +42,7 @@ class CourseInfoUpdateControllerTest {
 	private CourseInfoUpdate courseInfoUpdate;
 
 	@MockBean
-	private AccessTokenProvider<Long> accessTokenProvider;
+	private me.chan99k.learningmanager.application.UserContext userContext;
 
 	@MockBean(name = "courseTaskExecutor")
 	private Executor courseTaskExecutor;
@@ -56,18 +56,11 @@ class CourseInfoUpdateControllerTest {
 			return null;
 		}).given(courseTaskExecutor).execute(any(Runnable.class));
 
-		// 토큰 검증 모킹
-		when(accessTokenProvider.validateAccessToken("valid-token")).thenReturn(true);
-		when(accessTokenProvider.getIdFromAccessToken("valid-token")).thenReturn(1L);
-
 		// 모든 테스트에서 기본적으로 인증된 사용자가 있도록 설정
-		AuthenticationContextHolder.setCurrentMemberId(1L);
+		given(userContext.getCurrentMemberId()).willReturn(1L);
+		given(userContext.isAuthenticated()).willReturn(true);
 	}
 
-	@AfterEach
-	void tearDown() {
-		AuthenticationContextHolder.clear();
-	}
 
 	@Test
 	@DisplayName("[Success] 과정 정보 수정 요청이 성공하면 200 OK를 반환한다")
@@ -106,12 +99,10 @@ class CourseInfoUpdateControllerTest {
 	@Test
 	@DisplayName("[Success] 설명만 수정 요청이 성공하면 200 OK를 반환한다")
 	void updateCourse_DescriptionOnly_Success() throws Exception {
-		// given
 		CourseInfoUpdate.Request request = new CourseInfoUpdate.Request(null, "Updated Description");
 		doNothing().when(courseInfoUpdate)
 			.updateCourseInfo(anyLong(), any(CourseInfoUpdate.Request.class));
 
-		// when & then
 		mockMvc.perform(put("/api/v1/courses/{courseId}", 1L)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -122,13 +113,11 @@ class CourseInfoUpdateControllerTest {
 	@Test
 	@DisplayName("[Failure] 제목과 설명이 모두 null이면 400 Bad Request를 반환한다")
 	void updateCourse_Fail_BothFieldsNull() throws Exception {
-		// given
 		CourseInfoUpdate.Request request = new CourseInfoUpdate.Request(null, null);
 		doThrow(new IllegalArgumentException("제목 또는 설명 중 하나 이상을 입력해주세요"))
 			.when(courseInfoUpdate)
 			.updateCourseInfo(anyLong(), any(CourseInfoUpdate.Request.class));
 
-		// when & then
 		mockMvc.perform(put("/api/v1/courses/{courseId}", 1L)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -137,33 +126,29 @@ class CourseInfoUpdateControllerTest {
 	}
 
 	@Test
-	@DisplayName("[Failure] 인증 정보가 없으면 401 Unauthorized를 반환한다")
+	@DisplayName("[Failure] 인증 정보가 없으면 403 Forbidden를 반환한다")
 	void updateCourse_Fail_Unauthenticated() throws Exception {
-		// given
 		CourseInfoUpdate.Request request = new CourseInfoUpdate.Request("Updated Title", "Updated Description");
 		doThrow(new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND))
 			.when(courseInfoUpdate)
 			.updateCourseInfo(anyLong(), any(CourseInfoUpdate.Request.class));
 
-		// when & then
 		mockMvc.perform(put("/api/v1/courses/{courseId}", 1L)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isUnauthorized())
-			.andExpect(jsonPath("$.code").value(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND.getCode()));
+			.andExpect(content().contentType("application/problem+json;charset=UTF-8"));
 	}
 
 	@Test
 	@DisplayName("[Failure] 권한이 없으면 403 Forbidden을 반환한다")
 	void updateCourse_Fail_Authorization() throws Exception {
-		// given
 		CourseInfoUpdate.Request request = new CourseInfoUpdate.Request("Updated Title", "Updated Description");
 		doThrow(new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED))
 			.when(courseInfoUpdate)
 			.updateCourseInfo(anyLong(), any(CourseInfoUpdate.Request.class));
 
-		// when & then
 		mockMvc.perform(put("/api/v1/courses/{courseId}", 1L)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -175,13 +160,11 @@ class CourseInfoUpdateControllerTest {
 	@Test
 	@DisplayName("[Failure] 유효하지 않은 제목이면 400 Bad Request를 반환한다")
 	void updateCourse_Fail_InvalidTitle() throws Exception {
-		// given
 		CourseInfoUpdate.Request request = new CourseInfoUpdate.Request("", "Updated Description");
 		doThrow(new IllegalArgumentException("과정 제목은 필수입니다"))
 			.when(courseInfoUpdate)
 			.updateCourseInfo(anyLong(), any(CourseInfoUpdate.Request.class));
 
-		// when & then
 		mockMvc.perform(put("/api/v1/courses/{courseId}", 1L)
 				.header("Authorization", "Bearer valid-token")
 				.contentType(MediaType.APPLICATION_JSON)

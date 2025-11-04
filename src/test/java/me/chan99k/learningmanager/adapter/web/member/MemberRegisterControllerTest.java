@@ -8,34 +8,27 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.concurrent.Executor;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.adapter.auth.BcryptPasswordEncoder;
-import me.chan99k.learningmanager.adapter.auth.JwtCredentialProvider;
-import me.chan99k.learningmanager.adapter.auth.jwt.AccessJwtTokenProvider;
-import me.chan99k.learningmanager.adapter.auth.jwt.InMemoryJwtTokenRevocationProvider;
 import me.chan99k.learningmanager.application.member.MemberRegisterService;
 import me.chan99k.learningmanager.application.member.provides.MemberRegistration;
 import me.chan99k.learningmanager.application.member.provides.SignUpConfirmation;
+import me.chan99k.learningmanager.common.exception.DomainException;
+import me.chan99k.learningmanager.domain.member.MemberProblemCode;
 
-@WebMvcTest(value = MemberRegisterController.class)
-@Import({
-	JwtCredentialProvider.class,
-	AccessJwtTokenProvider.class,
-	InMemoryJwtTokenRevocationProvider.class,
-	BcryptPasswordEncoder.class
-})
+@WebMvcTest(value = MemberRegisterController.class,
+	excludeAutoConfiguration = {
+		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}
+)
 public class MemberRegisterControllerTest {
 
 	private static final String TEST_EMAIL = "test@example.com";
@@ -154,15 +147,59 @@ public class MemberRegisterControllerTest {
 		}
 
 		@Test
-		@Disabled
 		@DisplayName("[Failure] 이미 존재하는 이메일로 가입 시 409 Conflict를 반환한다")
-		void register_member_test_07() {
+		void register_member_test_07() throws Exception {
+			MemberRegistration.Request request = new MemberRegistration.Request(TEST_EMAIL, TEST_PASSWORD);
+
+			// 이미 존재하는 이메일로 인한 DomainException 시나리오 설정
+			given(memberRegisterService.register(any(MemberRegistration.Request.class)))
+				.willThrow(new DomainException(MemberProblemCode.EMAIL_ALREADY_EXISTS));
+
+			// Executor가 동기적으로 실행하도록 목 시나리오 설정
+			willAnswer(invocation -> {
+				Runnable task = invocation.getArgument(0);
+				task.run();
+				return null;
+			}).given(memberTaskExecutor).execute(any(Runnable.class));
+
+			// 요청 및 결과 검증
+			mockMvc.perform(post("/api/v1/members/register")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+				.andDo(print())
+				.andExpect(status().isConflict())
+				.andExpect(content().contentType("application/problem+json;charset=UTF-8"))
+				.andExpect(jsonPath("$.title").value("Domain Error"))
+				.andExpect(jsonPath("$.detail").value("[System] 이미 등록된 이메일입니다."))
+				.andExpect(jsonPath("$.code").value("DML022"));
 		}
 
 		@Test
-		@Disabled
 		@DisplayName("[Failure] 예기치 못한 회원 등록 실패 시 500 Internal Server Error를 반환한다")
-		void register_member_test_08() {
+		void register_member_test_08() throws Exception {
+			MemberRegistration.Request request = new MemberRegistration.Request(TEST_EMAIL, TEST_PASSWORD);
+
+			// 예기치 못한 서버 오류로 인한 RuntimeException 시나리오 설정
+			given(memberRegisterService.register(any(MemberRegistration.Request.class)))
+				.willThrow(new RuntimeException("데이터베이스 연결 오류"));
+
+			// Executor가 동기적으로 실행하도록 목 시나리오 설정
+			willAnswer(invocation -> {
+				Runnable task = invocation.getArgument(0);
+				task.run();
+				return null;
+			}).given(memberTaskExecutor).execute(any(Runnable.class));
+
+			// 요청 및 결과 검증
+			mockMvc.perform(post("/api/v1/members/register")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+				.andDo(print())
+				.andExpect(status().isInternalServerError())
+				.andExpect(content().contentType("application/problem+json;charset=UTF-8"))
+				.andExpect(jsonPath("$.title").value("Internal Server Error"))
+				.andExpect(jsonPath("$.detail").value("[System] 일시적인 서버 오류가 발생했습니다."))
+				.andExpect(jsonPath("$.code").value("INTERNAL_SERVER_ERROR"));
 		}
 	}
 

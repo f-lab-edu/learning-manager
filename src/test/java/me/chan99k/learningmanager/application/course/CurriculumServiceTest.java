@@ -10,11 +10,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
+import me.chan99k.learningmanager.application.UserContext;
 import me.chan99k.learningmanager.application.course.provides.CurriculumCreation;
 import me.chan99k.learningmanager.application.course.requires.CourseCommandRepository;
 import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
@@ -38,6 +37,9 @@ class CurriculumServiceTest {
 	@Mock
 	private Course course;
 
+	@Mock
+	private UserContext userContext;
+
 	@Test
 	@DisplayName("[Success] 과정 관리자가 커리큘럼 생성에 성공한다")
 	void createCurriculum_Success() {
@@ -49,17 +51,16 @@ class CurriculumServiceTest {
 		when(newCurriculum.getId()).thenReturn(101L);
 		when(newCurriculum.getTitle()).thenReturn(request.title());
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
-			when(course.addCurriculum(request.title(), request.description())).thenReturn(newCurriculum);
+		when(userContext.getCurrentMemberId()).thenReturn(managerId);
+		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
+		when(course.addCurriculum(request.title(), request.description())).thenReturn(newCurriculum);
 
-			CurriculumCreation.Response response = curriculumService.createCurriculum(courseId, request);
+		CurriculumCreation.Response response = curriculumService.createCurriculum(courseId, request);
 
-			assertThat(response).isNotNull();
-			assertThat(response.curriculumId()).isEqualTo(101L);
-			assertThat(response.title()).isEqualTo("JPA 기초");
-		}
+		assertThat(response).isNotNull();
+		assertThat(response.curriculumId()).isEqualTo(101L);
+		assertThat(response.title()).isEqualTo("JPA 기초");
+		verify(courseCommandRepository).save(course);
 	}
 
 	@Test
@@ -69,14 +70,12 @@ class CurriculumServiceTest {
 		long nonManagerId = 11L;
 		CurriculumCreation.Request request = new CurriculumCreation.Request("JPA 기초", null);
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(nonManagerId));
-			when(courseQueryRepository.findManagedCourseById(courseId, nonManagerId)).thenReturn(Optional.empty());
+		when(userContext.getCurrentMemberId()).thenReturn(nonManagerId);
+		when(courseQueryRepository.findManagedCourseById(courseId, nonManagerId)).thenReturn(Optional.empty());
 
-			assertThatThrownBy(() -> curriculumService.createCurriculum(courseId, request))
-				.isInstanceOf(AuthorizationException.class)
-				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
-		}
+		assertThatThrownBy(() -> curriculumService.createCurriculum(courseId, request))
+			.isInstanceOf(AuthorizationException.class)
+			.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
 	}
 
 	@Test
@@ -85,13 +84,12 @@ class CurriculumServiceTest {
 		long courseId = 1L;
 		CurriculumCreation.Request request = new CurriculumCreation.Request("JPA 기초", null);
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.empty());
+		when(userContext.getCurrentMemberId())
+			.thenThrow(new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
 
-			assertThatThrownBy(() -> curriculumService.createCurriculum(courseId, request))
-				.isInstanceOf(AuthenticationException.class)
-				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND);
-		}
+		assertThatThrownBy(() -> curriculumService.createCurriculum(courseId, request))
+			.isInstanceOf(AuthenticationException.class)
+			.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND);
 	}
 
 	@Test
@@ -105,17 +103,15 @@ class CurriculumServiceTest {
 		when(newCurriculum.getId()).thenReturn(102L);
 		when(newCurriculum.getTitle()).thenReturn(request.title());
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
-			when(course.addCurriculum(request.title(), request.description())).thenReturn(newCurriculum);
+		when(userContext.getCurrentMemberId()).thenReturn(managerId);
+		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
+		when(course.addCurriculum(request.title(), request.description())).thenReturn(newCurriculum);
 
-			CurriculumCreation.Response response = curriculumService.createCurriculum(courseId, request);
+		CurriculumCreation.Response response = curriculumService.createCurriculum(courseId, request);
 
-			assertThat(response).isNotNull();
-			assertThat(response.curriculumId()).isEqualTo(102L);
-			assertThat(response.title()).isEqualTo("Spring Security");
-		}
+		assertThat(response).isNotNull();
+		assertThat(response.curriculumId()).isEqualTo(102L);
+		assertThat(response.title()).isEqualTo("Spring Security");
 	}
 
 	@Test
@@ -129,18 +125,15 @@ class CurriculumServiceTest {
 		when(newCurriculum.getId()).thenReturn(103L);
 		when(newCurriculum.getTitle()).thenReturn(request.title());
 
+		when(userContext.getCurrentMemberId()).thenReturn(managerId);
+		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
+		when(course.addCurriculum(request.title(), request.description())).thenReturn(newCurriculum);
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
-			when(course.addCurriculum(request.title(), request.description())).thenReturn(newCurriculum);
+		CurriculumCreation.Response response = curriculumService.createCurriculum(courseId, request);
 
-			CurriculumCreation.Response response = curriculumService.createCurriculum(courseId, request);
-
-			assertThat(response).isNotNull();
-			assertThat(response.curriculumId()).isEqualTo(103L);
-			assertThat(response.title()).isEqualTo("React 기초");
-		}
+		assertThat(response).isNotNull();
+		assertThat(response.curriculumId()).isEqualTo(103L);
+		assertThat(response.title()).isEqualTo("React 기초");
 	}
 
 	@Test
@@ -152,14 +145,12 @@ class CurriculumServiceTest {
 
 		Curriculum newCurriculum = Curriculum.create(course, request.title(), request.description());
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
-			when(course.addCurriculum(request.title(), request.description())).thenReturn(newCurriculum);
+		when(userContext.getCurrentMemberId()).thenReturn(managerId);
+		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
+		when(course.addCurriculum(request.title(), request.description())).thenReturn(newCurriculum);
 
-			curriculumService.createCurriculum(courseId, request);
+		curriculumService.createCurriculum(courseId, request);
 
-			verify(courseCommandRepository).save(course);
-		}
+		verify(courseCommandRepository).save(course);
 	}
 }

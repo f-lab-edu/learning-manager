@@ -16,19 +16,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import me.chan99k.learningmanager.adapter.auth.BcryptPasswordEncoder;
-import me.chan99k.learningmanager.adapter.auth.JwtCredentialProvider;
-import me.chan99k.learningmanager.adapter.auth.jwt.AccessJwtTokenProvider;
-import me.chan99k.learningmanager.adapter.auth.jwt.InMemoryJwtTokenRevocationProvider;
 import me.chan99k.learningmanager.application.member.provides.MemberLogin;
 
-@WebMvcTest(MemberLoginController.class)
-@Import({
-	JwtCredentialProvider.class,
-	AccessJwtTokenProvider.class,
-	InMemoryJwtTokenRevocationProvider.class,
-	BcryptPasswordEncoder.class
-})
+@WebMvcTest(controllers = MemberLoginController.class,
+	excludeAutoConfiguration = {
+		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}
+)
+@Import(me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler.class)
 class MemberLoginControllerTest {
 
 	@Autowired
@@ -50,7 +44,8 @@ class MemberLoginControllerTest {
 		}).given(memberTaskExecutor).execute(any(Runnable.class));
 
 		// 기본적으로 성공 응답을 반환하도록 설정
-		MemberLogin.Response mockResponse = new MemberLogin.Response("jwt_token_123");
+		MemberLogin.Response mockResponse = new MemberLogin.Response("access_token_123", "refresh_token_123", 1L,
+			"test@example.com");
 		when(memberLogin.login(any(MemberLogin.Request.class))).thenReturn(mockResponse);
 	}
 
@@ -68,7 +63,7 @@ class MemberLoginControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(validRequest))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.accessToken").value("jwt_token_123"));
+			.andExpect(jsonPath("$.accessToken").value("access_token_123"));
 	}
 
 	@Test

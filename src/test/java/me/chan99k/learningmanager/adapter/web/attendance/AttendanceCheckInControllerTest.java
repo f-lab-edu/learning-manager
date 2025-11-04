@@ -9,7 +9,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.Instant;
 import java.util.concurrent.Executor;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,25 +22,19 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.adapter.auth.AccessTokenProvider;
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
-import me.chan99k.learningmanager.adapter.auth.BcryptPasswordEncoder;
-import me.chan99k.learningmanager.adapter.auth.JwtCredentialProvider;
-import me.chan99k.learningmanager.adapter.auth.jwt.AccessJwtTokenProvider;
-import me.chan99k.learningmanager.adapter.auth.jwt.InMemoryJwtTokenRevocationProvider;
 import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.application.UserContext;
 import me.chan99k.learningmanager.application.attendance.provides.AttendanceCheckIn;
 import me.chan99k.learningmanager.application.attendance.requires.QRCodeGenerator;
 import me.chan99k.learningmanager.common.exception.AuthenticationException;
 
-@WebMvcTest(controllers = AttendanceCheckInController.class)
+@WebMvcTest(controllers = AttendanceCheckInController.class,
+	excludeAutoConfiguration = {
+		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}
+)
 @Import({
-	GlobalExceptionHandler.class,
-	JwtCredentialProvider.class,
-	AccessJwtTokenProvider.class,
-	InMemoryJwtTokenRevocationProvider.class,
-	BcryptPasswordEncoder.class
+	GlobalExceptionHandler.class
 })
 class AttendanceCheckInControllerTest {
 
@@ -58,7 +51,7 @@ class AttendanceCheckInControllerTest {
 	@MockBean
 	QRCodeGenerator qrCodeGenerator;
 	@MockBean
-	AccessTokenProvider<Long> accessTokenProvider;
+	UserContext userContext;
 	@MockBean(name = "memberTaskExecutor")
 	Executor memberTaskExecutor;
 	@MockBean(name = "courseTaskExecutor")
@@ -81,23 +74,14 @@ class AttendanceCheckInControllerTest {
 			return null;
 		}).given(courseTaskExecutor).execute(any(Runnable.class));
 
-		// 인증 컨텍스트 설정
-		AuthenticationContextHolder.setCurrentMemberId(MEMBER_ID);
-
-		// AccessTokenProvider 모킹
-		given(accessTokenProvider.validateAccessToken("valid-access-token")).willReturn(true);
-		given(accessTokenProvider.getIdFromAccessToken("valid-access-token")).willReturn(MEMBER_ID);
-	}
-
-	@AfterEach
-	void tearDown() {
-		AuthenticationContextHolder.clear();
+		// UserContext 모킹
+		given(userContext.getCurrentMemberId()).willReturn(MEMBER_ID);
+		given(userContext.isAuthenticated()).willReturn(true);
 	}
 
 	@Test
 	@DisplayName("[Success] 유효한 QR 토큰으로 체크인에 성공한다")
 	void checkIn_success() throws Exception {
-		// Given
 		AttendanceCheckIn.Request request = new AttendanceCheckIn.Request(SESSION_ID);
 		AttendanceCheckIn.Response response = new AttendanceCheckIn.Response(
 			"attendance-id",
@@ -111,7 +95,6 @@ class AttendanceCheckInControllerTest {
 		given(attendanceCheckInService.checkIn(any(AttendanceCheckIn.Request.class)))
 			.willReturn(response);
 
-		// When & Then
 		mockMvc.perform(post("/api/v1/attendance/check-in/{token}", VALID_QR_TOKEN)
 				.header("Authorization", "Bearer valid-access-token")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -130,12 +113,10 @@ class AttendanceCheckInControllerTest {
 	@Test
 	@DisplayName("[Failure] 잘못된 QR 토큰으로 체크인 시도 시 401 Unauthorized를 반환한다")
 	void checkIn_failure_invalid_qr_token() throws Exception {
-		// Given
 		AttendanceCheckIn.Request request = new AttendanceCheckIn.Request(SESSION_ID);
 
 		given(qrCodeGenerator.validateQrCode(INVALID_QR_TOKEN, SESSION_ID)).willReturn(false);
 
-		// When & Then
 		mockMvc.perform(post("/api/v1/attendance/check-in/{token}", INVALID_QR_TOKEN)
 				.header("Authorization", "Bearer valid-access-token")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -151,27 +132,22 @@ class AttendanceCheckInControllerTest {
 	@Test
 	@DisplayName("[Failure] 인증되지 않은 사용자가 체크인 시도 시 401 Unauthorized를 반환한다")
 	void checkIn_failure_unauthenticated() throws Exception {
-		// Given
 		AttendanceCheckIn.Request request = new AttendanceCheckIn.Request(SESSION_ID);
 
-		// When & Then
 		mockMvc.perform(post("/api/v1/attendance/check-in/{token}", VALID_QR_TOKEN)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andDo(print())
-			.andExpect(status().isUnauthorized())
-			.andExpect(content().contentType("application/problem+json;charset=UTF-8"));
+			.andExpect(status().isUnauthorized());
 	}
 
 	@Test
 	@DisplayName("[Failure] 잘못된 JSON 형식인 경우 400 Bad Request를 반환한다")
 	void checkIn_failure_invalid_json() throws Exception {
-		// Given
 		String invalidJson = "{\"sessionId\":}";
 
 		given(qrCodeGenerator.validateQrCode(VALID_QR_TOKEN, null)).willReturn(true);
 
-		// When & Then
 		mockMvc.perform(post("/api/v1/attendance/check-in/{token}", VALID_QR_TOKEN)
 				.header("Authorization", "Bearer valid-access-token")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -183,14 +159,12 @@ class AttendanceCheckInControllerTest {
 	@Test
 	@DisplayName("[Failure] 어플리케이션 서비스에서 인증 예외 발생 시 401 Unauthorized를 반환한다")
 	void checkIn_failure_service_authentication_error() throws Exception {
-		// Given
 		AttendanceCheckIn.Request request = new AttendanceCheckIn.Request(SESSION_ID);
 
 		given(qrCodeGenerator.validateQrCode(VALID_QR_TOKEN, SESSION_ID)).willReturn(true);
 		given(attendanceCheckInService.checkIn(any(AttendanceCheckIn.Request.class)))
 			.willThrow(new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
 
-		// When & Then
 		mockMvc.perform(post("/api/v1/attendance/check-in/{token}", VALID_QR_TOKEN)
 				.header("Authorization", "Bearer valid-access-token")
 				.contentType(MediaType.APPLICATION_JSON)

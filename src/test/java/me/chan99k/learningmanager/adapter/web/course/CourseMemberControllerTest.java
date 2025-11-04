@@ -8,7 +8,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.List;
 import java.util.concurrent.Executor;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,9 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.adapter.auth.AccessTokenProvider;
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
 import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
 import me.chan99k.learningmanager.application.course.CourseMemberService;
 import me.chan99k.learningmanager.application.course.provides.CourseMemberAddition;
@@ -32,7 +29,10 @@ import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.course.CourseProblemCode;
 import me.chan99k.learningmanager.domain.course.CourseRole;
 
-@WebMvcTest(controllers = CourseMemberController.class)
+@WebMvcTest(controllers = CourseMemberController.class,
+	excludeAutoConfiguration = {
+		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}
+)
 @Import(GlobalExceptionHandler.class)
 class CourseMemberControllerTest {
 
@@ -46,7 +46,7 @@ class CourseMemberControllerTest {
 	private CourseMemberService courseMemberService;
 
 	@MockBean
-	private AccessTokenProvider<Long> accessTokenProvider;
+	private me.chan99k.learningmanager.application.UserContext userContext;
 
 	@MockBean(name = "courseTaskExecutor")
 	private Executor courseTaskExecutor;
@@ -60,18 +60,11 @@ class CourseMemberControllerTest {
 			return null;
 		}).given(courseTaskExecutor).execute(any(Runnable.class));
 
-		// 토큰 검증 모킹
-		when(accessTokenProvider.validateAccessToken("valid-token")).thenReturn(true);
-		when(accessTokenProvider.getIdFromAccessToken("valid-token")).thenReturn(1L);
-
 		// 모든 테스트에서 기본적으로 인증된 사용자가 있도록 설정
-		AuthenticationContextHolder.setCurrentMemberId(1L);
+		given(userContext.getCurrentMemberId()).willReturn(1L);
+		given(userContext.isAuthenticated()).willReturn(true);
 	}
 
-	@AfterEach
-	void tearDown() {
-		AuthenticationContextHolder.clear();
-	}
 
 	@Test
 	@DisplayName("[Success] 단일 멤버 추가 요청이 성공하면 200 OK를 반환한다")
