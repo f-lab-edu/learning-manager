@@ -68,8 +68,8 @@ public class SignUpTokenCleanupScheduler {
 			log.info("  - Total tokens in memory: {}", totalTokens);
 			log.info("  - Expired tokens: {}", expiredTokens);
 			log.info("  - Active tokens: {}", activeTokens);
-			log.info("  - Memory usage efficiency: {:.2f}%",
-				totalTokens > 0 ? (double)activeTokens / totalTokens * 100 : 0.0);
+			log.info("  - Memory usage efficiency: {}%",
+				String.format("%.2f", totalTokens > 0 ? (double)activeTokens / totalTokens * 100 : 0.0));
 
 		} catch (Exception e) {
 			log.error("Failed to log weekly signup token statistics", e);
