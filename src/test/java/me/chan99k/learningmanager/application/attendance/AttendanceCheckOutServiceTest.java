@@ -13,11 +13,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
+import me.chan99k.learningmanager.application.UserContext;
 import me.chan99k.learningmanager.application.attendance.provides.AttendanceCheckOut;
 import me.chan99k.learningmanager.application.attendance.requires.AttendanceCommandRepository;
 import me.chan99k.learningmanager.application.attendance.requires.AttendanceQueryRepository;
@@ -46,6 +45,8 @@ class AttendanceCheckOutServiceTest {
 	private SessionQueryRepository sessionQueryRepository;
 	@Mock
 	private Clock clock;
+	@Mock
+	private UserContext userContext;
 	@InjectMocks
 	private AttendanceCheckOutService attendanceCheckOutService;
 
@@ -54,6 +55,7 @@ class AttendanceCheckOutServiceTest {
 	void test01() {
 		// Given
 		Session session = createMockSession();
+		when(userContext.getCurrentMemberId()).thenReturn(MEMBER_ID);
 		when(sessionQueryRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
 
 		Attendance existingAttendance = createMockAttendance();
@@ -64,23 +66,17 @@ class AttendanceCheckOutServiceTest {
 
 		AttendanceCheckOut.Request request = new AttendanceCheckOut.Request(SESSION_ID);
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContextHolder = mockStatic(
-			AuthenticationContextHolder.class)) {
-			mockedContextHolder.when(AuthenticationContextHolder::getCurrentMemberId)
-				.thenReturn(Optional.of(MEMBER_ID));
+		// When
+		AttendanceCheckOut.Response response = attendanceCheckOutService.checkOut(request);
 
-			// When
-			AttendanceCheckOut.Response response = attendanceCheckOutService.checkOut(request);
+		// Then
+		assertThat(response.attendanceId()).isEqualTo("attendance-id");
+		assertThat(response.sessionId()).isEqualTo(SESSION_ID);
+		assertThat(response.memberId()).isEqualTo(MEMBER_ID);
+		assertThat(response.status()).isEqualTo("PRESENT");
 
-			// Then
-			assertThat(response.attendanceId()).isEqualTo("attendance-id");
-			assertThat(response.sessionId()).isEqualTo(SESSION_ID);
-			assertThat(response.memberId()).isEqualTo(MEMBER_ID);
-			assertThat(response.status()).isEqualTo("PRESENT");
-
-			verify(attendanceCommandRepository).save(existingAttendance);
-			verify(existingAttendance).checkOut(clock);
-		}
+		verify(attendanceCommandRepository).save(existingAttendance);
+		verify(existingAttendance).checkOut(clock);
 	}
 
 	@Test
@@ -88,36 +84,27 @@ class AttendanceCheckOutServiceTest {
 	void test02() {
 		// Given
 		AttendanceCheckOut.Request request = new AttendanceCheckOut.Request(SESSION_ID);
+		when(userContext.getCurrentMemberId()).thenThrow(
+			new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContextHolder = mockStatic(
-			AuthenticationContextHolder.class)) {
-			mockedContextHolder.when(AuthenticationContextHolder::getCurrentMemberId)
-				.thenReturn(Optional.empty());
-
-			// When & Then
-			assertThatThrownBy(() -> attendanceCheckOutService.checkOut(request))
-				.isInstanceOf(AuthenticationException.class)
-				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND);
-		}
+		// When & Then
+		assertThatThrownBy(() -> attendanceCheckOutService.checkOut(request))
+			.isInstanceOf(AuthenticationException.class)
+			.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND);
 	}
 
 	@Test
 	@DisplayName("[Failure] 존재하지 않는 세션에 체크아웃 시도")
 	void test03() {
 		// Given
+		when(userContext.getCurrentMemberId()).thenReturn(MEMBER_ID);
 		when(sessionQueryRepository.findById(SESSION_ID)).thenReturn(Optional.empty());
 		AttendanceCheckOut.Request request = new AttendanceCheckOut.Request(SESSION_ID);
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContextHolder = mockStatic(
-			AuthenticationContextHolder.class)) {
-			mockedContextHolder.when(AuthenticationContextHolder::getCurrentMemberId)
-				.thenReturn(Optional.of(MEMBER_ID));
-
-			// When & Then
-			assertThatThrownBy(() -> attendanceCheckOutService.checkOut(request))
-				.isInstanceOf(DomainException.class)
-				.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.SESSION_NOT_FOUND);
-		}
+		// When & Then
+		assertThatThrownBy(() -> attendanceCheckOutService.checkOut(request))
+			.isInstanceOf(DomainException.class)
+			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.SESSION_NOT_FOUND);
 	}
 
 	@Test
@@ -125,19 +112,14 @@ class AttendanceCheckOutServiceTest {
 	void test04() {
 		// Given
 		Session session = createMockSession();
+		when(userContext.getCurrentMemberId()).thenReturn(NON_PARTICIPANT_ID);
 		when(sessionQueryRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
 		AttendanceCheckOut.Request request = new AttendanceCheckOut.Request(SESSION_ID);
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContextHolder = mockStatic(
-			AuthenticationContextHolder.class)) {
-			mockedContextHolder.when(AuthenticationContextHolder::getCurrentMemberId)
-				.thenReturn(Optional.of(NON_PARTICIPANT_ID));
-
-			// When & Then
-			assertThatThrownBy(() -> attendanceCheckOutService.checkOut(request))
-				.isInstanceOf(AuthorizationException.class)
-				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
-		}
+		// When & Then
+		assertThatThrownBy(() -> attendanceCheckOutService.checkOut(request))
+			.isInstanceOf(AuthorizationException.class)
+			.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
 	}
 
 	@Test
@@ -145,22 +127,17 @@ class AttendanceCheckOutServiceTest {
 	void test05() {
 		// Given
 		Session session = createMockSession();
+		when(userContext.getCurrentMemberId()).thenReturn(MEMBER_ID);
 		when(sessionQueryRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
 		when(attendanceQueryRepository.findBySessionIdAndMemberId(SESSION_ID, MEMBER_ID))
 			.thenReturn(Optional.empty());
 
 		AttendanceCheckOut.Request request = new AttendanceCheckOut.Request(SESSION_ID);
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContextHolder = mockStatic(
-			AuthenticationContextHolder.class)) {
-			mockedContextHolder.when(AuthenticationContextHolder::getCurrentMemberId)
-				.thenReturn(Optional.of(MEMBER_ID));
-
-			// When & Then
-			assertThatThrownBy(() -> attendanceCheckOutService.checkOut(request))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("[System] 출석 정보가 없습니다.");
-		}
+		// When & Then
+		assertThatThrownBy(() -> attendanceCheckOutService.checkOut(request))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("[System] 출석 정보가 없습니다.");
 	}
 
 	private Session createMockSession() {

@@ -5,10 +5,10 @@ import java.util.concurrent.Executor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.chan99k.learningmanager.adapter.auth.PasswordResetTokenProvider;
 import me.chan99k.learningmanager.application.member.provides.AccountPasswordReset;
 import me.chan99k.learningmanager.application.member.requires.MemberCommandRepository;
 import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
+import me.chan99k.learningmanager.application.member.requires.PasswordResetTokenProvider;
 import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.Email;
 import me.chan99k.learningmanager.domain.member.EmailSender;

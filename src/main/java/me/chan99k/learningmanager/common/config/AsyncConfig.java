@@ -9,8 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextTaskDecorator;
+import org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecutor;
 
 @Configuration
 @EnableAsync
@@ -57,9 +56,6 @@ public class AsyncConfig {
 
 		/* ============== 태스크 실행 관련 설정 ============== */
 
-		// 태스크 데코레이터: 각 태스크 실행 전/후 공통 처리 로직 추가 가능
-		// 예: Mapped Diagnostic Context 복사, 메트릭 수집 등
-		addAuthenticationContextTaskDecorator(executor);
 
 		/* ============== 거부 정책 설정  ============== */
 		// 거부 정책: 큐가 가득 차고 최대 스레드 수에 도달했을 때의 처리 방식
@@ -101,7 +97,7 @@ public class AsyncConfig {
 			executor.isDaemon()
 		);
 
-		return executor;
+		return new DelegatingSecurityContextAsyncTaskExecutor(executor);
 	}
 
 	@Bean(name = "emailTaskExecutor")
@@ -122,7 +118,6 @@ public class AsyncConfig {
 		executor.setAllowCoreThreadTimeOut(true);
 		executor.setKeepAliveSeconds(120);
 		executor.setBeanName("emailTaskExecutor");
-		executor.setTaskDecorator(new AuthenticationContextTaskDecorator());
 		executor.initialize();
 
 		log.info(
@@ -133,7 +128,7 @@ public class AsyncConfig {
 			executor.getThreadPriority(),
 			executor.getKeepAliveSeconds());
 
-		return executor;
+		return new DelegatingSecurityContextAsyncTaskExecutor(executor);
 	}
 
 	@Bean(name = "courseTaskExecutor")
@@ -148,8 +143,6 @@ public class AsyncConfig {
 		executor.setAwaitTerminationSeconds(30);
 		executor.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
 
-		addAuthenticationContextTaskDecorator(executor);
-
 		executor.setAllowCoreThreadTimeOut(true);
 		executor.setKeepAliveSeconds(120);
 		executor.setBeanName("courseTaskExecutor");
@@ -163,7 +156,7 @@ public class AsyncConfig {
 			executor.getThreadPriority(),
 			executor.getKeepAliveSeconds());
 
-		return executor;
+		return new DelegatingSecurityContextAsyncTaskExecutor(executor);
 	}
 
 	@Bean(name = "sessionTaskExecutor")
@@ -178,8 +171,6 @@ public class AsyncConfig {
 		executor.setAwaitTerminationSeconds(30);
 		executor.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
 
-		addAuthenticationContextTaskDecorator(executor);
-
 		executor.setAllowCoreThreadTimeOut(true);
 		executor.setKeepAliveSeconds(120);
 		executor.setBeanName("sessionTaskExecutor");
@@ -193,24 +184,7 @@ public class AsyncConfig {
 			executor.getThreadPriority(),
 			executor.getKeepAliveSeconds());
 
-		return executor;
+		return new DelegatingSecurityContextAsyncTaskExecutor(executor);
 	}
 
-	private void addAuthenticationContextTaskDecorator(ThreadPoolTaskExecutor executor) {
-		executor.setTaskDecorator(runnable -> {
-			Runnable authDecoratedTask = new AuthenticationContextTaskDecorator().decorate(runnable);
-
-			String currentThreadName = Thread.currentThread().getName();
-
-			return () -> {
-				try {
-					log.debug("Task started by thread: {} -> executing in: {}",
-						currentThreadName, Thread.currentThread().getName());
-					authDecoratedTask.run();
-				} finally {
-					log.debug("Task completed in thread: {}", Thread.currentThread().getName());
-				}
-			};
-		});
-	}
 }

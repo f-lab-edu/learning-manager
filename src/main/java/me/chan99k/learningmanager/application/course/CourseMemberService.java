@@ -10,14 +10,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
+import me.chan99k.learningmanager.application.UserContext;
 import me.chan99k.learningmanager.application.course.provides.CourseMemberAddition;
 import me.chan99k.learningmanager.application.course.provides.CourseMemberRemoval;
 import me.chan99k.learningmanager.application.course.requires.CourseCommandRepository;
 import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
 import me.chan99k.learningmanager.application.member.requires.MemberEmailPair;
 import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
-import me.chan99k.learningmanager.common.exception.AuthenticationException;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
 import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.course.Course;
@@ -34,21 +33,25 @@ public class CourseMemberService implements CourseMemberAddition, CourseMemberRe
 	private final CourseQueryRepository queryRepository;
 	private final CourseCommandRepository commandRepository;
 	private final MemberQueryRepository memberQueryRepository;
+	private final UserContext userContext;
 
 	public CourseMemberService(
 		@Value("${course.member.bulk.max-size}")
 		int maxBulkSize,
 		CourseQueryRepository queryRepository,
-		CourseCommandRepository commandRepository, MemberQueryRepository memberQueryRepository) {
+		CourseCommandRepository commandRepository, MemberQueryRepository memberQueryRepository,
+		UserContext userContext) {
 		MAX_BULK_SIZE = maxBulkSize;
 		this.queryRepository = queryRepository;
 		this.commandRepository = commandRepository;
 		this.memberQueryRepository = memberQueryRepository;
+		this.userContext = userContext;
 	}
 
 	@Override
 	public void addSingleMember(Long courseId, MemberAdditionItem item) {
-		Course course = authenticateAndAuthorizeManager(courseId);
+		Course course = queryRepository.findManagedCourseById(courseId, userContext.getCurrentMemberId())
+			.orElseThrow(() -> new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED));
 
 		Member member = memberQueryRepository.findByEmail(Email.of(item.email()))
 			.orElseThrow(() -> new DomainException(MemberProblemCode.MEMBER_NOT_FOUND));
@@ -67,7 +70,8 @@ public class CourseMemberService implements CourseMemberAddition, CourseMemberRe
 			throw new IllegalArgumentException("과정 멤버 추가 요청은 한번에 최대 " + MAX_BULK_SIZE + "개까지 가능합니다");
 		}
 
-		Course course = authenticateAndAuthorizeManager(courseId);
+		Course course = queryRepository.findManagedCourseById(courseId, userContext.getCurrentMemberId())
+			.orElseThrow(() -> new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED));
 
 		// 멤버 조회 로직
 		List<Email> emails = members.stream().map(item -> Email.of(item.email())).toList();
@@ -103,16 +107,9 @@ public class CourseMemberService implements CourseMemberAddition, CourseMemberRe
 
 	@Override
 	public void removeMemberFromCourse(Long courseId, Long memberId) {
-		Course course = authenticateAndAuthorizeManager(courseId);
+		Course course = queryRepository.findManagedCourseById(courseId, userContext.getCurrentMemberId())
+			.orElseThrow(() -> new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED));
 		course.removeMember(memberId);
 		commandRepository.save(course);
-	}
-
-	private Course authenticateAndAuthorizeManager(Long courseId) {    // TODO 권한 확인 로직 ASPECT 로 분리하기
-		Long managerId = AuthenticationContextHolder.getCurrentMemberId()
-			.orElseThrow(() -> new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
-
-		return queryRepository.findManagedCourseById(courseId, managerId)
-			.orElseThrow(() -> new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED));
 	}
 }

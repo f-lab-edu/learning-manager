@@ -14,11 +14,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
+import me.chan99k.learningmanager.application.UserContext;
 import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
 import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
 import me.chan99k.learningmanager.application.session.provides.SessionUpdate;
@@ -58,6 +57,9 @@ class SessionUpdateServiceTest {
 	private MemberQueryRepository memberQueryRepository;
 
 	@Mock
+	private UserContext userContext;
+
+	@Mock
 	private Session session;
 
 	@Mock
@@ -84,20 +86,21 @@ class SessionUpdateServiceTest {
 			null
 		);
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-			when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(member));
-			when(session.getCourseId()).thenReturn(courseId);
-			when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
+		// given
+		when(userContext.getCurrentMemberId()).thenReturn(managerId);
+		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
+		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(member));
+		when(session.getCourseId()).thenReturn(courseId);
+		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 
-			sessionUpdateService.updateSession(sessionId, request);
+		// when
+		sessionUpdateService.updateSession(sessionId, request);
 
-			verify(session).reschedule(scheduledAt, scheduledEndAt, clock);
-			verify(session).changeInfo("Updated Session Title", SessionType.ONLINE, clock);
-			verify(session).changeLocation(SessionLocation.ZOOM, null, clock);
-			verify(sessionCommandRepository).save(session);
-		}
+		// then
+		verify(session).reschedule(scheduledAt, scheduledEndAt, clock);
+		verify(session).changeInfo("Updated Session Title", SessionType.ONLINE, clock);
+		verify(session).changeLocation(SessionLocation.ZOOM, null, clock);
+		verify(sessionCommandRepository).save(session);
 	}
 
 	@Test
@@ -117,21 +120,22 @@ class SessionUpdateServiceTest {
 			"Conference Room A"
 		);
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(adminId));
-			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-			when(memberQueryRepository.findById(adminId)).thenReturn(Optional.of(member));
-			when(session.getCourseId()).thenReturn(null);
-			when(session.getCurriculumId()).thenReturn(null);
-			when(member.getRole()).thenReturn(SystemRole.ADMIN);
+		// given
+		when(userContext.getCurrentMemberId()).thenReturn(adminId);
+		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
+		when(memberQueryRepository.findById(adminId)).thenReturn(Optional.of(member));
+		when(session.getCourseId()).thenReturn(null);
+		when(session.getCurriculumId()).thenReturn(null);
+		when(member.getRole()).thenReturn(SystemRole.ADMIN);
 
-			sessionUpdateService.updateSession(sessionId, request);
+		// when
+		sessionUpdateService.updateSession(sessionId, request);
 
-			verify(session).reschedule(scheduledAt, scheduledEndAt, clock);
-			verify(session).changeInfo("Updated Standalone Session", SessionType.OFFLINE, clock);
-			verify(session).changeLocation(SessionLocation.SITE, "Conference Room A", clock);
-			verify(sessionCommandRepository).save(session);
-		}
+		// then
+		verify(session).reschedule(scheduledAt, scheduledEndAt, clock);
+		verify(session).changeInfo("Updated Standalone Session", SessionType.OFFLINE, clock);
+		verify(session).changeLocation(SessionLocation.SITE, "Conference Room A", clock);
+		verify(sessionCommandRepository).save(session);
 	}
 
 	@Test
@@ -144,16 +148,17 @@ class SessionUpdateServiceTest {
 			SessionType.ONLINE, SessionLocation.ZOOM, null
 		);
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.empty());
+		// given
+		when(userContext.getCurrentMemberId()).thenThrow(
+			new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
 
-			assertThatThrownBy(() -> sessionUpdateService.updateSession(sessionId, request))
-				.isInstanceOf(AuthenticationException.class)
-				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND);
+		// when & then
+		assertThatThrownBy(() -> sessionUpdateService.updateSession(sessionId, request))
+			.isInstanceOf(AuthenticationException.class)
+			.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND);
 
-			verify(sessionQueryRepository, never()).findById(anyLong());
-			verify(sessionCommandRepository, never()).save(any());
-		}
+		verify(sessionQueryRepository, never()).findById(anyLong());
+		verify(sessionCommandRepository, never()).save(any());
 	}
 
 	@Test
@@ -167,16 +172,16 @@ class SessionUpdateServiceTest {
 			SessionType.ONLINE, SessionLocation.ZOOM, null
 		);
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.empty());
+		// given
+		when(userContext.getCurrentMemberId()).thenReturn(managerId);
+		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.empty());
 
-			assertThatThrownBy(() -> sessionUpdateService.updateSession(sessionId, request))
-				.isInstanceOf(DomainException.class)
-				.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.SESSION_NOT_FOUND);
+		// when & then
+		assertThatThrownBy(() -> sessionUpdateService.updateSession(sessionId, request))
+			.isInstanceOf(DomainException.class)
+			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.SESSION_NOT_FOUND);
 
-			verify(sessionCommandRepository, never()).save(any());
-		}
+		verify(sessionCommandRepository, never()).save(any());
 	}
 
 	@Test
@@ -191,19 +196,19 @@ class SessionUpdateServiceTest {
 			SessionType.ONLINE, SessionLocation.ZOOM, null
 		);
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(nonManagerId));
-			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-			when(memberQueryRepository.findById(nonManagerId)).thenReturn(Optional.of(member));
-			when(session.getCourseId()).thenReturn(courseId);
-			when(courseQueryRepository.findManagedCourseById(courseId, nonManagerId)).thenReturn(Optional.empty());
+		// given
+		when(userContext.getCurrentMemberId()).thenReturn(nonManagerId);
+		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
+		when(memberQueryRepository.findById(nonManagerId)).thenReturn(Optional.of(member));
+		when(session.getCourseId()).thenReturn(courseId);
+		when(courseQueryRepository.findManagedCourseById(courseId, nonManagerId)).thenReturn(Optional.empty());
 
-			assertThatThrownBy(() -> sessionUpdateService.updateSession(sessionId, request))
-				.isInstanceOf(AuthorizationException.class)
-				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
+		// when & then
+		assertThatThrownBy(() -> sessionUpdateService.updateSession(sessionId, request))
+			.isInstanceOf(AuthorizationException.class)
+			.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
 
-			verify(sessionCommandRepository, never()).save(any());
-		}
+		verify(sessionCommandRepository, never()).save(any());
 	}
 
 	@Test
@@ -217,20 +222,20 @@ class SessionUpdateServiceTest {
 			SessionType.ONLINE, SessionLocation.ZOOM, null
 		);
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(userId));
-			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-			when(memberQueryRepository.findById(userId)).thenReturn(Optional.of(member));
-			when(session.getCourseId()).thenReturn(null);
-			when(session.getCurriculumId()).thenReturn(null);
-			when(member.getRole()).thenReturn(SystemRole.MEMBER);
+		// given
+		when(userContext.getCurrentMemberId()).thenReturn(userId);
+		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
+		when(memberQueryRepository.findById(userId)).thenReturn(Optional.of(member));
+		when(session.getCourseId()).thenReturn(null);
+		when(session.getCurriculumId()).thenReturn(null);
+		when(member.getRole()).thenReturn(SystemRole.MEMBER);
 
-			assertThatThrownBy(() -> sessionUpdateService.updateSession(sessionId, request))
-				.isInstanceOf(AuthorizationException.class)
-				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
+		// when & then
+		assertThatThrownBy(() -> sessionUpdateService.updateSession(sessionId, request))
+			.isInstanceOf(AuthorizationException.class)
+			.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
 
-			verify(sessionCommandRepository, never()).save(any());
-		}
+		verify(sessionCommandRepository, never()).save(any());
 	}
 
 	@Test
@@ -244,18 +249,17 @@ class SessionUpdateServiceTest {
 			SessionType.ONLINE, SessionLocation.ZOOM, null
 		);
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId)
-				.thenReturn(Optional.of(invalidMemberId));
-			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-			when(memberQueryRepository.findById(invalidMemberId)).thenReturn(Optional.empty());
+		// given
+		when(userContext.getCurrentMemberId()).thenReturn(invalidMemberId);
+		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
+		when(memberQueryRepository.findById(invalidMemberId)).thenReturn(Optional.empty());
 
-			assertThatThrownBy(() -> sessionUpdateService.updateSession(sessionId, request))
-				.isInstanceOf(DomainException.class)
-				.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.MEMBER_NOT_FOUND);
+		// when & then
+		assertThatThrownBy(() -> sessionUpdateService.updateSession(sessionId, request))
+			.isInstanceOf(DomainException.class)
+			.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.MEMBER_NOT_FOUND);
 
-			verify(sessionCommandRepository, never()).save(any());
-		}
+		verify(sessionCommandRepository, never()).save(any());
 	}
 
 	@Test
@@ -270,16 +274,17 @@ class SessionUpdateServiceTest {
 			SessionType.ONLINE, SessionLocation.ZOOM, null
 		);
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-			when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(member));
-			when(session.getCourseId()).thenReturn(courseId);
-			when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
+		// given
+		when(userContext.getCurrentMemberId()).thenReturn(managerId);
+		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
+		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(member));
+		when(session.getCourseId()).thenReturn(courseId);
+		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 
-			sessionUpdateService.updateSession(sessionId, request);
+		// when
+		sessionUpdateService.updateSession(sessionId, request);
 
-			verify(sessionCommandRepository).save(session);
-		}
+		// then
+		verify(sessionCommandRepository).save(session);
 	}
 }

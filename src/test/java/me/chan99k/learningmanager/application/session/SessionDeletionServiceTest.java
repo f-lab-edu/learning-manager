@@ -12,11 +12,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
+import me.chan99k.learningmanager.application.UserContext;
 import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
 import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
 import me.chan99k.learningmanager.application.session.requires.SessionCommandRepository;
@@ -50,6 +49,9 @@ class SessionDeletionServiceTest {
 	private MemberQueryRepository memberQueryRepository;
 
 	@Mock
+	private UserContext userContext;
+
+	@Mock
 	private Session session;
 
 	@Mock
@@ -61,22 +63,23 @@ class SessionDeletionServiceTest {
 	@Test
 	@DisplayName("[Success] 과정 관리자가 과정 세션 삭제에 성공한다")
 	void deleteSession_CourseSession_Success() {
+		// given
 		long sessionId = 1L;
 		long courseId = 10L;
 		long managerId = 100L;
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-			when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(member));
-			when(session.getCourseId()).thenReturn(courseId);
-			when(session.getChildren()).thenReturn(Collections.emptyList());
-			when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
+		when(userContext.getCurrentMemberId()).thenReturn(managerId);
+		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
+		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(member));
+		when(session.getCourseId()).thenReturn(courseId);
+		when(session.getChildren()).thenReturn(Collections.emptyList());
+		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 
-			sessionDeletionService.deleteSession(sessionId);
+		// when
+		sessionDeletionService.deleteSession(sessionId);
 
-			verify(sessionCommandRepository).delete(session);
-		}
+		// then
+		verify(sessionCommandRepository).delete(session);
 	}
 
 	@Test
@@ -85,19 +88,19 @@ class SessionDeletionServiceTest {
 		long sessionId = 1L;
 		long adminId = 100L;
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(adminId));
-			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-			when(memberQueryRepository.findById(adminId)).thenReturn(Optional.of(member));
-			when(session.getCourseId()).thenReturn(null);
-			when(session.getCurriculumId()).thenReturn(null);
-			when(session.getChildren()).thenReturn(Collections.emptyList());
-			when(member.getRole()).thenReturn(SystemRole.ADMIN);
+		when(userContext.getCurrentMemberId()).thenReturn(adminId);
+		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
+		when(memberQueryRepository.findById(adminId)).thenReturn(Optional.of(member));
+		when(session.getCourseId()).thenReturn(null);
+		when(session.getCurriculumId()).thenReturn(null);
+		when(session.getChildren()).thenReturn(Collections.emptyList());
+		when(member.getRole()).thenReturn(SystemRole.ADMIN);
 
-			sessionDeletionService.deleteSession(sessionId);
+		// when
+		sessionDeletionService.deleteSession(sessionId);
 
-			verify(sessionCommandRepository).delete(session);
-		}
+		// then
+		verify(sessionCommandRepository).delete(session);
 	}
 
 	@Test
@@ -105,16 +108,16 @@ class SessionDeletionServiceTest {
 	void deleteSession_Fail_Unauthenticated() {
 		long sessionId = 1L;
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.empty());
+		when(userContext.getCurrentMemberId()).thenThrow(
+			new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
 
-			assertThatThrownBy(() -> sessionDeletionService.deleteSession(sessionId))
-				.isInstanceOf(AuthenticationException.class)
-				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND);
+		// when & then
+		assertThatThrownBy(() -> sessionDeletionService.deleteSession(sessionId))
+			.isInstanceOf(AuthenticationException.class)
+			.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND);
 
-			verify(sessionQueryRepository, never()).findById(anyLong());
-			verify(sessionCommandRepository, never()).delete(any());
-		}
+		verify(sessionQueryRepository, never()).findById(anyLong());
+		verify(sessionCommandRepository, never()).delete(any());
 	}
 
 	@Test
@@ -123,16 +126,15 @@ class SessionDeletionServiceTest {
 		long sessionId = 999L;
 		long managerId = 100L;
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.empty());
+		when(userContext.getCurrentMemberId()).thenReturn(managerId);
+		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.empty());
 
-			assertThatThrownBy(() -> sessionDeletionService.deleteSession(sessionId))
-				.isInstanceOf(DomainException.class)
-				.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.SESSION_NOT_FOUND);
+		// when & then
+		assertThatThrownBy(() -> sessionDeletionService.deleteSession(sessionId))
+			.isInstanceOf(DomainException.class)
+			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.SESSION_NOT_FOUND);
 
-			verify(sessionCommandRepository, never()).delete(any());
-		}
+		verify(sessionCommandRepository, never()).delete(any());
 	}
 
 	@Test
@@ -142,19 +144,19 @@ class SessionDeletionServiceTest {
 		long courseId = 10L;
 		long nonManagerId = 101L;
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(nonManagerId));
-			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-			when(memberQueryRepository.findById(nonManagerId)).thenReturn(Optional.of(member));
-			when(session.getCourseId()).thenReturn(courseId);
-			when(courseQueryRepository.findManagedCourseById(courseId, nonManagerId)).thenReturn(Optional.empty());
+		// given
+		when(userContext.getCurrentMemberId()).thenReturn(nonManagerId);
+		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
+		when(memberQueryRepository.findById(nonManagerId)).thenReturn(Optional.of(member));
+		when(session.getCourseId()).thenReturn(courseId);
+		when(courseQueryRepository.findManagedCourseById(courseId, nonManagerId)).thenReturn(Optional.empty());
 
-			assertThatThrownBy(() -> sessionDeletionService.deleteSession(sessionId))
-				.isInstanceOf(AuthorizationException.class)
-				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
+		// when & then
+		assertThatThrownBy(() -> sessionDeletionService.deleteSession(sessionId))
+			.isInstanceOf(AuthorizationException.class)
+			.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
 
-			verify(sessionCommandRepository, never()).delete(any());
-		}
+		verify(sessionCommandRepository, never()).delete(any());
 	}
 
 	@Test
@@ -163,20 +165,20 @@ class SessionDeletionServiceTest {
 		long sessionId = 1L;
 		long userId = 100L;
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(userId));
-			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-			when(memberQueryRepository.findById(userId)).thenReturn(Optional.of(member));
-			when(session.getCourseId()).thenReturn(null);
-			when(session.getCurriculumId()).thenReturn(null);
-			when(member.getRole()).thenReturn(SystemRole.MEMBER);
+		// given
+		when(userContext.getCurrentMemberId()).thenReturn(userId);
+		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
+		when(memberQueryRepository.findById(userId)).thenReturn(Optional.of(member));
+		when(session.getCourseId()).thenReturn(null);
+		when(session.getCurriculumId()).thenReturn(null);
+		when(member.getRole()).thenReturn(SystemRole.MEMBER);
 
-			assertThatThrownBy(() -> sessionDeletionService.deleteSession(sessionId))
-				.isInstanceOf(AuthorizationException.class)
-				.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
+		// when & then
+		assertThatThrownBy(() -> sessionDeletionService.deleteSession(sessionId))
+			.isInstanceOf(AuthorizationException.class)
+			.hasFieldOrPropertyWithValue("problemCode", AuthProblemCode.AUTHORIZATION_REQUIRED);
 
-			verify(sessionCommandRepository, never()).delete(any());
-		}
+		verify(sessionCommandRepository, never()).delete(any());
 	}
 
 	@Test
@@ -187,20 +189,20 @@ class SessionDeletionServiceTest {
 		long managerId = 100L;
 		Session childSession = mock(Session.class);
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-			when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(member));
-			when(session.getCourseId()).thenReturn(courseId);
-			when(session.getChildren()).thenReturn(List.of(childSession));
-			when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
+		// given
+		when(userContext.getCurrentMemberId()).thenReturn(managerId);
+		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
+		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(member));
+		when(session.getCourseId()).thenReturn(courseId);
+		when(session.getChildren()).thenReturn(List.of(childSession));
+		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 
-			assertThatThrownBy(() -> sessionDeletionService.deleteSession(sessionId))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessageContaining("하위 세션이 있는 세션은 삭제할 수 없습니다");
+		// when & then
+		assertThatThrownBy(() -> sessionDeletionService.deleteSession(sessionId))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessageContaining("하위 세션이 있는 세션은 삭제할 수 없습니다");
 
-			verify(sessionCommandRepository, never()).delete(any());
-		}
+		verify(sessionCommandRepository, never()).delete(any());
 	}
 
 	@Test
@@ -209,18 +211,17 @@ class SessionDeletionServiceTest {
 		long sessionId = 1L;
 		long invalidMemberId = 999L;
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId)
-				.thenReturn(Optional.of(invalidMemberId));
-			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-			when(memberQueryRepository.findById(invalidMemberId)).thenReturn(Optional.empty());
+		// given
+		when(userContext.getCurrentMemberId()).thenReturn(invalidMemberId);
+		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
+		when(memberQueryRepository.findById(invalidMemberId)).thenReturn(Optional.empty());
 
-			assertThatThrownBy(() -> sessionDeletionService.deleteSession(sessionId))
-				.isInstanceOf(DomainException.class)
-				.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.MEMBER_NOT_FOUND);
+		// when & then
+		assertThatThrownBy(() -> sessionDeletionService.deleteSession(sessionId))
+			.isInstanceOf(DomainException.class)
+			.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.MEMBER_NOT_FOUND);
 
-			verify(sessionCommandRepository, never()).delete(any());
-		}
+		verify(sessionCommandRepository, never()).delete(any());
 	}
 
 	@Test
@@ -230,17 +231,18 @@ class SessionDeletionServiceTest {
 		long courseId = 10L;
 		long managerId = 100L;
 
-		try (MockedStatic<AuthenticationContextHolder> mockedContext = mockStatic(AuthenticationContextHolder.class)) {
-			mockedContext.when(AuthenticationContextHolder::getCurrentMemberId).thenReturn(Optional.of(managerId));
-			when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-			when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(member));
-			when(session.getCourseId()).thenReturn(courseId);
-			when(session.getChildren()).thenReturn(Collections.emptyList());
-			when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
+		// given
+		when(userContext.getCurrentMemberId()).thenReturn(managerId);
+		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
+		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(member));
+		when(session.getCourseId()).thenReturn(courseId);
+		when(session.getChildren()).thenReturn(Collections.emptyList());
+		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 
-			sessionDeletionService.deleteSession(sessionId);
+		// when
+		sessionDeletionService.deleteSession(sessionId);
 
-			verify(sessionCommandRepository).delete(session);
-		}
+		// then
+		verify(sessionCommandRepository).delete(session);
 	}
 }

@@ -6,13 +6,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
+import me.chan99k.learningmanager.application.UserContext;
 import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
 import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
 import me.chan99k.learningmanager.application.session.provides.SessionCreation;
 import me.chan99k.learningmanager.application.session.requires.SessionCommandRepository;
 import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
-import me.chan99k.learningmanager.common.exception.AuthenticationException;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
 import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.course.Course;
@@ -31,17 +30,20 @@ public class SessionCreationService implements SessionCreation {
 	private final CourseQueryRepository courseQueryRepository;
 	private final MemberQueryRepository memberQueryRepository;
 	private final Clock clock;
+	private final UserContext userContext;
 
 	public SessionCreationService(SessionQueryRepository sessionQueryRepository,
 		SessionCommandRepository sessionCommandRepository,
 		CourseQueryRepository courseQueryRepository,
 		MemberQueryRepository memberQueryRepository,
-		Clock clock) {
+		Clock clock,
+		UserContext userContext) {
 		this.sessionQueryRepository = sessionQueryRepository;
 		this.sessionCommandRepository = sessionCommandRepository;
 		this.courseQueryRepository = courseQueryRepository;
 		this.memberQueryRepository = memberQueryRepository;
 		this.clock = clock;
+		this.userContext = userContext;
 	}
 
 	@Override
@@ -54,9 +56,7 @@ public class SessionCreationService implements SessionCreation {
 	}
 
 	private Long getCurrentMemberId() {
-		return AuthenticationContextHolder.getCurrentMemberId()
-			.orElseThrow(() -> new AuthenticationException(
-				AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
+		return userContext.getCurrentMemberId();
 	}
 
 	private void validatePermission(Request request, Long memberId) {

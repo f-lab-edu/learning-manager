@@ -4,11 +4,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
-import me.chan99k.learningmanager.adapter.auth.AuthenticationContextHolder;
+import me.chan99k.learningmanager.application.UserContext;
 import me.chan99k.learningmanager.application.course.provides.CurriculumInfoUpdate;
 import me.chan99k.learningmanager.application.course.requires.CourseCommandRepository;
 import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
-import me.chan99k.learningmanager.common.exception.AuthenticationException;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
 import me.chan99k.learningmanager.domain.course.Course;
 import me.chan99k.learningmanager.domain.course.Curriculum;
@@ -19,12 +18,15 @@ public class CurriculumInfoUpdateService implements CurriculumInfoUpdate {
 
 	private final CourseQueryRepository queryRepository;
 	private final CourseCommandRepository commandRepository;
+	private final UserContext userContext;
 
 	public CurriculumInfoUpdateService(
 		CourseQueryRepository queryRepository,
-		CourseCommandRepository commandRepository) {
+		CourseCommandRepository commandRepository,
+		UserContext userContext) {
 		this.queryRepository = queryRepository;
 		this.commandRepository = commandRepository;
+		this.userContext = userContext;
 	}
 
 	@Override
@@ -49,8 +51,7 @@ public class CurriculumInfoUpdateService implements CurriculumInfoUpdate {
 	}
 
 	private Course authenticatedAndAuthorizedCourseByManager(Long courseId) {
-		Long managerId = AuthenticationContextHolder.getCurrentMemberId()
-			.orElseThrow(() -> new AuthenticationException(AuthProblemCode.AUTHENTICATION_CONTEXT_NOT_FOUND));
+		Long managerId = userContext.getCurrentMemberId();
 
 		return queryRepository.findManagedCourseById(courseId, managerId)
 			.orElseThrow(() -> new AuthorizationException(AuthProblemCode.AUTHORIZATION_REQUIRED));
