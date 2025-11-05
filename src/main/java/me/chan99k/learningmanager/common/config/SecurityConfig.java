@@ -49,13 +49,13 @@ public class SecurityConfig {
 		return http
 			.authorizeHttpRequests(req -> req
 				.requestMatchers(
-					// 인증 관련
-					"/api/v1/members/auth/token",
+					"/api/v1/auth/**",
 
 					// 회원가입 관련
 					"/api/v1/members/register",
 					"/api/v1/members/activate",
 
+					// 비밀번호 재설정
 					"/api/v1/members/reset-password",
 					"/api/v1/members/confirm-reset-password",
 
