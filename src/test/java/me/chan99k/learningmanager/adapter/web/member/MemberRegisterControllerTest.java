@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import me.chan99k.learningmanager.application.member.MemberRegisterService;
 import me.chan99k.learningmanager.application.member.provides.MemberRegistration;
 import me.chan99k.learningmanager.application.member.provides.SignUpConfirmation;
-import me.chan99k.learningmanager.common.exception.DomainException;
+import me.chan99k.learningmanager.domain.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.MemberProblemCode;
 
 @WebMvcTest(value = MemberRegisterController.class,

@@ -23,9 +23,9 @@ import me.chan99k.learningmanager.application.attendance.requires.AttendanceQuer
 import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
 import me.chan99k.learningmanager.common.exception.AuthenticationException;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
-import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.attendance.Attendance;
 import me.chan99k.learningmanager.domain.attendance.AttendanceStatus;
+import me.chan99k.learningmanager.domain.exception.DomainException;
 import me.chan99k.learningmanager.domain.session.Session;
 import me.chan99k.learningmanager.domain.session.SessionParticipant;
 import me.chan99k.learningmanager.domain.session.SessionProblemCode;

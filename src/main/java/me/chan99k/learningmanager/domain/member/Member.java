@@ -18,8 +18,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.OneToMany;
-import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.AbstractEntity;
+import me.chan99k.learningmanager.domain.exception.DomainException;
 
 @Entity
 public class Member extends AbstractEntity {

@@ -13,7 +13,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Component;
 
 import me.chan99k.learningmanager.application.member.requires.PasswordResetTokenProvider;
-import me.chan99k.learningmanager.common.exception.DomainException;
+import me.chan99k.learningmanager.domain.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.Email;
 import me.chan99k.learningmanager.domain.member.MemberProblemCode;
 

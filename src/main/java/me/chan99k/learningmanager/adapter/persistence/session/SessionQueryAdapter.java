@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
+import me.chan99k.learningmanager.domain.course.CourseRole;
 import me.chan99k.learningmanager.domain.session.Session;
 import me.chan99k.learningmanager.domain.session.SessionLocation;
 import me.chan99k.learningmanager.domain.session.SessionType;
@@ -46,7 +47,7 @@ public class SessionQueryAdapter implements SessionQueryRepository {
 
 	@Override
 	public Optional<Session> findManagedSessionById(Long sessionId, Long memberId) {
-		return jpaRepository.findManagedSessionById(sessionId, memberId);
+		return jpaRepository.findManagedSessionById(sessionId, memberId, CourseRole.MANAGER);
 	}
 
 	@Override

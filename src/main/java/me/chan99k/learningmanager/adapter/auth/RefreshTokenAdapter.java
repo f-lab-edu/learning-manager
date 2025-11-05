@@ -20,7 +20,6 @@ public class RefreshTokenAdapter implements RefreshTokenProvider {
 	private final JwtDecoder jwtDecoder;
 	private final AccessTokenAdapter accessTokenProvider;
 
-	// 간단한 메모리 기반 토큰 저장소 (실제 운영에서는 Redis 등 사용)
 	private final ConcurrentHashMap<String, Boolean> validTokens = new ConcurrentHashMap<>();
 
 	public RefreshTokenAdapter(JwtEncoder jwtEncoder, JwtDecoder jwtDecoder, AccessTokenAdapter accessTokenProvider) {
@@ -60,7 +59,7 @@ public class RefreshTokenAdapter implements RefreshTokenProvider {
 			// 기존 리프레시 토큰 무효화
 			validTokens.remove(refreshToken);
 
-			// 새로운 토큰들 생성
+			// 새로운 토큰 생성
 			String newAccessToken = accessTokenProvider.generateAccessToken(memberId, email);
 			String newRefreshToken = generateRefreshToken(memberId, email);
 
@@ -84,7 +83,10 @@ public class RefreshTokenAdapter implements RefreshTokenProvider {
 		try {
 			Jwt jwt = jwtDecoder.decode(refreshToken);
 			String tokenType = jwt.getClaimAsString("type");
-			return "refresh".equals(tokenType) && jwt.getExpiresAt().isAfter(Instant.now());
+			if (!"refresh".equals(tokenType))
+				return false;
+			assert jwt.getExpiresAt() != null;
+			return jwt.getExpiresAt().isAfter(Instant.now());
 		} catch (JwtException e) {
 			validTokens.remove(refreshToken); // 유효하지 않은 토큰 제거
 			return false;

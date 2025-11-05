@@ -13,7 +13,7 @@ import me.chan99k.learningmanager.application.member.provides.MemberRegistration
 import me.chan99k.learningmanager.application.member.provides.SignUpConfirmation;
 import me.chan99k.learningmanager.application.member.requires.MemberCommandRepository;
 import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
-import me.chan99k.learningmanager.common.exception.DomainException;
+import me.chan99k.learningmanager.domain.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.Account;
 import me.chan99k.learningmanager.domain.member.EmailSender;
 import me.chan99k.learningmanager.domain.member.Member;

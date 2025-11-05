@@ -19,9 +19,9 @@ import org.springframework.data.domain.Pageable;
 
 import me.chan99k.learningmanager.application.course.provides.CourseDetailRetrieval;
 import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
-import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.course.Course;
 import me.chan99k.learningmanager.domain.course.CourseRole;
+import me.chan99k.learningmanager.domain.exception.DomainException;
 
 @ExtendWith(MockitoExtension.class)
 class CourseDetailServiceTest {

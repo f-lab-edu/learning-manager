@@ -129,27 +129,24 @@ package "Session Management" {
     }
 }
 
-package "Attendance Management" {
-    entity "attendance" as attendance {
-      * id: BIGINT (PK)
-      --
-      * session_id: BIGINT (FK)
-      * member_id: BIGINT (FK)
-      * check_in_time: DATETIME(6)
-      check_out_time: DATETIME(6)
-      --
-      * created_at: DATETIME(6)
-      last_modified_at: DATETIME(6)
-      * created_by: BIGINT
-      last_modified_by: BIGINT
-      * version: BIGINT
-    }
+package "Attendance Management (MongoDB)" {
+    note as attendance_note
+      **MongoDB Collection: attendance**
+      
+      • id: String (ObjectId)
+      • sessionId: Long
+      • memberId: Long  
+      • events: Array[AttendanceEvent]
+        - CheckedIn: { timestamp: Instant }
+        - CheckedOut: { timestamp: Instant }
+      • finalStatus: AttendanceStatus
+        (PRESENT, ABSENT, LATE, LEFT_EARLY)
+    end note
 }
 
 ' Define relationships with cardinality
 member ||-|| account
 member ||--o{ course_member
-member ||--o{ attendance
 member ||--o{ session_participant
 
 course ||--o{ curriculum
@@ -158,8 +155,11 @@ course ||--o{ session
 
 curriculum ||--o{ session
 
-session ||--o{ attendance
 session ||--o{ session_participant
 session }o--o{ session
+
+' MongoDB relationships (logical, not FK-based)
+session ..> attendance_note : " MongoDB reference\n (sessionId)"
+member ..> attendance_note : " MongoDB reference\n (memberId)"
 
 @enduml
