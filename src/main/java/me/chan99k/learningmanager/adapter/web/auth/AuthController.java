@@ -43,7 +43,7 @@ public class AuthController {
 	}
 
 	/**
-	 * 로그아웃 (리프레시 토큰 무효화)
+	 * 로그아웃 (명시적 리프레시 토큰 무효화)
 	 *
 	 * @param request 리프레시 토큰 요청
 	 * @return 로그아웃 완료 응답
@@ -52,18 +52,6 @@ public class AuthController {
 	public ResponseEntity<Void> logout(@RequestBody @Valid RefreshRequest request) {
 		authService.revokeRefreshToken(request.refreshToken());
 
-		return ResponseEntity.ok().build();
-	}
-
-	/**
-	 * 명시적 토큰 무효화
-	 *
-	 * @param request 리프레시 토큰 요청
-	 * @return 무효화 완료 응답
-	 */
-	@PostMapping("/revoke")
-	public ResponseEntity<Void> revoke(@RequestBody @Valid RefreshRequest request) {
-		authService.revokeRefreshToken(request.refreshToken());
 		return ResponseEntity.ok().build();
 	}
 }
