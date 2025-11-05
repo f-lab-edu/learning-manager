@@ -11,17 +11,17 @@ import org.springframework.stereotype.Component;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import me.chan99k.learningmanager.adapter.auth.core.AuthProblemCode;
+import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
 import me.chan99k.learningmanager.adapter.auth.token.TokenFormat;
 import me.chan99k.learningmanager.adapter.auth.token.TokenType;
 import me.chan99k.learningmanager.common.exception.AuthenticationException;
 
 @Component
-public class JwtDecoder {
+public class CustomJwtDecoder {
 
 	private final byte[] secretKey;
 
-	public JwtDecoder(@Value("${jwt.secret}") String secret) {
+	public CustomJwtDecoder(@Value("${jwt.secret}") String secret) {
 		if (secret == null || secret.trim().isEmpty()) {
 			throw new IllegalArgumentException("[System] JWT secret 은 비어있거나 null 일 수 없습니다");
 		}

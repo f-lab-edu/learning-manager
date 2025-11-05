@@ -12,9 +12,9 @@ import me.chan99k.learningmanager.application.attendance.requires.AttendanceComm
 import me.chan99k.learningmanager.application.attendance.requires.AttendanceQueryRepository;
 import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
-import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.attendance.Attendance;
 import me.chan99k.learningmanager.domain.attendance.AttendanceEvent;
+import me.chan99k.learningmanager.domain.exception.DomainException;
 import me.chan99k.learningmanager.domain.session.Session;
 import me.chan99k.learningmanager.domain.session.SessionProblemCode;
 

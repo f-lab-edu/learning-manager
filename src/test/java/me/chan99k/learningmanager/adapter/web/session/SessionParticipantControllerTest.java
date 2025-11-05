@@ -31,7 +31,7 @@ import me.chan99k.learningmanager.application.session.provides.SessionParticipan
 import me.chan99k.learningmanager.application.session.provides.SessionParticipantManagement.RemoveParticipantRequest;
 import me.chan99k.learningmanager.application.session.provides.SessionParticipantManagement.SessionParticipantResponse;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
-import me.chan99k.learningmanager.common.exception.DomainException;
+import me.chan99k.learningmanager.domain.exception.DomainException;
 import me.chan99k.learningmanager.domain.session.SessionParticipantRole;
 import me.chan99k.learningmanager.domain.session.SessionProblemCode;
 

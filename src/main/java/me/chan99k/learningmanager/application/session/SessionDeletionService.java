@@ -11,7 +11,7 @@ import me.chan99k.learningmanager.application.session.provides.SessionDeletion;
 import me.chan99k.learningmanager.application.session.requires.SessionCommandRepository;
 import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
-import me.chan99k.learningmanager.common.exception.DomainException;
+import me.chan99k.learningmanager.domain.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.Member;
 import me.chan99k.learningmanager.domain.member.MemberProblemCode;
 import me.chan99k.learningmanager.domain.member.SystemRole;

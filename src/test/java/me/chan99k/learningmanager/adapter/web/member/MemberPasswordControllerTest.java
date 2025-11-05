@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import me.chan99k.learningmanager.application.member.provides.AccountPasswordChange;
 import me.chan99k.learningmanager.application.member.provides.AccountPasswordReset;
-import me.chan99k.learningmanager.common.exception.DomainException;
+import me.chan99k.learningmanager.domain.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.MemberProblemCode;
 
 @WebMvcTest(controllers = MemberPasswordController.class,

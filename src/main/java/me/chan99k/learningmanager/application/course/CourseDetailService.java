@@ -7,8 +7,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import me.chan99k.learningmanager.application.course.provides.CourseDetailRetrieval;
 import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
-import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.course.CourseProblemCode;
+import me.chan99k.learningmanager.domain.exception.DomainException;
 
 @Service
 @Transactional(readOnly = true)

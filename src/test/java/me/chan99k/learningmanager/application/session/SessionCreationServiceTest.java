@@ -7,11 +7,11 @@ import static org.mockito.Mockito.*;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,10 +28,10 @@ import me.chan99k.learningmanager.application.session.requires.SessionCommandRep
 import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
 import me.chan99k.learningmanager.common.exception.AuthenticationException;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
-import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.course.Course;
 import me.chan99k.learningmanager.domain.course.CourseProblemCode;
 import me.chan99k.learningmanager.domain.course.Curriculum;
+import me.chan99k.learningmanager.domain.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.Member;
 import me.chan99k.learningmanager.domain.member.MemberProblemCode;
 import me.chan99k.learningmanager.domain.member.SystemRole;
@@ -65,19 +65,26 @@ class SessionCreationServiceTest {
 	private SessionCreationService sessionCreationService;
 
 	@Test
-	@Disabled // TODO :: 실행 환경 타임존 문제 해결 필요
 	@DisplayName("[Success] 시스템 관리자가 스탠드얼론 세션 생성에 성공한다")
 	void createStandaloneSession_Success() {
+		// given
+		Instant fixedTime = Instant.parse("2024-01-15T10:00:00Z");
+		lenient().when(clock.instant()).thenReturn(fixedTime);
+		lenient().when(clock.getZone()).thenReturn(ZoneId.of("Asia/Seoul"));
+		
 		Long adminId = 1L;
 		Member admin = mock(Member.class);
 		when(admin.getRole()).thenReturn(SystemRole.ADMIN);
 		when(memberQueryRepository.findById(adminId)).thenReturn(Optional.of(admin));
 
+		Instant startTime = fixedTime.plusSeconds(86400); // +1 day
+		Instant endTime = fixedTime.plusSeconds(86400 + 7200); // +1 day +2 hours
+		
 		SessionCreation.Request request = new SessionCreation.Request(
 			null, null, null,
 			"테스트 세션",
-			LocalDateTime.now().plusDays(1).toInstant(ZoneOffset.UTC),
-			LocalDateTime.now().plusDays(1).plusHours(2).toInstant(ZoneOffset.UTC),
+			startTime,
+			endTime,
 			SessionType.ONLINE, SessionLocation.ZOOM, null
 		);
 
@@ -118,10 +125,13 @@ class SessionCreationServiceTest {
 	}
 
 	@Test
-	@Disabled // TODO :: 실행 환경 타임존 문제 해결 필요
 	@DisplayName("[Success] 과정 매니저가 과정 세션 생성에 성공한다")
 	void createCourseSession_Success() {
 		// given
+		Instant fixedTime = Instant.parse("2024-01-15T10:00:00Z");
+		lenient().when(clock.instant()).thenReturn(fixedTime);
+		lenient().when(clock.getZone()).thenReturn(ZoneId.of("Asia/Seoul"));
+		
 		Long managerId = 1L;
 		Long courseId = 1L;
 		Member manager = mock(Member.class);
@@ -131,11 +141,14 @@ class SessionCreationServiceTest {
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 
+		Instant startTime = fixedTime.plusSeconds(86400); // +1 day
+		Instant endTime = fixedTime.plusSeconds(86400 + 7200); // +1 day +2 hours
+		
 		SessionCreation.Request request = new SessionCreation.Request(
 			courseId, null, null,
 			"과정 세션",
-			LocalDateTime.now().plusDays(1).toInstant(ZoneOffset.UTC),
-			LocalDateTime.now().plusDays(1).plusHours(2).toInstant(ZoneOffset.UTC),
+			startTime,
+			endTime,
 			SessionType.OFFLINE, SessionLocation.SITE, "강의실 A"
 		);
 
@@ -178,10 +191,13 @@ class SessionCreationServiceTest {
 	}
 
 	@Test
-	@Disabled // TODO :: 실행 환경 타임존 문제 해결 필요
 	@DisplayName("[Success] 과정 매니저가 커리큘럼 세션 생성에 성공한다")
 	void createCurriculumSession_Success() {
 		// given
+		Instant fixedTime = Instant.parse("2024-01-15T10:00:00Z");
+		lenient().when(clock.instant()).thenReturn(fixedTime);
+		lenient().when(clock.getZone()).thenReturn(ZoneId.of("Asia/Seoul"));
+		
 		Long managerId = 1L;
 		Long courseId = 1L;
 		Long curriculumId = 1L;
@@ -195,11 +211,14 @@ class SessionCreationServiceTest {
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 
+		Instant startTime = fixedTime.plusSeconds(86400); // +1 day
+		Instant endTime = fixedTime.plusSeconds(86400 + 7200); // +1 day +2 hours
+		
 		SessionCreation.Request request = new SessionCreation.Request(
 			courseId, curriculumId, null,
 			"커리큘럼 세션",
-			LocalDateTime.now().plusDays(1).toInstant(ZoneOffset.UTC),
-			LocalDateTime.now().plusDays(1).plusHours(2).toInstant(ZoneOffset.UTC),
+			startTime,
+			endTime,
 			SessionType.OFFLINE, SessionLocation.SITE, "강의실 B"
 		);
 

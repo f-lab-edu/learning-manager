@@ -43,12 +43,10 @@ public class JwtTokenData implements TokenData {
 		return format;
 	}
 
-	@Override
 	public Object getPayload() {
 		return payload;
 	}
 
-	@Override
 	public Instant getIssuedAt() {
 		return issuedAt;
 	}
@@ -58,15 +56,36 @@ public class JwtTokenData implements TokenData {
 		return expiresAt;
 	}
 
-	@Override
 	public boolean isRevoked() {
 		return false;
+	}
+
+	@Override
+	public boolean isExpired() {
+		return expiresAt != null && Instant.now().isAfter(expiresAt);
+	}
+
+	@Override
+	public Long getMemberId() {
+		// JWT에서 memberId는 subject나 claims에서 추출 가능
+		try {
+			return Long.valueOf(subject);
+		} catch (NumberFormatException e) {
+			return null;
+		}
+	}
+
+	@Override
+	public String getValue() {
+		// JWT의 경우 토큰 자체의 문자열 값이 필요할 때 사용
+		return null;
 	}
 
 	public String getIssuer() {
 		return issuer;
 	}
 
+	@Override
 	public String getSubject() {
 		return subject;
 	}

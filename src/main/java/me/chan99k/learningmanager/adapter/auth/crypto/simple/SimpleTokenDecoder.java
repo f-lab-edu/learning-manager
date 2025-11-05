@@ -4,7 +4,7 @@ import java.time.Instant;
 
 import org.springframework.stereotype.Component;
 
-import me.chan99k.learningmanager.adapter.auth.core.AuthProblemCode;
+import me.chan99k.learningmanager.adapter.auth.AuthProblemCode;
 import me.chan99k.learningmanager.common.exception.AuthenticationException;
 
 @Component

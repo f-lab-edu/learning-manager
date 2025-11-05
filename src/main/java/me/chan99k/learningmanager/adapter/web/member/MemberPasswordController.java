@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import me.chan99k.learningmanager.application.member.provides.AccountPasswordChange;
 import me.chan99k.learningmanager.application.member.provides.AccountPasswordReset;
-import me.chan99k.learningmanager.common.exception.DomainException;
+import me.chan99k.learningmanager.domain.exception.DomainException;
 
 @RestController
 @RequestMapping("/api/v1/members")

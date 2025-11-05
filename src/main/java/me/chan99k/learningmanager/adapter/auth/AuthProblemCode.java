@@ -14,8 +14,11 @@ public enum AuthProblemCode implements ProblemCode {
 	AUTHENTICATION_CONTEXT_NOT_FOUND("IAUTH107", "[System] 인증 컨텍스트를 찾을 수 없습니다."),
 	INVALID_AUTHENTICATION_INFO("IAUTH108", "[System] 인증 정보가 올바르지 않습니다"),
 	// 토큰 관련
-	INVALID_TOKEN_PURPOSE("IAUTH200", "[System] 토큰 용도가 올바르지 않습니다"),
-	INVALID_TOKEN_CLAIMS("IAUTH201", "[System] 토큰 클레임이 올바르지 않습니다"),
+	INVALID_TOKEN("IAUTH200", "[System] 유효하지 않은 토큰입니다"),
+	INVALID_TOKEN_PURPOSE("IAUTH201", "[System] 토큰 용도가 올바르지 않습니다"),
+	INVALID_TOKEN_CLAIMS("IAUTH202", "[System] 토큰 클레임이 올바르지 않습니다"),
+	FAILED_TO_PARSE_TOKEN("IAUTH203", "[System] 토큰 파싱에 실패하였습니다"),
+	FAILED_TO_PARSE_JWT("IAUTH204", "[System] JWT 토큰 파싱에 실패하였습니다"),
 
 	// 인가 관련
 	AUTHORIZATION_REQUIRED("AUTH400", "[System] 요청 동작에 대한 권한이 없습니다");

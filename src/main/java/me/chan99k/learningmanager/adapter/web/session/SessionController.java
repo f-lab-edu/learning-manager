@@ -29,7 +29,7 @@ import me.chan99k.learningmanager.application.session.provides.SessionDetailRetr
 import me.chan99k.learningmanager.application.session.provides.SessionListRetrieval;
 import me.chan99k.learningmanager.application.session.provides.SessionUpdate;
 import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
-import me.chan99k.learningmanager.common.exception.DomainException;
+import me.chan99k.learningmanager.domain.exception.DomainException;
 import me.chan99k.learningmanager.domain.session.Session;
 import me.chan99k.learningmanager.domain.session.SessionLocation;
 import me.chan99k.learningmanager.domain.session.SessionProblemCode;

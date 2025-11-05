@@ -25,9 +25,9 @@ import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
 import me.chan99k.learningmanager.application.course.CourseMemberService;
 import me.chan99k.learningmanager.application.course.provides.CourseMemberAddition;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
-import me.chan99k.learningmanager.common.exception.DomainException;
 import me.chan99k.learningmanager.domain.course.CourseProblemCode;
 import me.chan99k.learningmanager.domain.course.CourseRole;
+import me.chan99k.learningmanager.domain.exception.DomainException;
 
 @WebMvcTest(controllers = CourseMemberController.class,
 	excludeAutoConfiguration = {

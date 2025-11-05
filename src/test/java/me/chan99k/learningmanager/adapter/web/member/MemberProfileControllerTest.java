@@ -27,7 +27,7 @@ import me.chan99k.learningmanager.application.member.provides.MemberProfileRetri
 import me.chan99k.learningmanager.application.member.provides.MemberProfileUpdate;
 import me.chan99k.learningmanager.application.member.provides.MemberWithdrawal;
 import me.chan99k.learningmanager.common.exception.AuthenticationException;
-import me.chan99k.learningmanager.common.exception.DomainException;
+import me.chan99k.learningmanager.domain.exception.DomainException;
 
 @WebMvcTest(controllers = MemberProfileController.class,
 	excludeAutoConfiguration = {

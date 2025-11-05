@@ -20,7 +20,7 @@ import me.chan99k.learningmanager.application.member.requires.MemberCommandRepos
 import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
 import me.chan99k.learningmanager.common.exception.AuthenticationException;
 import me.chan99k.learningmanager.common.exception.AuthorizationException;
-import me.chan99k.learningmanager.common.exception.DomainException;
+import me.chan99k.learningmanager.domain.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.Member;
 import me.chan99k.learningmanager.domain.member.MemberProblemCode;
 import me.chan99k.learningmanager.domain.member.MemberStatus;
