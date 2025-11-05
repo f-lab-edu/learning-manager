@@ -70,7 +70,7 @@
     - **생성**: 스터디장은 스터디의 제목, 설명 등을 포함하는 새로운 스터디 과정을 생성할 수 있다.
 - **(P0) 스터디 과정 멤버 관리**:
   - **멤버 등록**: 스터디장은 과정에 참여할 멤버를 직접 등록할 수 있다.
-    - **역할 부여**: 멤버 등록 시, 스터디장은 해당 멤버에게 `MANAGER`, `MENTOR`, `STUDENT` 등의 `CourseRole`을 부여할 수 있다.
+      - **역할 부여**: 멤버 등록 시, 스터디장은 해당 멤버에게 `MANAGER`, `MENTOR`, `MENTEE` 등의 `CourseRole`을 부여할 수 있다.
 
 #### 4.2.3 스터디 커리큘럼 (Curriculum)
 
@@ -134,8 +134,9 @@
 - **권한 매트릭스 (예시)**:
   | 리소스 | 생성(C) | 조회(R) | 수정(U) | 삭제(D) |
   | :--- | :--- | :--- | :--- | :--- |
-  | `Course` | 스터디장 | 전체 회원 | 스터디장 | 스터디장 |
-  | `Session` | 스터디장 | 과정 참여자 | 스터디장 | 스터디장 |
+  | `Course` | MANAGER | 전체 회원 | MANAGER | MANAGER |
+  | `Session` | MANAGER, MENTOR | 과정 참여자 | MANAGER, MENTOR | MANAGER |
+  | `Attendance` | 시스템 | MANAGER, MENTOR, 본인 | 시스템 | - |
   | `Member` | (회원가입) | 본인, 관리자 | 본인, 관리자 | (탈퇴) |
 
 ### 5.3 데이터 유효성 검사 (Data Validation)
@@ -231,13 +232,17 @@
 - `save()`: 회원 정보 변경 사항을 DB에 저장(또는 수정)합니다.
 - `saveHistory()`: 회원 상태 변경 이력을 DB에 기록합니다.
 
-#### 6.1.5 `MemberStatusHistory` : 회원 상태 변경 이력
+#### 6.1.5 `MemberStatusHistory` : 회원 상태 변경 이력 (미구현)
 
+> ⚠️ **현재 미구현**: 도메인 모델은 정의되어 있으나, 실제 상태 변경 시 이력 기록 로직이 구현되지 않음
+>
 > 회원의 상태가 변경될 때마다 해당 기록을 저장하여 추적합니다.
 
 - **id** (Long), **memberId** (Long)
 - **status** (MemberStatus), **reason** (String)
 - **changedAt** (Instant)
+
+**구현 계획**: Member 상태 변경 메서드에서 자동으로 이력 기록하는 로직 추가 필요
 
 ### 6.2 Course
 
@@ -267,7 +272,10 @@
 > 특정 스터디 과정에 어떤 회원이 어떤 역할로 참여하는지를 정의합니다.
 
 - **id** (Long), **memberId** (Long), **courseId** (Long)
-- **courseRole** (CourseRole): 과정 내 역할 (`MANAGER`, `MENTOR`, `STUDENT`)
+- **courseRole** (CourseRole): 과정 내 역할 (`MANAGER`, `MENTOR`, `MENTEE`)
+    - **MANAGER**: 과정 관리자 (스터디장) - 과정 생성/수정/삭제, 멤버 관리, 세션 관리 권한
+    - **MENTOR**: 과정 멘토 - 세션 진행, 멘티 지도, 출석 관리 권한 (관리 권한 제한)
+    - **MENTEE**: 과정 멘티 (수강생) - 세션 참여, 과정 조회 권한
 
 #### 6.2.3 `Curriculum` : 스터디 커리큘럼
 
@@ -375,12 +383,15 @@
 - **LATE**: 지각 (추후 확장)
 - **LEFT_EARLY**: 조퇴 (추후 확장)
 
-### 6.5 Notification
+### 6.5 Notification (미구현)
 
-#### 6.5.1 `Notification` : 알림
+#### 6.5.1 `Notification` : 알림 (미구현)
 
-> 시스템에서 사용자에게 발송되는 모든 알림의 내용, 상태, 이력을 관리합니다.
+> ⚠️ **현재 미구현**: 알림 도메인은 설계되어 있으나 실제 구현되지 않음. 현재는 인터페이스 레벨에서 참조만 되고 있음.
+>
+> **향후 구현 예정**: 시스템에서 사용자에게 발송되는 모든 알림의 내용, 상태, 이력을 관리합니다.
 
+**설계된 구조** (향후 구현 시 참고):
 - **id** (Long), **memberId** (Long)
 - **type** (NotificationType): `EMAIL`, `SMS` 등
 - **content** (String): 알림 내용
@@ -388,15 +399,11 @@
 - **sentAt** (Instant): 발송 완료 시각
 - **createdAt**, **createdBy**, **updatedAt**, **updatedBy**
 
-##### provides
+**구현 계획**:
 
-- `create()`: 발송할 알림을 생성합니다.
-- `markAsSent()`: 발송 성공 상태로 변경합니다.
-- `fail()`: 발송 실패 상태로 변경합니다.
-
-##### requires
-
-- `save()`: 알림 정보 변경 사항을 DB에 저장(또는 수정)합니다.
-- `send()`: 외부 게이트웨이(Email, SMS 등)를 통해 실제 알림을 발송합니다.
+- 회원가입 인증 이메일 발송
+- 비밀번호 재설정 이메일 발송
+- 세션 시작 알림
+- 과정 멤버 초대 알림
 
 ---
