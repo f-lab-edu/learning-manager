@@ -3,12 +3,12 @@ package me.chan99k.learningmanager.adapter.web.attendance;
 import java.time.Instant;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import me.chan99k.learningmanager.application.UserContext;
 import me.chan99k.learningmanager.application.attendance.provides.AttendanceRetrieval;
 import me.chan99k.learningmanager.domain.attendance.AttendanceStatus;
 
@@ -17,18 +17,19 @@ import me.chan99k.learningmanager.domain.attendance.AttendanceStatus;
 public class AttendanceController {
 
 	private final AttendanceRetrieval attendanceRetrieval;
+	private final UserContext userContext;
 
-	public AttendanceController(AttendanceRetrieval attendanceRetrieval) {
+	public AttendanceController(AttendanceRetrieval attendanceRetrieval, UserContext userContext) {
 		this.attendanceRetrieval = attendanceRetrieval;
+		this.userContext = userContext;
 	}
 
 	/**
 	 * 내 전체 출석 현황 조회
 	 */
 	@GetMapping("/my")
-	public ResponseEntity<AttendanceRetrieval.Response> getMyAllAttendanceStatus(
-		@AuthenticationPrincipal Long memberId
-	) {
+	public ResponseEntity<AttendanceRetrieval.Response> getMyAllAttendanceStatus() {
+		Long memberId = userContext.getCurrentMemberId();
 		AttendanceRetrieval.AllAttendanceRequest request =
 			new AttendanceRetrieval.AllAttendanceRequest(memberId);
 
@@ -41,9 +42,9 @@ public class AttendanceController {
 	 */
 	@GetMapping("/my/course")
 	public ResponseEntity<AttendanceRetrieval.Response> getMyCourseAttendanceStatus(
-		@AuthenticationPrincipal Long memberId,
 		@RequestParam Long courseId
 	) {
+		Long memberId = userContext.getCurrentMemberId();
 		AttendanceRetrieval.CourseAttendanceRequest request =
 			new AttendanceRetrieval.CourseAttendanceRequest(memberId, courseId);
 
@@ -56,9 +57,9 @@ public class AttendanceController {
 	 */
 	@GetMapping("/my/curriculum")
 	public ResponseEntity<AttendanceRetrieval.Response> getMyCurriculumAttendanceStatus(
-		@AuthenticationPrincipal Long memberId,
 		@RequestParam Long curriculumId
 	) {
+		Long memberId = userContext.getCurrentMemberId();
 		AttendanceRetrieval.CurriculumAttendanceRequest request =
 			new AttendanceRetrieval.CurriculumAttendanceRequest(memberId, curriculumId);
 
@@ -71,12 +72,12 @@ public class AttendanceController {
 	 */
 	@GetMapping("/my/monthly")
 	public ResponseEntity<AttendanceRetrieval.Response> getMyMonthlyAttendanceStatus(
-		@AuthenticationPrincipal Long memberId,
 		@RequestParam int year,
 		@RequestParam int month,
 		@RequestParam(required = false) Long courseId,
 		@RequestParam(required = false) Long curriculumId
 	) {
+		Long memberId = userContext.getCurrentMemberId();
 		AttendanceRetrieval.MonthlyAttendanceRequest request =
 			new AttendanceRetrieval.MonthlyAttendanceRequest(
 				memberId, year, month, courseId, curriculumId
@@ -91,13 +92,13 @@ public class AttendanceController {
 	 */
 	@GetMapping("/my/period")
 	public ResponseEntity<AttendanceRetrieval.Response> getMyPeriodAttendanceStatus(
-		@AuthenticationPrincipal Long memberId,
 		@RequestParam Instant startDate,
 		@RequestParam Instant endDate,
 		@RequestParam(required = false) Long courseId,
 		@RequestParam(required = false) Long curriculumId,
 		@RequestParam(required = false) AttendanceStatus status
 	) {
+		Long memberId = userContext.getCurrentMemberId();
 		AttendanceRetrieval.PeriodAttendanceRequest request =
 			new AttendanceRetrieval.PeriodAttendanceRequest(
 				memberId, startDate, endDate, courseId, curriculumId, status
