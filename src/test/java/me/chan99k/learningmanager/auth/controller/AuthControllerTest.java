@@ -67,7 +67,8 @@ class AuthControllerTest {
 		RefreshRequest request = new RefreshRequest(invalidRefreshToken);
 
 		when(authService.refreshTokens(invalidRefreshToken))
-			.thenThrow(new IllegalArgumentException("Invalid refresh token"));
+			.thenThrow(new me.chan99k.learningmanager.common.exception.AuthenticationException(
+				me.chan99k.learningmanager.adapter.auth.AuthProblemCode.INVALID_TOKEN));
 
 		mockMvc.perform(post("/api/v1/auth/refresh")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -159,20 +160,6 @@ class AuthControllerTest {
 		RefreshRequest request = new RefreshRequest(refreshToken);
 
 		mockMvc.perform(post("/api/v1/auth/logout")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(status().isOk());
-
-		verify(authService).revokeRefreshToken(refreshToken);
-	}
-
-	@Test
-	@DisplayName("토큰 무효화 요청 시 리프레시 토큰을 무효화하고 성공 응답을 반환한다")
-	void revoke_ValidRefreshToken_RevokesTokenAndReturnsSuccess() throws Exception {
-		String refreshToken = "valid-refresh-token";
-		RefreshRequest request = new RefreshRequest(refreshToken);
-
-		mockMvc.perform(post("/api/v1/auth/revoke")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk());

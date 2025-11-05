@@ -83,7 +83,10 @@ public class RefreshTokenAdapter implements RefreshTokenProvider {
 		try {
 			Jwt jwt = jwtDecoder.decode(refreshToken);
 			String tokenType = jwt.getClaimAsString("type");
-			return "refresh".equals(tokenType) && jwt.getExpiresAt().isAfter(Instant.now());
+			if (!"refresh".equals(tokenType))
+				return false;
+			assert jwt.getExpiresAt() != null;
+			return jwt.getExpiresAt().isAfter(Instant.now());
 		} catch (JwtException e) {
 			validTokens.remove(refreshToken); // 유효하지 않은 토큰 제거
 			return false;

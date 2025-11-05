@@ -34,7 +34,7 @@ public class SimpleTokenDecoder {
 			// Format: "subject:memberId" or "subject:memberId:value" or "subject:memberId:value:expiration"
 			String subject = parts[0];
 			Long memberId = Long.parseLong(parts[1]);
-			String value = parts.length > 2 ? parts[2] : null;
+			String value = parts.length > 2 && !"NULL".equals(parts[2]) ? parts[2] : null;
 			Instant expiresAt = parts.length > 3 ? Instant.ofEpochSecond(Long.parseLong(parts[3])) : null;
 
 			return new SimpleTokenData(subject, memberId, value, expiresAt);
@@ -56,7 +56,7 @@ public class SimpleTokenDecoder {
 
 		if (expiresAt != null) {
 			if (value == null) {
-				token.append(":");  // value가 null이면 빈 자리 표시
+				token.append("NULL:");  // value가 null이면 명시적 NULL 플레이스홀더 사용
 			}
 			token.append(":").append(expiresAt.getEpochSecond());
 		}

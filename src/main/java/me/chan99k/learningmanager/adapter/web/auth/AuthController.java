@@ -25,6 +25,7 @@ public class AuthController {
 	@PostMapping("/login")
 	public ResponseEntity<LoginResponse> login(@RequestBody @Valid LoginRequest request) {
 		LoginResponse response = authService.login(request);
+
 		return ResponseEntity.ok(response);
 	}
 
@@ -37,6 +38,7 @@ public class AuthController {
 	@PostMapping("/refresh")
 	public ResponseEntity<TokenResponse> refresh(@RequestBody @Valid RefreshRequest request) {
 		AuthService.TokenPair tokenPair = authService.refreshTokens(request.refreshToken());
+
 		TokenResponse response = TokenResponse.of(tokenPair.accessToken(), tokenPair.refreshToken());
 
 		return ResponseEntity.ok(response);

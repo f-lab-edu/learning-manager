@@ -56,9 +56,6 @@ public class JwtTokenData implements TokenData {
 		return expiresAt;
 	}
 
-	public boolean isRevoked() {
-		return false;
-	}
 
 	@Override
 	public boolean isExpired() {

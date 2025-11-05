@@ -77,8 +77,8 @@ class AuthServiceTest {
 			.thenThrow(new IllegalArgumentException("Invalid refresh token"));
 
 		assertThatThrownBy(() -> authService.refreshTokens(invalidRefreshToken))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("Invalid refresh token");
+			.isInstanceOf(me.chan99k.learningmanager.common.exception.AuthenticationException.class)
+			.hasMessage("[System] 유효하지 않은 토큰입니다");
 
 		verify(refreshTokenAdapter).refreshAccessToken(invalidRefreshToken);
 	}

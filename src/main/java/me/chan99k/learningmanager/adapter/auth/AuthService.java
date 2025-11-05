@@ -30,8 +30,13 @@ public class AuthService {
 	}
 
 	public TokenPair refreshTokens(String refreshToken) {
-		RefreshResult result = refreshTokenAdapter.refreshAccessToken(refreshToken);
-		return new TokenPair(result.newAccessToken(), result.newRefreshToken());
+		try {
+			RefreshResult result = refreshTokenAdapter.refreshAccessToken(refreshToken);
+			return new TokenPair(result.newAccessToken(), result.newRefreshToken());
+		} catch (IllegalArgumentException e) {
+			throw new me.chan99k.learningmanager.common.exception.AuthenticationException(
+				AuthProblemCode.INVALID_TOKEN, e);
+		}
 	}
 
 	public void revokeRefreshToken(String refreshToken) {
