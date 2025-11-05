@@ -1,6 +1,5 @@
 package me.chan99k.learningmanager.adapter.web.auth;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,15 +36,10 @@ public class AuthController {
 	 */
 	@PostMapping("/refresh")
 	public ResponseEntity<TokenResponse> refresh(@RequestBody @Valid RefreshRequest request) {
-		try {
-			AuthService.TokenPair tokenPair = authService.refreshTokens(request.refreshToken());
-			TokenResponse response = TokenResponse.of(tokenPair.accessToken(), tokenPair.refreshToken());
+		AuthService.TokenPair tokenPair = authService.refreshTokens(request.refreshToken());
+		TokenResponse response = TokenResponse.of(tokenPair.accessToken(), tokenPair.refreshToken());
 
-			return ResponseEntity.ok(response);
-		} catch (IllegalArgumentException e) {
-			// 유효하지 않은 리프레시 토큰인 경우 401 Unauthorized 반환
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-		}
+		return ResponseEntity.ok(response);
 	}
 
 	/**
@@ -57,6 +51,7 @@ public class AuthController {
 	@PostMapping("/logout")
 	public ResponseEntity<Void> logout(@RequestBody @Valid RefreshRequest request) {
 		authService.revokeRefreshToken(request.refreshToken());
+
 		return ResponseEntity.ok().build();
 	}
 
