@@ -230,7 +230,13 @@ public class MemberRegisterControllerTest {
 		void activate_member_test_02() throws Exception {
 			mockMvc.perform(get("/api/v1/members/activate"))
 				.andDo(print())
-				.andExpect(status().isInternalServerError());
+				.andExpect(status().isBadRequest())
+				.andExpect(content().contentType("application/problem+json;charset=UTF-8"))
+				.andExpect(jsonPath("$.status").value(400))
+				.andExpect(jsonPath("$.title").value("Missing Required Parameter"))
+				.andExpect(jsonPath("$.detail").value("Required request parameter 'token' is missing"))
+				.andExpect(jsonPath("$.code").value("MISSING_PARAMETER"))
+				.andExpect(jsonPath("$.parameterName").value("token"));
 		}
 
 		@Test

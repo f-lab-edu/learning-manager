@@ -3,11 +3,13 @@ package me.chan99k.learningmanager.application.session.requires;
 import java.time.Instant;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import me.chan99k.learningmanager.adapter.persistence.session.SessionInfo;
 import me.chan99k.learningmanager.domain.session.Session;
 import me.chan99k.learningmanager.domain.session.SessionLocation;
 import me.chan99k.learningmanager.domain.session.SessionType;
@@ -39,4 +41,31 @@ public interface SessionQueryRepository {
 
 	List<Session> findByYearMonth(YearMonth yearMonth, SessionType type, SessionLocation location,
 		Long courseId, Long curriculumId);
+
+	List<Long> findSessionIdsByPeriodAndFilters(
+		Instant startDate,
+		Instant endDate,
+		Long courseId,      // nullable
+		Long curriculumId   // nullable
+	);
+
+	List<Long> findSessionIdsByCourseId(Long courseId);
+
+	List<Long> findSessionIdsByCurriculumId(Long curriculumId);
+
+	List<Long> findSessionIdsByMemberId(Long memberId);
+
+	List<Long> findSessionIdsByMonthAndFilters(
+		int year,
+		int month,
+		Long courseId,      // nullable
+		Long curriculumId   // nullable
+	);
+
+	List<SessionInfo> findSessionInfoProjectionByIds(List<Long> sessionIds);
+	List<SessionInfo> findSessionInfoByIds(List<Long> sessionIds);
+
+	Map<Long, SessionInfo> findSessionInfoMapByIds(List<Long> sessionIds);
+
+
 }

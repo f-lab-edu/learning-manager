@@ -5,7 +5,9 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -91,4 +93,66 @@ public class SessionQueryAdapter implements SessionQueryRepository {
 		return jpaRepository.findByYearMonth(startOfMonthInstant, startOfNextMonthInstant,
 			type, location, courseId, curriculumId);
 	}
+
+	@Override
+	public List<Long> findSessionIdsByPeriodAndFilters(Instant startDate, Instant endDate, Long courseId,
+		Long curriculumId) {
+		return jpaRepository.findIdsByPeriodAndFilters(startDate, endDate, courseId, curriculumId);
+	}
+
+	@Override
+	public List<Long> findSessionIdsByCourseId(Long courseId) {
+		return jpaRepository.findByCourseId(courseId).stream()
+			.map(Session::getId)
+			.toList();
+	}
+
+	@Override
+	public List<Long> findSessionIdsByCurriculumId(Long curriculumId) {
+		return jpaRepository.findByCurriculumId(curriculumId).stream()
+			.map(Session::getId)
+			.toList();
+	}
+
+	@Override
+	public List<Long> findSessionIdsByMemberId(Long memberId) {
+		return jpaRepository.findByMemberIdWithFilters(memberId, null, null, null, null, Pageable.unpaged())
+			.getContent()
+			.stream()
+			.map(Session::getId)
+			.toList();
+	}
+
+	@Override
+	public List<Long> findSessionIdsByMonthAndFilters(int year, int month, Long courseId, Long curriculumId) {
+		YearMonth yearMonth = YearMonth.of(year, month);
+		LocalDate startOfMonth = yearMonth.atDay(1);
+		LocalDate startOfNextMonth = yearMonth.plusMonths(1).atDay(1);
+
+		Instant startDate = startOfMonth.atStartOfDay().toInstant(ZoneOffset.UTC);
+		Instant endDate = startOfNextMonth.atStartOfDay().toInstant(ZoneOffset.UTC);
+
+		return findSessionIdsByPeriodAndFilters(startDate, endDate, courseId, curriculumId);
+	}
+
+	@Override
+	public List<SessionInfo> findSessionInfoProjectionByIds(List<Long> sessionIds) {
+		if (sessionIds.isEmpty()) {
+			return List.of();
+		}
+
+		return jpaRepository.findSessionInfoProjectionByIds(sessionIds);
+	}
+
+	@Override
+	public List<SessionInfo> findSessionInfoByIds(List<Long> sessionIds) {
+		return findSessionInfoProjectionByIds(sessionIds);
+	}
+
+	@Override
+	public Map<Long, SessionInfo> findSessionInfoMapByIds(List<Long> sessionIds) {
+		return findSessionInfoByIds(sessionIds).stream()
+			.collect(Collectors.toMap(SessionInfo::sessionId, info -> info));
+	}
+
 }

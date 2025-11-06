@@ -10,6 +10,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -182,6 +183,27 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 			.headers(createProblemJsonHeaders())
 			.body(problemDetail);
+	}
+
+	/**
+	 * 필수 요청 파라미터가 누락된 경우를 처리한다.
+	 * @param e MissingServletRequestParameterException
+	 * @return 400, ResponseEntity
+	 */
+	@ExceptionHandler(MissingServletRequestParameterException.class)
+	public ResponseEntity<ProblemDetail> handleMissingServletRequestParameter(
+		MissingServletRequestParameterException e) {
+		ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+			HttpStatus.BAD_REQUEST,
+			String.format("Required request parameter '%s' is missing", e.getParameterName())
+		);
+
+		problemDetail.setType(URI.create("https://api.lm.com/errors/missing-parameter"));
+		problemDetail.setTitle("Missing Required Parameter");
+		problemDetail.setProperty("code", "MISSING_PARAMETER");
+		problemDetail.setProperty("parameterName", e.getParameterName());
+
+		return ResponseEntity.badRequest().headers(createProblemJsonHeaders()).body(problemDetail);
 	}
 
 	@ExceptionHandler(Exception.class)

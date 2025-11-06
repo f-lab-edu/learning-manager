@@ -108,4 +108,23 @@ public interface SessionJpaRepository extends JpaRepository<Session, Long> {
 		@Param("courseId") Long courseId,
 		@Param("curriculumId") Long curriculumId
 	);
+
+	@Query("SELECT s.id FROM Session s WHERE " +
+		"s.scheduledAt > :startDate AND s.scheduledAt < :endDate AND " +
+		"(:courseId IS NULL OR s.courseId = :courseId) AND " +
+		"(:curriculumId IS NULL OR s.curriculumId = :curriculumId)")
+	List<Long> findIdsByPeriodAndFilters(
+		@Param("startDate") Instant startDate,
+		@Param("endDate") Instant endDate,
+		@Param("courseId") Long courseId,
+		@Param("curriculumId") Long curriculumId
+	);
+
+	@Query("SELECT new me.chan99k.learningmanager.adapter.persistence.session.SessionInfo(" +
+		"s.id, s.title, s.scheduledAt, s.courseId, c.title, s.curriculumId, cur.title) " +
+		"FROM Session s " +
+		"LEFT JOIN Course c ON s.courseId = c.id " +
+		"LEFT JOIN Curriculum cur ON s.curriculumId = cur.id " +
+		"WHERE s.id IN :sessionIds")
+	List<SessionInfo> findSessionInfoProjectionByIds(@Param("sessionIds") List<Long> sessionIds);
 }
