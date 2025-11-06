@@ -9,6 +9,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import me.chan99k.learningmanager.adapter.persistence.session.SessionInfo;
 import me.chan99k.learningmanager.domain.session.Session;
 import me.chan99k.learningmanager.domain.session.SessionLocation;
 import me.chan99k.learningmanager.domain.session.SessionType;
@@ -52,6 +53,8 @@ public interface SessionQueryRepository {
 
 	List<Long> findSessionIdsByCurriculumId(Long curriculumId);
 
+	List<Long> findSessionIdsByMemberId(Long memberId);
+
 	List<Long> findSessionIdsByMonthAndFilters(
 		int year,
 		int month,
@@ -59,19 +62,10 @@ public interface SessionQueryRepository {
 		Long curriculumId   // nullable
 	);
 
+	List<SessionInfo> findSessionInfoProjectionByIds(List<Long> sessionIds);
 	List<SessionInfo> findSessionInfoByIds(List<Long> sessionIds);
 
 	Map<Long, SessionInfo> findSessionInfoMapByIds(List<Long> sessionIds);
 
-	record SessionInfo(
-		Long sessionId,
-		String sessionTitle,
-		Instant scheduledAt,
-		Long courseId,
-		String courseTitle,
-		Long curriculumId,
-		String curriculumTitle
-	) {
-	}
 
 }

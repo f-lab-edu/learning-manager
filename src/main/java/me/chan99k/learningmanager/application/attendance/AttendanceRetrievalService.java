@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+import me.chan99k.learningmanager.adapter.persistence.session.SessionInfo;
 import me.chan99k.learningmanager.application.attendance.provides.AttendanceRetrieval;
 import me.chan99k.learningmanager.application.attendance.requires.AttendanceQueryRepository;
 import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
@@ -23,19 +24,20 @@ public class AttendanceRetrievalService implements AttendanceRetrieval {
 	@Override
 	public Response getMyAllAttendanceStatus(AllAttendanceRequest request) {
 		// 해당 회원의 모든 출석 기록 조회
+		List<Long> sessionIds = sessionQueryRepository.findSessionIdsByMemberId(request.memberId());
 		List<AttendanceQueryRepository.AttendanceProjection> attendances =
 			attendanceQueryRepository.findAttendanceProjectionByMemberIdAndSessionIds(
 				request.memberId(),
-				getAllSessionIds() // 모든 세션 ID (실제로는 참여하는 세션만 조회해야 함)
+				sessionIds
 			);
 
 		// 세션 정보 조회
-		List<Long> sessionIds = attendances.stream()
+		List<Long> attendanceSessionIds = attendances.stream()
 			.map(AttendanceQueryRepository.AttendanceProjection::sessionId)
 			.toList();
 
-		Map<Long, SessionQueryRepository.SessionInfo> sessionInfoMap =
-			sessionQueryRepository.findSessionInfoMapByIds(sessionIds);
+		Map<Long, SessionInfo> sessionInfoMap =
+			sessionQueryRepository.findSessionInfoMapByIds(attendanceSessionIds);
 
 		// 결과 조합
 		List<SessionAttendanceInfo> sessionInfos = buildSessionAttendanceInfos(attendances, sessionInfoMap);
@@ -57,7 +59,7 @@ public class AttendanceRetrievalService implements AttendanceRetrieval {
 			);
 
 		// 세션 정보 조회
-		Map<Long, SessionQueryRepository.SessionInfo> sessionInfoMap =
+		Map<Long, SessionInfo> sessionInfoMap =
 			sessionQueryRepository.findSessionInfoMapByIds(sessionIds);
 
 		// 결과 조합
@@ -80,7 +82,7 @@ public class AttendanceRetrievalService implements AttendanceRetrieval {
 			);
 
 		// 세션 정보 조회
-		Map<Long, SessionQueryRepository.SessionInfo> sessionInfoMap =
+		Map<Long, SessionInfo> sessionInfoMap =
 			sessionQueryRepository.findSessionInfoMapByIds(sessionIds);
 
 		// 결과 조합
@@ -105,7 +107,7 @@ public class AttendanceRetrievalService implements AttendanceRetrieval {
 			);
 
 		// 세션 정보 조회
-		Map<Long, SessionQueryRepository.SessionInfo> sessionInfoMap =
+		Map<Long, SessionInfo> sessionInfoMap =
 			sessionQueryRepository.findSessionInfoMapByIds(sessionIds);
 
 		// 결과 조합
@@ -137,7 +139,7 @@ public class AttendanceRetrievalService implements AttendanceRetrieval {
 		}
 
 		// 세션 정보 조회
-		Map<Long, SessionQueryRepository.SessionInfo> sessionInfoMap =
+		Map<Long, SessionInfo> sessionInfoMap =
 			sessionQueryRepository.findSessionInfoMapByIds(sessionIds);
 
 		// 결과 조합
@@ -150,11 +152,11 @@ public class AttendanceRetrievalService implements AttendanceRetrieval {
 
 	private List<SessionAttendanceInfo> buildSessionAttendanceInfos(
 		List<AttendanceQueryRepository.AttendanceProjection> attendances,
-		Map<Long, SessionQueryRepository.SessionInfo> sessionInfoMap
+		Map<Long, SessionInfo> sessionInfoMap
 	) {
 		return attendances.stream()
 			.map(attendance -> {
-				SessionQueryRepository.SessionInfo sessionInfo = sessionInfoMap.get(attendance.sessionId());
+				SessionInfo sessionInfo = sessionInfoMap.get(attendance.sessionId());
 				if (sessionInfo == null) {
 					// 세션 정보가 없는 경우 로그 남기고 기본값 처리
 					return new SessionAttendanceInfo(
@@ -182,10 +184,5 @@ public class AttendanceRetrievalService implements AttendanceRetrieval {
 			.toList();
 	}
 
-	private List<Long> getAllSessionIds() {
-		// TODO: 실제로는 해당 회원이 참여하는 세션들만 조회해야 함
-		// 현재는 임시 구현
-		throw new UnsupportedOperationException("회원이 참여하는 세션 조회 로직 필요");
-	}
 
 }

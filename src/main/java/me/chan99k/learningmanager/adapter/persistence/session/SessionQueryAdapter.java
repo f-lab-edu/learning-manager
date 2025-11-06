@@ -97,15 +97,7 @@ public class SessionQueryAdapter implements SessionQueryRepository {
 	@Override
 	public List<Long> findSessionIdsByPeriodAndFilters(Instant startDate, Instant endDate, Long courseId,
 		Long curriculumId) {
-		// TODO: JpaRepository에 메서드 추가 필요
-		// 임시 구현: 전체 세션을 조회한 후 필터링 (성능상 비효율적)
-		return jpaRepository.findAll().stream()
-			.filter(
-				session -> session.getScheduledAt().isAfter(startDate) && session.getScheduledAt().isBefore(endDate))
-			.filter(session -> courseId == null || courseId.equals(session.getCourseId()))
-			.filter(session -> curriculumId == null || curriculumId.equals(session.getCurriculumId()))
-			.map(Session::getId)
-			.toList();
+		return jpaRepository.findIdsByPeriodAndFilters(startDate, endDate, courseId, curriculumId);
 	}
 
 	@Override
@@ -123,6 +115,15 @@ public class SessionQueryAdapter implements SessionQueryRepository {
 	}
 
 	@Override
+	public List<Long> findSessionIdsByMemberId(Long memberId) {
+		return jpaRepository.findByMemberIdWithFilters(memberId, null, null, null, null, Pageable.unpaged())
+			.getContent()
+			.stream()
+			.map(Session::getId)
+			.toList();
+	}
+
+	@Override
 	public List<Long> findSessionIdsByMonthAndFilters(int year, int month, Long courseId, Long curriculumId) {
 		YearMonth yearMonth = YearMonth.of(year, month);
 		LocalDate startOfMonth = yearMonth.atDay(1);
@@ -135,14 +136,17 @@ public class SessionQueryAdapter implements SessionQueryRepository {
 	}
 
 	@Override
-	public List<SessionInfo> findSessionInfoByIds(List<Long> sessionIds) {
+	public List<SessionInfo> findSessionInfoProjectionByIds(List<Long> sessionIds) {
 		if (sessionIds.isEmpty()) {
 			return List.of();
 		}
 
-		return jpaRepository.findAllById(sessionIds).stream()
-			.map(this::toSessionInfo)
-			.toList();
+		return jpaRepository.findSessionInfoProjectionByIds(sessionIds);
+	}
+
+	@Override
+	public List<SessionInfo> findSessionInfoByIds(List<Long> sessionIds) {
+		return findSessionInfoProjectionByIds(sessionIds);
 	}
 
 	@Override
@@ -151,17 +155,4 @@ public class SessionQueryAdapter implements SessionQueryRepository {
 			.collect(Collectors.toMap(SessionInfo::sessionId, info -> info));
 	}
 
-	private SessionInfo toSessionInfo(Session session) {
-		// TODO: Course, Curriculum 정보를 조인으로 가져와야 함
-		// 현재는 임시 구현
-		return new SessionInfo(
-			session.getId(),
-			session.getTitle(),
-			session.getScheduledAt(),
-			session.getCourseId(),
-			"Course Title", // TODO: 실제 Course 제목 조회 필요
-			session.getCurriculumId(),
-			"Curriculum Title" // TODO: 실제 Curriculum 제목 조회 필요
-		);
-	}
 }
