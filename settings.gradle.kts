@@ -18,3 +18,9 @@ include(
     ":adapter:mysql",
     ":adapter:mongo"
 )
+
+// Support 모듈들
+include(
+    ":support:logging",
+    ":support:monitoring"
+)

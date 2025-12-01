@@ -11,9 +11,14 @@ dependencies {
     implementation(project(":core:service"))
 
     implementation(catalog.findLibrary("jjwt-api").get())
+    implementation(catalog.findLibrary("spring-boot-starter-web").get())
     runtimeOnly(catalog.findLibrary("jjwt-impl").get())
     runtimeOnly(catalog.findLibrary("jjwt-jackson").get())
 
     runtimeOnly(project(":adapter:mysql"))
     runtimeOnly(project(":adapter:mongo"))
+
+    // Support 모듈
+    runtimeOnly(project(":support:logging"))
+    implementation(project(":support:monitoring"))
 }

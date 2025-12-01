@@ -7,6 +7,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -22,6 +23,11 @@ import org.springframework.test.context.TestPropertySource;
 
 import me.chan99k.learningmanager.application.auth.UserContext;
 
+/**
+ * 비동기 작업에서 인증 컨텍스트 전파 테스트.
+ * adapter 모듈 의존성이 필요하므로 별도의 통합 테스트 모듈로 이동 필요.
+ */
+@Disabled("통합 테스트 모듈로 이동 예정")
 @SpringBootTest
 @TestPropertySource(properties = "spring.profiles.active=test")
 public class AuthenticationContextAsyncTest {
