@@ -1,0 +1,70 @@
+[versions]
+# Spring
+spring-boot = "3.3.12"
+spring-dependency-management = "1.1.7"
+
+# Database
+mysql = "8.0.33"
+flyway = "10.10.0"
+mongock = "5.2.4"
+
+# JWT
+jjwt = "0.12.3"
+
+# Password
+jbcrypt = "0.4"
+
+# Testing
+testcontainers = "1.19.0"
+
+[libraries]
+# Spring Boot Starters
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
+spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
+spring-boot-starter-oauth2-resource-server = { module = "org.springframework.boot:spring-boot-starter-oauth2-resource-server" }
+spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
+spring-boot-starter-data-mongodb = { module = "org.springframework.boot:spring-boot-starter-data-mongodb" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers" }
+
+# Spring Framework
+spring-context = { module = "org.springframework:spring-context" }
+spring-tx = { module = "org.springframework:spring-tx" }
+spring-security-test = { module = "org.springframework.security:spring-security-test" }
+spring-data-commons = { module = "org.springframework.data:spring-data-commons" }
+
+# Jakarta
+jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api" }
+
+# Database
+mysql-connector = { module = "com.mysql:mysql-connector-j" }
+h2 = { module = "com.h2database:h2" }
+flyway-core = { module = "org.flywaydb:flyway-core" }
+flyway-mysql = { module = "org.flywaydb:flyway-mysql" }
+
+# MongoDB
+mongock-springboot = { module = "io.mongock:mongock-springboot-v3", version.ref = "mongock" }
+mongock-mongodb-driver = { module = "io.mongock:mongodb-springdata-v4-driver", version.ref = "mongock" }
+
+# JWT
+jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
+jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
+jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
+
+# Password
+jbcrypt = { module = "org.mindrot:jbcrypt", version.ref = "jbcrypt" }
+
+# Testing
+testcontainers-junit = { module = "org.testcontainers:junit-jupiter" }
+testcontainers-mysql = { module = "org.testcontainers:mysql" }
+testcontainers-mongodb = { module = "org.testcontainers:mongodb" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
+
+[bundles]
+jjwt = ["jjwt-api", "jjwt-impl", "jjwt-jackson"]
+testcontainers = ["testcontainers-junit", "testcontainers-mysql", "testcontainers-mongodb"]
