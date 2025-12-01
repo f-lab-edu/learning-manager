@@ -3,37 +3,47 @@ package me.chan99k.learningmanager.domain.member;
 import static me.chan99k.learningmanager.domain.member.MemberProblemCode.*;
 import static org.springframework.util.Assert.*;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import java.time.Instant;
+
 import me.chan99k.learningmanager.domain.AbstractEntity;
 
-@Entity
 public class Account extends AbstractEntity {
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "member_id", nullable = false)
+
 	private Member member;
 
-	@Enumerated(EnumType.STRING)
 	private AccountStatus status;
 
-	@Embedded
-	@AttributeOverride(name = "address", column = @Column(name = "email", nullable = false, unique = true))
 	private Email email;
 
-	@Embedded
-	@AttributeOverride(name = "encoded", column = @Column(name = "password", nullable = false, unique = true))
 	private Password password;
 
 	/* 도메인 로직 */
 
 	protected Account() {
+	}
+
+	public static Account reconstitute(
+		Long id,
+		AccountStatus status,
+		Email email,
+		Password password,
+		Instant createdAt,
+		Long createdBy,
+		Instant lastModifiedAt,
+		Long lastModifiedBy,
+		Long version
+	) {
+		Account account = new Account();
+		account.setId(id);
+		account.status = status;
+		account.email = email;
+		account.password = password;
+		account.setCreatedAt(createdAt);
+		account.setCreatedBy(createdBy);
+		account.setLastModifiedAt(lastModifiedAt);
+		account.setLastModifiedBy(lastModifiedBy);
+		account.setVersion(version);
+		return account;
 	}
 
 	private Account(Member member, String email, String rawPassword, PasswordEncoder encoder) {
@@ -67,15 +77,15 @@ public class Account extends AbstractEntity {
 
 	/* 게터 로직 */
 
-	AccountStatus getStatus() {
+	public AccountStatus getStatus() {
 		return status;
 	}
 
-	Email getEmail() {
+	public Email getEmail() {
 		return email;
 	}
 
-	Password getPassword() {
+	public Password getPassword() {
 		return password;
 	}
 }

@@ -13,10 +13,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.application.auth.requires.UserContext;
+import me.chan99k.learningmanager.application.auth.UserContext;
 import me.chan99k.learningmanager.application.course.provides.CurriculumInfoUpdate;
-import me.chan99k.learningmanager.application.course.requires.CourseCommandRepository;
-import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
 import me.chan99k.learningmanager.domain.course.Course;
 import me.chan99k.learningmanager.domain.course.Curriculum;
 import me.chan99k.learningmanager.domain.exception.AuthProblemCode;

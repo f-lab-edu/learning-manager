@@ -6,7 +6,7 @@ import java.time.temporal.ChronoUnit;
 
 import org.springframework.stereotype.Component;
 
-import me.chan99k.learningmanager.application.attendance.requires.QRCodeGenerator;
+import me.chan99k.learningmanager.application.attendance.QRCodeGenerator;
 
 @Component
 public class SimpleQRCodeGenerator implements QRCodeGenerator {

@@ -6,9 +6,8 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 
 import me.chan99k.learningmanager.application.attendance.provides.AttendanceRetrieval;
-import me.chan99k.learningmanager.application.attendance.requires.AttendanceQueryRepository;
+import me.chan99k.learningmanager.application.session.SessionQueryRepository;
 import me.chan99k.learningmanager.application.session.dto.SessionInfo;
-import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
 
 @Service
 public class AttendanceRetrievalService implements AttendanceRetrieval {

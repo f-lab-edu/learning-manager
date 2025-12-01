@@ -1,10 +1,9 @@
 package me.chan99k.learningmanager.application.course.provides;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-
 import me.chan99k.learningmanager.application.course.CourseDetailInfo;
 import me.chan99k.learningmanager.application.course.CourseMemberInfo;
+import me.chan99k.learningmanager.common.PageRequest;
+import me.chan99k.learningmanager.common.PageResult;
 
 /**
  * 과정 상세 정보 조회 포트
@@ -16,7 +15,7 @@ public interface CourseDetailRetrieval {
 
 	CourseDetailResponse getCourseDetail(Long courseId);
 
-	Page<CourseMemberInfo> getCourseMembers(Long courseId, Pageable pageable);
+	PageResult<CourseMemberInfo> getCourseMembers(Long courseId, PageRequest pageRequest);
 
 	record CourseDetailResponse(CourseDetailInfo courseDetail) {
 	}

@@ -6,8 +6,7 @@ import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.data.domain.Page;
-
+import me.chan99k.learningmanager.common.PageResult;
 import me.chan99k.learningmanager.domain.session.SessionLocation;
 import me.chan99k.learningmanager.domain.session.SessionType;
 
@@ -16,13 +15,13 @@ import me.chan99k.learningmanager.domain.session.SessionType;
  */
 public interface SessionListRetrieval {
 
-	Page<SessionListResponse> getSessionList(SessionListRequest request);
+	PageResult<SessionListResponse> getSessionList(SessionListRequest request);
 
-	Page<SessionListResponse> getCourseSessionList(Long courseId, CourseSessionListRequest request);
+	PageResult<SessionListResponse> getCourseSessionList(Long courseId, CourseSessionListRequest request);
 
-	Page<SessionListResponse> getCurriculumSessionList(Long curriculumId, CurriculumSessionListRequest request);
+	PageResult<SessionListResponse> getCurriculumSessionList(Long curriculumId, CurriculumSessionListRequest request);
 
-	Page<SessionListResponse> getUserSessionList(Long memberId, UserSessionListRequest request);
+	PageResult<SessionListResponse> getUserSessionList(Long memberId, UserSessionListRequest request);
 
 	Map<LocalDate, List<SessionCalendarResponse>> getSessionCalendar(YearMonth yearMonth,
 		SessionCalendarRequest request);

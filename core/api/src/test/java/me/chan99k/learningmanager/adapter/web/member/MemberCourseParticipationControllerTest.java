@@ -20,11 +20,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.application.auth.UserContext;
 import me.chan99k.learningmanager.application.member.CourseParticipationInfo;
 import me.chan99k.learningmanager.application.member.MemberCourseParticipationService;
 import me.chan99k.learningmanager.application.member.MemberCourseParticipationService.ParticipatingCoursesResponse;
 import me.chan99k.learningmanager.domain.course.CourseRole;
+import me.chan99k.learningmanager.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.web.member.MemberCourseParticipationController;
 
 @WebMvcTest(controllers = MemberCourseParticipationController.class,
 	excludeAutoConfiguration = {
@@ -40,7 +42,7 @@ class MemberCourseParticipationControllerTest {
 	private MemberCourseParticipationService memberCourseParticipationService;
 
 	@MockBean
-	private me.chan99k.learningmanager.application.auth.requires.UserContext userContext;
+	private UserContext userContext;
 
 	@MockBean(name = "memberTaskExecutor")
 	private Executor memberTaskExecutor;

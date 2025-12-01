@@ -3,6 +3,7 @@ package me.chan99k.learningmanager.domain.member;
 import static me.chan99k.learningmanager.domain.member.MemberProblemCode.*;
 import static org.springframework.util.Assert.*;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -10,33 +11,19 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.OneToMany;
 import me.chan99k.learningmanager.domain.AbstractEntity;
 import me.chan99k.learningmanager.domain.exception.DomainException;
 
-@Entity
 public class Member extends AbstractEntity {
 
 	private static final Logger log = LoggerFactory.getLogger(Member.class);
 
-	@OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Account> accounts = new ArrayList<>();
 
-	@Embedded
-	@AttributeOverride(name = "value", column = @Column(name = "nickname", nullable = false, unique = true, length = 20))
 	private Nickname nickname;
 
-	@Enumerated(EnumType.STRING)
 	private SystemRole role;
 
-	@Enumerated(EnumType.STRING)
 	private MemberStatus status;
 
 	private String profileImageUrl;
@@ -44,6 +31,36 @@ public class Member extends AbstractEntity {
 	private String selfIntroduction;
 
 	protected Member() {
+	}
+
+	public static Member reconstitute(
+		Long id,
+		Nickname nickname,
+		SystemRole role,
+		MemberStatus status,
+		String profileImageUrl,
+		String selfIntroduction,
+		List<Account> accounts,
+		Instant createdAt,
+		Long createdBy,
+		Instant lastModifiedAt,
+		Long lastModifiedBy,
+		Long version
+	) {
+		Member member = new Member();
+		member.setId(id);
+		member.nickname = nickname;
+		member.role = role;
+		member.status = status;
+		member.profileImageUrl = profileImageUrl;
+		member.selfIntroduction = selfIntroduction;
+		member.accounts = new ArrayList<>(accounts);
+		member.setCreatedAt(createdAt);
+		member.setCreatedBy(createdBy);
+		member.setLastModifiedAt(lastModifiedAt);
+		member.setLastModifiedBy(lastModifiedBy);
+		member.setVersion(version);
+		return member;
 	}
 
 	/* 도메인 로직 */

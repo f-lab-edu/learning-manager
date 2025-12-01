@@ -5,11 +5,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.chan99k.learningmanager.application.auth.requires.UserContext;
-import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
+import me.chan99k.learningmanager.application.auth.UserContext;
+import me.chan99k.learningmanager.application.course.CourseQueryRepository;
 import me.chan99k.learningmanager.application.member.provides.MemberWithdrawal;
-import me.chan99k.learningmanager.application.member.requires.MemberCommandRepository;
-import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
 import me.chan99k.learningmanager.domain.course.Course;
 import me.chan99k.learningmanager.domain.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.Account;

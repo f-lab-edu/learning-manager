@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Repository;
 
 import me.chan99k.learningmanager.adapter.persistence.attendance.documents.AttendanceDocument;
-import me.chan99k.learningmanager.application.attendance.requires.AttendanceQueryRepository;
+import me.chan99k.learningmanager.application.attendance.AttendanceQueryRepository;
 import me.chan99k.learningmanager.domain.attendance.Attendance;
 
 @Repository

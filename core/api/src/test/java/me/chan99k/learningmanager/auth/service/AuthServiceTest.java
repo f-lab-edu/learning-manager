@@ -10,12 +10,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.adapter.auth.AuthService;
-import me.chan99k.learningmanager.adapter.auth.RefreshTokenAdapter;
-import me.chan99k.learningmanager.adapter.web.auth.dto.LoginRequest;
-import me.chan99k.learningmanager.adapter.web.auth.dto.LoginResponse;
+import me.chan99k.learningmanager.application.member.RefreshTokenProvider.RefreshResult;
 import me.chan99k.learningmanager.application.member.provides.MemberLogin;
-import me.chan99k.learningmanager.application.member.requires.RefreshTokenProvider.RefreshResult;
+import me.chan99k.learningmanager.auth.AuthService;
+import me.chan99k.learningmanager.auth.RefreshTokenAdapter;
+import me.chan99k.learningmanager.web.auth.dto.LoginRequest;
+import me.chan99k.learningmanager.web.auth.dto.LoginResponse;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {

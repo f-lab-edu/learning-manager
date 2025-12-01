@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import me.chan99k.learningmanager.application.member.provides.MemberStatusChange;
 import me.chan99k.learningmanager.domain.member.MemberStatus;
+import me.chan99k.learningmanager.web.member.MemberAdminController;
 
 @WebMvcTest(controllers = MemberAdminController.class,
 	excludeAutoConfiguration = {

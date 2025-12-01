@@ -15,7 +15,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import me.chan99k.learningmanager.application.member.MemberCourseParticipationService.ParticipatingCoursesResponse;
-import me.chan99k.learningmanager.application.member.requires.MemberCourseQueryRepository;
 import me.chan99k.learningmanager.domain.course.CourseRole;
 
 @ExtendWith(MockitoExtension.class)

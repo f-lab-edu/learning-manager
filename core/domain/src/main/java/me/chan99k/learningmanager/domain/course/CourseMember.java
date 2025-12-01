@@ -3,32 +3,42 @@ package me.chan99k.learningmanager.domain.course;
 import static me.chan99k.learningmanager.domain.course.CourseProblemCode.*;
 import static org.springframework.util.Assert.*;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import java.time.Instant;
+
 import me.chan99k.learningmanager.domain.AbstractEntity;
 
-@Entity
-
 public class CourseMember extends AbstractEntity {
-	/**
-	 * 사용자 ID
-	 */
+
 	private Long memberId;
-	/**
-	 * 과정 ID
-	 */
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "course_id")
+
 	private Course course;
-	/**
-	 * 해당 과정에서의 역할
-	 */
-	@Enumerated(EnumType.STRING)
+
 	private CourseRole courseRole;
+
+	protected CourseMember() {
+	}
+
+	public static CourseMember reconstitute(
+		Long id,
+		Long memberId,
+		CourseRole courseRole,
+		Instant createdAt,
+		Long createdBy,
+		Instant lastModifiedAt,
+		Long lastModifiedBy,
+		Long version
+	) {
+		CourseMember courseMember = new CourseMember();
+		courseMember.setId(id);
+		courseMember.memberId = memberId;
+		courseMember.courseRole = courseRole;
+		courseMember.setCreatedAt(createdAt);
+		courseMember.setCreatedBy(createdBy);
+		courseMember.setLastModifiedAt(lastModifiedAt);
+		courseMember.setLastModifiedBy(lastModifiedBy);
+		courseMember.setVersion(version);
+		return courseMember;
+	}
 
 	/* 도메인 로직 */
 

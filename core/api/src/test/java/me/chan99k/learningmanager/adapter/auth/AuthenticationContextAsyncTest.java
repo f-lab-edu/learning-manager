@@ -20,7 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.test.context.TestPropertySource;
 
-import me.chan99k.learningmanager.application.auth.requires.UserContext;
+import me.chan99k.learningmanager.application.auth.UserContext;
 
 @SpringBootTest
 @TestPropertySource(properties = "spring.profiles.active=test")

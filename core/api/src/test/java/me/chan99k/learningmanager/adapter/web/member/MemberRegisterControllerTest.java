@@ -24,6 +24,7 @@ import me.chan99k.learningmanager.application.member.provides.MemberRegistration
 import me.chan99k.learningmanager.application.member.provides.SignUpConfirmation;
 import me.chan99k.learningmanager.domain.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.MemberProblemCode;
+import me.chan99k.learningmanager.web.member.MemberRegisterController;
 
 @WebMvcTest(value = MemberRegisterController.class,
 	excludeAutoConfiguration = {

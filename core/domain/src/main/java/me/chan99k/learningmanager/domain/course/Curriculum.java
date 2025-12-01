@@ -3,22 +3,42 @@ package me.chan99k.learningmanager.domain.course;
 import static me.chan99k.learningmanager.domain.course.CourseProblemCode.*;
 import static org.springframework.util.Assert.*;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import java.time.Instant;
+
 import me.chan99k.learningmanager.domain.AbstractEntity;
 
-@Entity
 public class Curriculum extends AbstractEntity {
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "course_id", nullable = false)
 	private Course course;
 
 	private String title;
 
 	private String description;
+
+	protected Curriculum() {
+	}
+
+	public static Curriculum reconstitute(
+		Long id,
+		String title,
+		String description,
+		Instant createdAt,
+		Long createdBy,
+		Instant lastModifiedAt,
+		Long lastModifiedBy,
+		Long version
+	) {
+		Curriculum curriculum = new Curriculum();
+		curriculum.setId(id);
+		curriculum.title = title;
+		curriculum.description = description;
+		curriculum.setCreatedAt(createdAt);
+		curriculum.setCreatedBy(createdBy);
+		curriculum.setLastModifiedAt(lastModifiedAt);
+		curriculum.setLastModifiedBy(lastModifiedBy);
+		curriculum.setVersion(version);
+		return curriculum;
+	}
 
 	/* 도메인 로직 */
 

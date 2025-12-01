@@ -14,12 +14,12 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.adapter.auth.AuthService;
-import me.chan99k.learningmanager.adapter.web.auth.AuthController;
-import me.chan99k.learningmanager.adapter.web.auth.dto.LoginRequest;
-import me.chan99k.learningmanager.adapter.web.auth.dto.LoginResponse;
-import me.chan99k.learningmanager.adapter.web.auth.dto.RefreshRequest;
 import me.chan99k.learningmanager.application.member.provides.MemberLogin;
+import me.chan99k.learningmanager.auth.AuthService;
+import me.chan99k.learningmanager.web.auth.AuthController;
+import me.chan99k.learningmanager.web.auth.dto.LoginRequest;
+import me.chan99k.learningmanager.web.auth.dto.LoginResponse;
+import me.chan99k.learningmanager.web.auth.dto.RefreshRequest;
 
 @WebMvcTest(controllers = AuthController.class,
 	excludeAutoConfiguration = {

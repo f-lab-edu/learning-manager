@@ -2,7 +2,6 @@ package me.chan99k.learningmanager.adapter.persistence.session;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 
@@ -17,11 +16,12 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import me.chan99k.learningmanager.application.session.dto.SessionInfo;
 import me.chan99k.learningmanager.config.TestJpaConfig;
-import me.chan99k.learningmanager.domain.course.Course;
-import me.chan99k.learningmanager.domain.course.Curriculum;
-import me.chan99k.learningmanager.domain.session.Session;
+import me.chan99k.learningmanager.course.entity.CourseEntity;
+import me.chan99k.learningmanager.course.entity.CurriculumEntity;
 import me.chan99k.learningmanager.domain.session.SessionLocation;
 import me.chan99k.learningmanager.domain.session.SessionType;
+import me.chan99k.learningmanager.session.SessionJpaRepository;
+import me.chan99k.learningmanager.session.entity.SessionEntity;
 
 @DataJpaTest
 @Testcontainers
@@ -31,69 +31,90 @@ class SessionJpaRepositoryTest {
 
 	private static final Instant START_DATE = Instant.parse("2025-01-01T00:00:00Z");
 	private static final Instant END_DATE = Instant.parse("2025-01-31T23:59:59Z");
-	private final Clock clock = Clock.systemUTC();
 	@Autowired
 	private TestEntityManager entityManager;
 	@Autowired
 	private SessionJpaRepository sessionJpaRepository;
-	private Course course1;
-	private Course course2;
-	private Curriculum curriculum1;
-	private Curriculum curriculum2;
-	private Session session1;
-	private Session session2;
-	private Session session3;
-	private Session session4;
-	private Session session5;
+	private CourseEntity course1;
+	private CourseEntity course2;
+	private CurriculumEntity curriculum1;
+	private CurriculumEntity curriculum2;
+	private SessionEntity session1;
+	private SessionEntity session2;
+	private SessionEntity session3;
+	private SessionEntity session4;
+	private SessionEntity session5;
 
 	@BeforeEach
 	void setUp() {
 		// Course 및 Curriculum 엔티티 생성
-		course1 = Course.create("Java Programming Course", "Learn Java fundamentals");
-		course2 = Course.create("Spring Boot Course", "Learn Spring Boot framework");
+		course1 = new CourseEntity();
+		course1.setTitle("Java Programming Course");
+		course1.setDescription("Learn Java fundamentals");
+		course2 = new CourseEntity();
+		course2.setTitle("Spring Boot Course");
+		course2.setDescription("Learn Spring Boot framework");
 		entityManager.persistAndFlush(course1);
 		entityManager.persistAndFlush(course2);
 
-		curriculum1 = Curriculum.create(course1, "Java Basics", "Introduction to Java");
-		curriculum2 = Curriculum.create(course1, "Advanced Java", "Advanced Java concepts");
+		curriculum1 = new CurriculumEntity();
+		curriculum1.setCourse(course1);
+		curriculum1.setTitle("Java Basics");
+		curriculum1.setDescription("Introduction to Java");
+		curriculum2 = new CurriculumEntity();
+		curriculum2.setCourse(course1);
+		curriculum2.setTitle("Advanced Java");
+		curriculum2.setDescription("Advanced Java concepts");
 		entityManager.persistAndFlush(curriculum1);
 		entityManager.persistAndFlush(curriculum2);
 
 		// Session 엔티티 생성 (실제 Course, Curriculum ID 사용)
-		session1 = Session.createCurriculumSession(
-			course1.getId(), curriculum1.getId(), "Session 1",
-			Instant.parse("2025-01-10T10:00:00Z"),
-			Instant.parse("2025-01-10T12:00:00Z"),
-			SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null, clock
-		);
+		session1 = new SessionEntity();
+		session1.setCourseId(course1.getId());
+		session1.setCurriculumId(curriculum1.getId());
+		session1.setTitle("Session 1");
+		session1.setScheduledAt(Instant.parse("2025-01-10T10:00:00Z"));
+		session1.setScheduledEndAt(Instant.parse("2025-01-10T12:00:00Z"));
+		session1.setType(SessionType.ONLINE);
+		session1.setLocation(SessionLocation.GOOGLE_MEET);
 
-		session2 = Session.createCurriculumSession(
-			course1.getId(), curriculum2.getId(), "Session 2",
-			Instant.parse("2025-01-20T14:00:00Z"),
-			Instant.parse("2025-01-20T16:00:00Z"),
-			SessionType.OFFLINE, SessionLocation.SITE, "Room A", clock
-		);
+		session2 = new SessionEntity();
+		session2.setCourseId(course1.getId());
+		session2.setCurriculumId(curriculum2.getId());
+		session2.setTitle("Session 2");
+		session2.setScheduledAt(Instant.parse("2025-01-20T14:00:00Z"));
+		session2.setScheduledEndAt(Instant.parse("2025-01-20T16:00:00Z"));
+		session2.setType(SessionType.OFFLINE);
+		session2.setLocation(SessionLocation.SITE);
+		session2.setLocationDetails("Room A");
 
-		session3 = Session.createCurriculumSession(
-			course2.getId(), curriculum1.getId(), "Session 3",
-			Instant.parse("2025-01-25T16:00:00Z"),
-			Instant.parse("2025-01-25T18:00:00Z"),
-			SessionType.ONLINE, SessionLocation.ZOOM, null, clock
-		);
+		session3 = new SessionEntity();
+		session3.setCourseId(course2.getId());
+		session3.setCurriculumId(curriculum1.getId());
+		session3.setTitle("Session 3");
+		session3.setScheduledAt(Instant.parse("2025-01-25T16:00:00Z"));
+		session3.setScheduledEndAt(Instant.parse("2025-01-25T18:00:00Z"));
+		session3.setType(SessionType.ONLINE);
+		session3.setLocation(SessionLocation.ZOOM);
 
-		session4 = Session.createCurriculumSession(
-			course1.getId(), curriculum1.getId(), "Session 4",
-			Instant.parse("2024-12-25T10:00:00Z"),
-			Instant.parse("2024-12-25T12:00:00Z"),
-			SessionType.OFFLINE, SessionLocation.SITE, "Room B", clock
-		);
+		session4 = new SessionEntity();
+		session4.setCourseId(course1.getId());
+		session4.setCurriculumId(curriculum1.getId());
+		session4.setTitle("Session 4");
+		session4.setScheduledAt(Instant.parse("2024-12-25T10:00:00Z"));
+		session4.setScheduledEndAt(Instant.parse("2024-12-25T12:00:00Z"));
+		session4.setType(SessionType.OFFLINE);
+		session4.setLocation(SessionLocation.SITE);
+		session4.setLocationDetails("Room B");
 
-		session5 = Session.createCurriculumSession(
-			course2.getId(), curriculum2.getId(), "Session 5",
-			Instant.parse("2025-02-10T10:00:00Z"),
-			Instant.parse("2025-02-10T12:00:00Z"),
-			SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null, clock
-		);
+		session5 = new SessionEntity();
+		session5.setCourseId(course2.getId());
+		session5.setCurriculumId(curriculum2.getId());
+		session5.setTitle("Session 5");
+		session5.setScheduledAt(Instant.parse("2025-02-10T10:00:00Z"));
+		session5.setScheduledEndAt(Instant.parse("2025-02-10T12:00:00Z"));
+		session5.setType(SessionType.ONLINE);
+		session5.setLocation(SessionLocation.GOOGLE_MEET);
 
 		entityManager.persistAndFlush(session1);
 		entityManager.persistAndFlush(session2);

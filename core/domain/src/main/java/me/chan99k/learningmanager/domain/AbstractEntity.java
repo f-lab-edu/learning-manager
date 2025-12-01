@@ -2,21 +2,6 @@ package me.chan99k.learningmanager.domain;
 
 import java.time.Instant;
 
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import jakarta.annotation.Nullable;
-import jakarta.persistence.Column;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.Version;
-
 /**
  * 생성/수정 시간 및 생성/수정 주체를 관리하기 위한 엔티티.
  * <p>
@@ -24,30 +9,13 @@ import jakarta.persistence.Version;
  * <p>
  * 버전 정보를 관리하여 낙관적 잠금을 지원한다.
  */
-
-@MappedSuperclass
-@EntityListeners(AuditingEntityListener.class)
 public abstract class AbstractEntity {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-
-	@CreatedDate
-	@Column(nullable = false, updatable = false)
 	private Instant createdAt;
-
-	@CreatedBy
-	@Column(nullable = false, updatable = false)
 	private Long createdBy;
-
-	@LastModifiedDate
 	private Instant lastModifiedAt;
-
-	@LastModifiedBy
 	private Long lastModifiedBy;
-
-	@Version
-	private Long version; // TODO :: 하위 엔티티의 수정에 의한 버전 변경이 루트 엔티티의 버전을 변경할 수 있도록 수정하기
+	private Long version;
 
 	/**
 	 * 엔티티의 고유 식별자를 반환한다.
@@ -66,28 +34,51 @@ public abstract class AbstractEntity {
 	 * - DB 가 생성한 ID 값을 가지고 있으므로, id 값은 null 이 아니다.
 	 * @return Long id 또는 null
 	 */
-	@Nullable
 	public Long getId() {
 		return id;
+	}
+
+	protected void setId(Long id) {
+		this.id = id;
 	}
 
 	public Instant getCreatedAt() {
 		return createdAt;
 	}
 
-	public Instant getLastModifiedAt() {
-		return lastModifiedAt;
+	protected void setCreatedAt(Instant createdAt) {
+		this.createdAt = createdAt;
 	}
 
 	public Long getCreatedBy() {
 		return createdBy;
 	}
 
+	protected void setCreatedBy(Long createdBy) {
+		this.createdBy = createdBy;
+	}
+
+	public Instant getLastModifiedAt() {
+		return lastModifiedAt;
+	}
+
+	protected void setLastModifiedAt(Instant lastModifiedAt) {
+		this.lastModifiedAt = lastModifiedAt;
+	}
+
 	public Long getLastModifiedBy() {
 		return lastModifiedBy;
 	}
 
+	protected void setLastModifiedBy(Long lastModifiedBy) {
+		this.lastModifiedBy = lastModifiedBy;
+	}
+
 	public Long getVersion() {
 		return version;
+	}
+
+	protected void setVersion(Long version) {
+		this.version = version;
 	}
 }

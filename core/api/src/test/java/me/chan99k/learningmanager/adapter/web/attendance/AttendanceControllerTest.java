@@ -17,8 +17,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import me.chan99k.learningmanager.application.attendance.provides.AttendanceRetrieval;
-import me.chan99k.learningmanager.application.auth.requires.UserContext;
+import me.chan99k.learningmanager.application.auth.UserContext;
 import me.chan99k.learningmanager.domain.attendance.AttendanceStatus;
+import me.chan99k.learningmanager.web.attendance.AttendanceController;
 
 @WebMvcTest(controllers = AttendanceController.class,
 	excludeAutoConfiguration = {

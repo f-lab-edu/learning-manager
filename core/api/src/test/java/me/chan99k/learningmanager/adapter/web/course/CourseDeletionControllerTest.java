@@ -15,11 +15,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.test.web.servlet.MockMvc;
 
-import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.application.auth.UserContext;
 import me.chan99k.learningmanager.application.course.provides.CourseDeletion;
 import me.chan99k.learningmanager.domain.exception.AuthProblemCode;
 import me.chan99k.learningmanager.domain.exception.AuthenticationException;
 import me.chan99k.learningmanager.domain.exception.AuthorizationException;
+import me.chan99k.learningmanager.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.web.course.CourseDeletionController;
 
 @WebMvcTest(controllers = CourseDeletionController.class,
 	excludeAutoConfiguration = {
@@ -38,7 +40,7 @@ class CourseDeletionControllerTest {
 	private AsyncTaskExecutor courseTaskExecutor;
 
 	@MockBean
-	private me.chan99k.learningmanager.application.auth.requires.UserContext userContext;
+	private UserContext userContext;
 
 	@BeforeEach
 	void setUp() {

@@ -17,20 +17,21 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.task.TaskExecutor;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
-import me.chan99k.learningmanager.application.auth.requires.UserContext;
+import me.chan99k.learningmanager.application.auth.UserContext;
 import me.chan99k.learningmanager.application.session.SessionCreationService;
+import me.chan99k.learningmanager.application.session.SessionQueryRepository;
 import me.chan99k.learningmanager.application.session.provides.SessionDeletion;
 import me.chan99k.learningmanager.application.session.provides.SessionListRetrieval;
 import me.chan99k.learningmanager.application.session.provides.SessionUpdate;
-import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
+import me.chan99k.learningmanager.common.PageRequest;
+import me.chan99k.learningmanager.common.PageResult;
 import me.chan99k.learningmanager.domain.session.SessionLocation;
 import me.chan99k.learningmanager.domain.session.SessionType;
+import me.chan99k.learningmanager.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.web.session.SessionController;
 
 @WebMvcTest(controllers = SessionController.class,
 	excludeAutoConfiguration = {
@@ -93,7 +94,7 @@ class SessionListControllerTest {
 			SessionType.ONLINE, SessionLocation.ZOOM, null,
 			100L, 200L, null, 0, 5, SessionListRetrieval.SessionStatus.UPCOMING
 		);
-		var pageResponse = new PageImpl<>(List.of(sessionResponse), PageRequest.of(0, 20), 1);
+		var pageResponse = PageResult.of(List.of(sessionResponse), PageRequest.of(0, 20), 1);
 
 		when(sessionListRetrieval.getSessionList(any())).thenReturn(pageResponse);
 
@@ -132,7 +133,7 @@ class SessionListControllerTest {
 			SessionType.OFFLINE, SessionLocation.SITE, "서울시 강남구",
 			100L, 200L, null, 2, 10, SessionListRetrieval.SessionStatus.UPCOMING
 		);
-		var pageResponse = new PageImpl<>(List.of(sessionResponse), PageRequest.of(0, 20), 1);
+		var pageResponse = PageResult.of(List.of(sessionResponse), PageRequest.of(0, 20), 1);
 
 		when(sessionListRetrieval.getSessionList(any())).thenReturn(pageResponse);
 
@@ -169,7 +170,7 @@ class SessionListControllerTest {
 			SessionType.ONLINE, SessionLocation.GOOGLE_MEET, null,
 			courseId, null, null, 0, 3, SessionListRetrieval.SessionStatus.ONGOING
 		);
-		var pageResponse = new PageImpl<>(List.of(sessionResponse), PageRequest.of(0, 20), 1);
+		var pageResponse = PageResult.of(List.of(sessionResponse), PageRequest.of(0, 20), 1);
 
 		when(sessionListRetrieval.getCourseSessionList(eq(courseId), any())).thenReturn(pageResponse);
 
@@ -201,7 +202,7 @@ class SessionListControllerTest {
 			SessionType.OFFLINE, SessionLocation.SITE, "부산시 해운대구",
 			100L, curriculumId, null, 1, 8, SessionListRetrieval.SessionStatus.COMPLETED
 		);
-		var pageResponse = new PageImpl<>(List.of(sessionResponse), PageRequest.of(1, 10), 11);
+		var pageResponse = PageResult.of(List.of(sessionResponse), PageRequest.of(1, 10), 11);
 
 		when(sessionListRetrieval.getCurriculumSessionList(eq(curriculumId), any())).thenReturn(pageResponse);
 
@@ -236,7 +237,7 @@ class SessionListControllerTest {
 			SessionType.ONLINE, SessionLocation.ZOOM, null,
 			null, null, null, 0, 1, SessionListRetrieval.SessionStatus.UPCOMING
 		);
-		var pageResponse = new PageImpl<>(List.of(sessionResponse), PageRequest.of(0, 20), 1);
+		var pageResponse = PageResult.of(List.of(sessionResponse), PageRequest.of(0, 20), 1);
 
 		when(sessionListRetrieval.getSessionList(any())).thenReturn(pageResponse);
 

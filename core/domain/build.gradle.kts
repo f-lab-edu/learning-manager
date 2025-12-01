@@ -5,6 +5,6 @@ plugins {
 val catalog = extensions.getByType<VersionCatalogsExtension>().named("libs")
 
 dependencies {
-    // JPA for domain entities (they use JPA annotations)
-    implementation(catalog.findLibrary("spring-boot-starter-data-jpa").get())
+    implementation("org.springframework:spring-core")
+    implementation("org.slf4j:slf4j-api")
 }

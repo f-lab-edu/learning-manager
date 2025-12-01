@@ -3,29 +3,41 @@ package me.chan99k.learningmanager.domain.session;
 import static me.chan99k.learningmanager.domain.session.SessionProblemCode.*;
 import static org.springframework.util.Assert.*;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import java.time.Instant;
+
 import me.chan99k.learningmanager.domain.AbstractEntity;
 
-@Entity
 public class SessionParticipant extends AbstractEntity {
-	@Column(nullable = false)
+
 	private Long memberId;
 
-	@ManyToOne(fetch = FetchType.LAZY, optional = false)
-	@JoinColumn(name = "session_id")
 	private Session session;
 
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
 	private SessionParticipantRole role;
 
-	public SessionParticipant() {
+	protected SessionParticipant() {
+	}
+
+	public static SessionParticipant reconstitute(
+		Long id,
+		Long memberId,
+		SessionParticipantRole role,
+		Instant createdAt,
+		Long createdBy,
+		Instant lastModifiedAt,
+		Long lastModifiedBy,
+		Long version
+	) {
+		SessionParticipant participant = new SessionParticipant();
+		participant.setId(id);
+		participant.memberId = memberId;
+		participant.role = role;
+		participant.setCreatedAt(createdAt);
+		participant.setCreatedBy(createdBy);
+		participant.setLastModifiedAt(lastModifiedAt);
+		participant.setLastModifiedBy(lastModifiedBy);
+		participant.setVersion(version);
+		return participant;
 	}
 
 	private SessionParticipant(Long memberId, Session session, SessionParticipantRole role) {

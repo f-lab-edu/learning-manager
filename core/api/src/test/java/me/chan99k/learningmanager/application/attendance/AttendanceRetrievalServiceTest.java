@@ -16,9 +16,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import me.chan99k.learningmanager.application.attendance.provides.AttendanceRetrieval;
-import me.chan99k.learningmanager.application.attendance.requires.AttendanceQueryRepository;
+import me.chan99k.learningmanager.application.session.SessionQueryRepository;
 import me.chan99k.learningmanager.application.session.dto.SessionInfo;
-import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
 import me.chan99k.learningmanager.domain.attendance.AttendanceStatus;
 
 @ExtendWith(MockitoExtension.class)

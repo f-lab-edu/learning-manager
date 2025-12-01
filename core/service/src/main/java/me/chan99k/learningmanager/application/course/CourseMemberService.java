@@ -9,13 +9,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.chan99k.learningmanager.application.auth.requires.UserContext;
+import me.chan99k.learningmanager.application.auth.UserContext;
 import me.chan99k.learningmanager.application.course.provides.CourseMemberAddition;
 import me.chan99k.learningmanager.application.course.provides.CourseMemberRemoval;
-import me.chan99k.learningmanager.application.course.requires.CourseCommandRepository;
-import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
-import me.chan99k.learningmanager.application.member.requires.MemberEmailPair;
-import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
+import me.chan99k.learningmanager.application.member.MemberEmailPair;
+import me.chan99k.learningmanager.application.member.MemberQueryRepository;
 import me.chan99k.learningmanager.domain.course.Course;
 import me.chan99k.learningmanager.domain.exception.AuthProblemCode;
 import me.chan99k.learningmanager.domain.exception.AuthorizationException;

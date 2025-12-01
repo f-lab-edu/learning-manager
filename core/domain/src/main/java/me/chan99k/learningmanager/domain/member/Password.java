@@ -5,10 +5,7 @@ import static org.springframework.util.Assert.*;
 
 import java.util.regex.Pattern;
 
-import jakarta.persistence.Embeddable;
-
-@Embeddable
-public record Password(String encoded) { // TODO :: 다중 인코더 알고리즘 시나리오에서는 알고리즘 이름을 가지고 있으면 좋을 수 있을 것 같다
+public record Password(String encoded) {
 
 	private static final int MIN_LENGTH = 8;
 	private static final int MAX_LENGTH = 64;

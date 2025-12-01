@@ -1,12 +1,11 @@
 package me.chan99k.learningmanager.application.course;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import me.chan99k.learningmanager.application.course.provides.CourseDetailRetrieval;
-import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
+import me.chan99k.learningmanager.common.PageRequest;
+import me.chan99k.learningmanager.common.PageResult;
 import me.chan99k.learningmanager.domain.course.CourseProblemCode;
 import me.chan99k.learningmanager.domain.exception.DomainException;
 
@@ -29,10 +28,10 @@ public class CourseDetailService implements CourseDetailRetrieval {
 	}
 
 	@Override
-	public Page<CourseMemberInfo> getCourseMembers(Long courseId, Pageable pageable) {
+	public PageResult<CourseMemberInfo> getCourseMembers(Long courseId, PageRequest pageRequest) {
 		courseQueryRepository.findById(courseId)
 			.orElseThrow(() -> new DomainException(CourseProblemCode.COURSE_NOT_FOUND));
 
-		return courseQueryRepository.findCourseMembersByCourseId(courseId, pageable);
+		return courseQueryRepository.findCourseMembersByCourseId(courseId, pageRequest);
 	}
 }

@@ -20,10 +20,12 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import me.chan99k.learningmanager.application.auth.UserContext;
 import me.chan99k.learningmanager.application.member.provides.AccountPasswordChange;
 import me.chan99k.learningmanager.application.member.provides.AccountPasswordReset;
 import me.chan99k.learningmanager.domain.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.MemberProblemCode;
+import me.chan99k.learningmanager.web.member.MemberPasswordController;
 
 @WebMvcTest(controllers = MemberPasswordController.class,
 	excludeAutoConfiguration = {
@@ -38,7 +40,7 @@ class MemberPasswordControllerTest {
 	private ObjectMapper objectMapper;
 
 	@MockBean
-	private me.chan99k.learningmanager.application.auth.requires.UserContext userContext;
+	private UserContext userContext;
 
 	@MockBean
 	private AccountPasswordChange passwordChangeService;

@@ -22,12 +22,13 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.application.attendance.QRCodeGenerator;
 import me.chan99k.learningmanager.application.attendance.provides.AttendanceCheckIn;
-import me.chan99k.learningmanager.application.attendance.requires.QRCodeGenerator;
-import me.chan99k.learningmanager.application.auth.requires.UserContext;
+import me.chan99k.learningmanager.application.auth.UserContext;
 import me.chan99k.learningmanager.domain.exception.AuthProblemCode;
 import me.chan99k.learningmanager.domain.exception.AuthenticationException;
+import me.chan99k.learningmanager.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.web.attendance.AttendanceCheckInController;
 
 @WebMvcTest(controllers = AttendanceCheckInController.class,
 	excludeAutoConfiguration = {

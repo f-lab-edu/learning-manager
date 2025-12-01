@@ -3,30 +3,52 @@ package me.chan99k.learningmanager.domain.course;
 import static me.chan99k.learningmanager.domain.course.CourseProblemCode.*;
 import static org.springframework.util.Assert.*;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
 import me.chan99k.learningmanager.domain.AbstractEntity;
 
-@Entity
 public class Course extends AbstractEntity {
-	@Column(nullable = false, unique = true)
+
 	private String title;
 
 	private String description;
 
-	@OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	private List<CourseMember> courseMemberList = new ArrayList<>();
 
-	@OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	private List<Curriculum> curriculumList = new ArrayList<>();
+
+	protected Course() {
+	}
+
+	public static Course reconstitute(
+		Long id,
+		String title,
+		String description,
+		List<CourseMember> courseMemberList,
+		List<Curriculum> curriculumList,
+		Instant createdAt,
+		Long createdBy,
+		Instant lastModifiedAt,
+		Long lastModifiedBy,
+		Long version
+	) {
+		Course course = new Course();
+		course.setId(id);
+		course.title = title;
+		course.description = description;
+		course.courseMemberList = new ArrayList<>(courseMemberList);
+		course.curriculumList = new ArrayList<>(curriculumList);
+		course.setCreatedAt(createdAt);
+		course.setCreatedBy(createdBy);
+		course.setLastModifiedAt(lastModifiedAt);
+		course.setLastModifiedBy(lastModifiedBy);
+		course.setVersion(version);
+		return course;
+	}
 
 	/* 도메인 로직 */
 

@@ -26,12 +26,11 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
-import me.chan99k.learningmanager.application.auth.requires.UserContext;
+import me.chan99k.learningmanager.application.auth.UserContext;
 import me.chan99k.learningmanager.application.session.SessionCreationService;
+import me.chan99k.learningmanager.application.session.SessionQueryRepository;
 import me.chan99k.learningmanager.application.session.provides.SessionCreation;
 import me.chan99k.learningmanager.application.session.provides.SessionUpdate;
-import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
 import me.chan99k.learningmanager.domain.exception.AuthProblemCode;
 import me.chan99k.learningmanager.domain.exception.AuthenticationException;
 import me.chan99k.learningmanager.domain.exception.AuthorizationException;
@@ -40,6 +39,8 @@ import me.chan99k.learningmanager.domain.session.Session;
 import me.chan99k.learningmanager.domain.session.SessionLocation;
 import me.chan99k.learningmanager.domain.session.SessionProblemCode;
 import me.chan99k.learningmanager.domain.session.SessionType;
+import me.chan99k.learningmanager.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.web.session.SessionController;
 
 @WebMvcTest(controllers = SessionController.class,
 	excludeAutoConfiguration = {

@@ -20,11 +20,12 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
-import me.chan99k.learningmanager.application.auth.requires.UserContext;
+import me.chan99k.learningmanager.application.auth.UserContext;
 import me.chan99k.learningmanager.application.course.provides.CourseCreation;
 import me.chan99k.learningmanager.domain.exception.AuthenticationException;
 import me.chan99k.learningmanager.domain.exception.AuthorizationException;
+import me.chan99k.learningmanager.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.web.course.CourseCreateController;
 
 @WebMvcTest(controllers = CourseCreateController.class,
 	excludeAutoConfiguration = {

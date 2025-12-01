@@ -14,51 +14,75 @@ import java.util.Objects;
 
 import org.springframework.util.StringUtils;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import me.chan99k.learningmanager.domain.AbstractEntity;
 
-@Entity
 public class Session extends AbstractEntity {
-	@Column(name = "course_id")
+
 	private Long courseId;
 
-	@Column(name = "curriculum_id")
 	private Long curriculumId;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "parent_id")
 	private Session parent;
 
-	@OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Session> children = new ArrayList<>();
 
-	@OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<SessionParticipant> participants = new ArrayList<>();
 
-	@Column(nullable = false)
 	private String title;
 
 	private Instant scheduledAt;
 
 	private Instant scheduledEndAt;
 
-	@Enumerated(EnumType.STRING)
 	private SessionType type;
 
-	@Enumerated(EnumType.STRING)
 	private SessionLocation location;
 
 	private String locationDetails;
 
 	protected Session() {
+	}
+
+	public static Session reconstitute(
+		Long id,
+		Long courseId,
+		Long curriculumId,
+		Session parent,
+		String title,
+		Instant scheduledAt,
+		Instant scheduledEndAt,
+		SessionType type,
+		SessionLocation location,
+		String locationDetails,
+		List<SessionParticipant> participants,
+		Instant createdAt,
+		Long createdBy,
+		Instant lastModifiedAt,
+		Long lastModifiedBy,
+		Long version
+	) {
+		Session session = new Session();
+		session.setId(id);
+		session.courseId = courseId;
+		session.curriculumId = curriculumId;
+		session.parent = parent;
+		session.title = title;
+		session.scheduledAt = scheduledAt;
+		session.scheduledEndAt = scheduledEndAt;
+		session.type = type;
+		session.location = location;
+		session.locationDetails = locationDetails;
+		session.participants = new ArrayList<>(participants);
+		session.setCreatedAt(createdAt);
+		session.setCreatedBy(createdBy);
+		session.setLastModifiedAt(lastModifiedAt);
+		session.setLastModifiedBy(lastModifiedBy);
+		session.setVersion(version);
+		return session;
+	}
+
+	public void setChildren(List<Session> children) {
+		this.children = new ArrayList<>(children);
 	}
 
 	private Session(String title, Instant scheduledAt, Instant scheduledEndAt,

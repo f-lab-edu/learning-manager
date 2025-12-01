@@ -19,11 +19,13 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.application.auth.UserContext;
 import me.chan99k.learningmanager.application.course.provides.CourseInfoUpdate;
 import me.chan99k.learningmanager.domain.exception.AuthProblemCode;
 import me.chan99k.learningmanager.domain.exception.AuthenticationException;
 import me.chan99k.learningmanager.domain.exception.AuthorizationException;
+import me.chan99k.learningmanager.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.web.course.CourseInfoUpdateController;
 
 @WebMvcTest(controllers = CourseInfoUpdateController.class,
 	excludeAutoConfiguration = {
@@ -42,7 +44,7 @@ class CourseInfoUpdateControllerTest {
 	private CourseInfoUpdate courseInfoUpdate;
 
 	@MockBean
-	private me.chan99k.learningmanager.application.auth.requires.UserContext userContext;
+	private UserContext userContext;
 
 	@MockBean(name = "courseTaskExecutor")
 	private Executor courseTaskExecutor;

@@ -7,10 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import me.chan99k.learningmanager.application.attendance.provides.AttendanceCheckOut;
-import me.chan99k.learningmanager.application.attendance.requires.AttendanceCommandRepository;
-import me.chan99k.learningmanager.application.attendance.requires.AttendanceQueryRepository;
-import me.chan99k.learningmanager.application.auth.requires.UserContext;
-import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
+import me.chan99k.learningmanager.application.auth.UserContext;
+import me.chan99k.learningmanager.application.session.SessionQueryRepository;
 import me.chan99k.learningmanager.domain.attendance.Attendance;
 import me.chan99k.learningmanager.domain.attendance.AttendanceEvent;
 import me.chan99k.learningmanager.domain.attendance.CheckedOut;

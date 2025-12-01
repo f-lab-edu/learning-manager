@@ -3,12 +3,10 @@ package me.chan99k.learningmanager.application.session;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.chan99k.learningmanager.application.auth.requires.UserContext;
-import me.chan99k.learningmanager.application.course.requires.CourseQueryRepository;
-import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
+import me.chan99k.learningmanager.application.auth.UserContext;
+import me.chan99k.learningmanager.application.course.CourseQueryRepository;
+import me.chan99k.learningmanager.application.member.MemberQueryRepository;
 import me.chan99k.learningmanager.application.session.provides.SessionDeletion;
-import me.chan99k.learningmanager.application.session.requires.SessionCommandRepository;
-import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
 import me.chan99k.learningmanager.domain.exception.AuthProblemCode;
 import me.chan99k.learningmanager.domain.exception.AuthorizationException;
 import me.chan99k.learningmanager.domain.exception.DomainException;

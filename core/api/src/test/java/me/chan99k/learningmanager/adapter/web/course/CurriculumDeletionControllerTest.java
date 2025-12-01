@@ -14,11 +14,13 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
-import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.application.auth.UserContext;
 import me.chan99k.learningmanager.application.course.provides.CurriculumDeletion;
 import me.chan99k.learningmanager.domain.exception.AuthProblemCode;
 import me.chan99k.learningmanager.domain.exception.AuthenticationException;
 import me.chan99k.learningmanager.domain.exception.AuthorizationException;
+import me.chan99k.learningmanager.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.web.course.CurriculumDeletionController;
 
 @WebMvcTest(controllers = CurriculumDeletionController.class,
 	excludeAutoConfiguration = {
@@ -34,7 +36,7 @@ class CurriculumDeletionControllerTest {
 	private CurriculumDeletion curriculumDeletion;
 
 	@MockBean
-	private me.chan99k.learningmanager.application.auth.requires.UserContext userContext;
+	private UserContext userContext;
 
 	@BeforeEach
 	void setUp() {

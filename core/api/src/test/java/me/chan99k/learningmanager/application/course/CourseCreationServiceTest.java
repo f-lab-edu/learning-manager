@@ -13,10 +13,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.application.auth.requires.UserContext;
+import me.chan99k.learningmanager.application.auth.UserContext;
 import me.chan99k.learningmanager.application.course.provides.CourseCreation;
-import me.chan99k.learningmanager.application.course.requires.CourseCommandRepository;
-import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
+import me.chan99k.learningmanager.application.member.MemberQueryRepository;
 import me.chan99k.learningmanager.domain.course.Course;
 import me.chan99k.learningmanager.domain.exception.AuthProblemCode;
 import me.chan99k.learningmanager.domain.exception.AuthorizationException;

@@ -19,13 +19,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 
 import me.chan99k.learningmanager.application.session.provides.SessionListRetrieval;
-import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
+import me.chan99k.learningmanager.common.PageRequest;
+import me.chan99k.learningmanager.common.PageResult;
+import me.chan99k.learningmanager.common.SortOrder;
 import me.chan99k.learningmanager.domain.session.Session;
 import me.chan99k.learningmanager.domain.session.SessionLocation;
 import me.chan99k.learningmanager.domain.session.SessionType;
@@ -54,27 +52,29 @@ class SessionListServiceTest {
 	void getSessionList_Success() {
 		// given
 		var session = createMockSession(1L, "테스트 세션", SessionType.ONLINE, SessionLocation.ZOOM);
-		var sessions = new PageImpl<>(List.of(session), PageRequest.of(0, 20), 1);
+		var pageRequest = PageRequest.of(0, 20, "scheduledAt", SortOrder.DESC);
+		var sessions = PageResult.of(List.of(session), pageRequest, 1);
 
-		when(sessionQueryRepository.findAllWithFilters(any(), any(), any(), any(), any()))
+		when(sessionQueryRepository.findAllWithFilters(any(), any(), any(), any(), any(PageRequest.class)))
 			.thenReturn(sessions);
 
 		var request = new SessionListRetrieval.SessionListRequest(0, 20, "scheduledAt,desc", null, null, null, null);
 
 		// when
-		Page<SessionListRetrieval.SessionListResponse> result = sessionListService.getSessionList(request);
+		PageResult<SessionListRetrieval.SessionListResponse> result = sessionListService.getSessionList(request);
 
 		// then
 		assertThat(result).isNotNull();
-		assertThat(result.getContent()).hasSize(1);
-		assertThat(result.getContent().get(0).id()).isEqualTo(1L);
-		assertThat(result.getContent().get(0).title()).isEqualTo("테스트 세션");
+		assertThat(result.content()).hasSize(1);
+		assertThat(result.content().get(0).id()).isEqualTo(1L);
+		assertThat(result.content().get(0).title()).isEqualTo("테스트 세션");
 
 		verify(sessionQueryRepository).findAllWithFilters(
 			eq(null), eq(null), eq(null), eq(null),
-			argThat(pageable -> pageable.getPageNumber() == 0 &&
-				pageable.getPageSize() == 20 &&
-				pageable.getSort().equals(Sort.by(Sort.Direction.DESC, "scheduledAt")))
+			argThat(pr -> pr.page() == 0 &&
+				pr.size() == 20 &&
+				"scheduledAt".equals(pr.sortBy()) &&
+				pr.sortOrder() == SortOrder.DESC)
 		);
 	}
 
@@ -85,9 +85,11 @@ class SessionListServiceTest {
 		Long courseId = 100L;
 		var session = createMockSessionWithCustomValues(1L, "과정 세션", SessionType.OFFLINE, SessionLocation.SITE,
 			courseId, null);
-		var sessions = new PageImpl<>(List.of(session), PageRequest.of(0, 10), 1);
+		var pageRequest = PageRequest.of(0, 10, "title", SortOrder.ASC);
+		var sessions = PageResult.of(List.of(session), pageRequest, 1);
 
-		when(sessionQueryRepository.findByCourseIdWithFilters(any(), any(), any(), any(), any(), any(), any()))
+		when(sessionQueryRepository.findByCourseIdWithFilters(any(), any(), any(), any(), any(), any(),
+			any(PageRequest.class)))
 			.thenReturn(sessions);
 
 		var request = new SessionListRetrieval.CourseSessionListRequest(
@@ -95,19 +97,20 @@ class SessionListServiceTest {
 		);
 
 		// when
-		Page<SessionListRetrieval.SessionListResponse> result =
+		PageResult<SessionListRetrieval.SessionListResponse> result =
 			sessionListService.getCourseSessionList(courseId, request);
 
 		// then
 		assertThat(result).isNotNull();
-		assertThat(result.getContent()).hasSize(1);
-		assertThat(result.getContent().get(0).type()).isEqualTo(SessionType.OFFLINE);
+		assertThat(result.content()).hasSize(1);
+		assertThat(result.content().get(0).type()).isEqualTo(SessionType.OFFLINE);
 
 		verify(sessionQueryRepository).findByCourseIdWithFilters(
 			eq(courseId), eq(SessionType.OFFLINE), eq(null), eq(null), eq(null), eq(true),
-			argThat(pageable -> pageable.getPageNumber() == 0 &&
-				pageable.getPageSize() == 10 &&
-				pageable.getSort().equals(Sort.by(Sort.Direction.ASC, "title")))
+			argThat(pr -> pr.page() == 0 &&
+				pr.size() == 10 &&
+				"title".equals(pr.sortBy()) &&
+				pr.sortOrder() == SortOrder.ASC)
 		);
 	}
 
@@ -118,9 +121,11 @@ class SessionListServiceTest {
 		Long curriculumId = 200L;
 		var session = createMockSessionWithCustomValues(1L, "커리큘럼 세션", SessionType.ONLINE, SessionLocation.GOOGLE_MEET,
 			null, curriculumId);
-		var sessions = new PageImpl<>(List.of(session), PageRequest.of(1, 5), 1);
+		var pageRequest = PageRequest.of(1, 5, "scheduledAt", SortOrder.ASC);
+		var sessions = PageResult.of(List.of(session), pageRequest, 1);
 
-		when(sessionQueryRepository.findByCurriculumIdWithFilters(any(), any(), any(), any(), any(), any(), any()))
+		when(sessionQueryRepository.findByCurriculumIdWithFilters(any(), any(), any(), any(), any(), any(),
+			any(PageRequest.class)))
 			.thenReturn(sessions);
 
 		var request = new SessionListRetrieval.CurriculumSessionListRequest(
@@ -128,19 +133,20 @@ class SessionListServiceTest {
 		);
 
 		// when
-		Page<SessionListRetrieval.SessionListResponse> result =
+		PageResult<SessionListRetrieval.SessionListResponse> result =
 			sessionListService.getCurriculumSessionList(curriculumId, request);
 
 		// then
 		assertThat(result).isNotNull();
-		assertThat(result.getContent()).hasSize(1);
-		assertThat(result.getContent().get(0).location()).isEqualTo(SessionLocation.GOOGLE_MEET);
+		assertThat(result.content()).hasSize(1);
+		assertThat(result.content().get(0).location()).isEqualTo(SessionLocation.GOOGLE_MEET);
 
 		verify(sessionQueryRepository).findByCurriculumIdWithFilters(
 			eq(curriculumId), eq(null), eq(SessionLocation.GOOGLE_MEET), eq(null), eq(null), eq(false),
-			argThat(pageable -> pageable.getPageNumber() == 1 &&
-				pageable.getPageSize() == 5 &&
-				pageable.getSort().equals(Sort.by(Sort.Direction.ASC, "scheduledAt")))
+			argThat(pr -> pr.page() == 1 &&
+				pr.size() == 5 &&
+				"scheduledAt".equals(pr.sortBy()) &&
+				pr.sortOrder() == SortOrder.ASC)
 		);
 	}
 
@@ -151,18 +157,19 @@ class SessionListServiceTest {
 		Instant futureStart = Instant.now().plusSeconds(3600);
 		Instant futureEnd = futureStart.plusSeconds(7200);
 		var session = createMockSessionWithTime(1L, "미래 세션", futureStart, futureEnd);
-		var sessions = new PageImpl<>(List.of(session), PageRequest.of(0, 20), 1);
+		var pageRequest = PageRequest.of(0, 20, "scheduledAt", SortOrder.DESC);
+		var sessions = PageResult.of(List.of(session), pageRequest, 1);
 
-		when(sessionQueryRepository.findAllWithFilters(any(), any(), any(), any(), any()))
+		when(sessionQueryRepository.findAllWithFilters(any(), any(), any(), any(), any(PageRequest.class)))
 			.thenReturn(sessions);
 
 		var request = new SessionListRetrieval.SessionListRequest(0, 20, "scheduledAt,desc", null, null, null, null);
 
 		// when
-		Page<SessionListRetrieval.SessionListResponse> result = sessionListService.getSessionList(request);
+		PageResult<SessionListRetrieval.SessionListResponse> result = sessionListService.getSessionList(request);
 
 		// then
-		assertThat(result.getContent().get(0).status()).isEqualTo(SessionListRetrieval.SessionStatus.UPCOMING);
+		assertThat(result.content().get(0).status()).isEqualTo(SessionListRetrieval.SessionStatus.UPCOMING);
 	}
 
 	@Test
@@ -173,18 +180,19 @@ class SessionListServiceTest {
 		Instant pastStart = fixedNow.minusSeconds(7200);
 		Instant pastEnd = fixedNow.minusSeconds(3600);
 		var session = createMockSessionWithTime(1L, "과거 세션", pastStart, pastEnd);
-		var sessions = new PageImpl<>(List.of(session), PageRequest.of(0, 20), 1);
+		var pageRequest = PageRequest.of(0, 20, "scheduledAt", SortOrder.DESC);
+		var sessions = PageResult.of(List.of(session), pageRequest, 1);
 
-		when(sessionQueryRepository.findAllWithFilters(any(), any(), any(), any(), any()))
+		when(sessionQueryRepository.findAllWithFilters(any(), any(), any(), any(), any(PageRequest.class)))
 			.thenReturn(sessions);
 
 		var request = new SessionListRetrieval.SessionListRequest(0, 20, "scheduledAt,desc", null, null, null, null);
 
 		// when
-		Page<SessionListRetrieval.SessionListResponse> result = sessionListService.getSessionList(request);
+		PageResult<SessionListRetrieval.SessionListResponse> result = sessionListService.getSessionList(request);
 
 		// then
-		assertThat(result.getContent().get(0).status()).isEqualTo(SessionListRetrieval.SessionStatus.COMPLETED);
+		assertThat(result.content().get(0).status()).isEqualTo(SessionListRetrieval.SessionStatus.COMPLETED);
 	}
 
 	@Test
@@ -195,18 +203,19 @@ class SessionListServiceTest {
 		Instant ongoingStart = fixedNow.minusSeconds(3600);
 		Instant ongoingEnd = fixedNow.plusSeconds(3600);
 		var session = createMockSessionWithTime(1L, "진행 중 세션", ongoingStart, ongoingEnd);
-		var sessions = new PageImpl<>(List.of(session), PageRequest.of(0, 20), 1);
+		var pageRequest = PageRequest.of(0, 20, "scheduledAt", SortOrder.DESC);
+		var sessions = PageResult.of(List.of(session), pageRequest, 1);
 
-		when(sessionQueryRepository.findAllWithFilters(any(), any(), any(), any(), any()))
+		when(sessionQueryRepository.findAllWithFilters(any(), any(), any(), any(), any(PageRequest.class)))
 			.thenReturn(sessions);
 
 		var request = new SessionListRetrieval.SessionListRequest(0, 20, "scheduledAt,desc", null, null, null, null);
 
 		// when
-		Page<SessionListRetrieval.SessionListResponse> result = sessionListService.getSessionList(request);
+		PageResult<SessionListRetrieval.SessionListResponse> result = sessionListService.getSessionList(request);
 
 		// then
-		assertThat(result.getContent().get(0).status()).isEqualTo(SessionListRetrieval.SessionStatus.ONGOING);
+		assertThat(result.content().get(0).status()).isEqualTo(SessionListRetrieval.SessionStatus.ONGOING);
 	}
 
 	@Test
@@ -214,9 +223,10 @@ class SessionListServiceTest {
 	void normalizeRequestParameters() {
 		// given
 		var session = createMockSession(1L, "테스트", SessionType.ONLINE, SessionLocation.ZOOM);
-		var sessions = new PageImpl<>(List.of(session), PageRequest.of(0, 20), 1);
+		var pageRequest = PageRequest.of(0, 20, "scheduledAt", SortOrder.DESC);
+		var sessions = PageResult.of(List.of(session), pageRequest, 1);
 
-		when(sessionQueryRepository.findAllWithFilters(any(), any(), any(), any(), any()))
+		when(sessionQueryRepository.findAllWithFilters(any(), any(), any(), any(), any(PageRequest.class)))
 			.thenReturn(sessions);
 
 		// 잘못된 파라미터들 (-1 page, 0 size, null sort)
@@ -228,8 +238,8 @@ class SessionListServiceTest {
 		// then - 정규화된 값들로 호출되었는지 확인
 		verify(sessionQueryRepository).findAllWithFilters(
 			any(), any(), any(), any(),
-			argThat(pageable -> pageable.getPageNumber() == 0 && // -1 -> 0
-				pageable.getPageSize() == 20) // 0 -> 20
+			argThat(pr -> pr.page() == 0 && // -1 -> 0
+				pr.size() == 20) // 0 -> 20
 		);
 	}
 
@@ -239,9 +249,11 @@ class SessionListServiceTest {
 		// given
 		Long memberId = 300L;
 		var session = createMockSession(1L, "사용자 세션", SessionType.ONLINE, SessionLocation.ZOOM);
-		var sessions = new PageImpl<>(List.of(session), PageRequest.of(0, 20), 1);
+		var pageRequest = PageRequest.of(0, 20, "scheduledAt", SortOrder.DESC);
+		var sessions = PageResult.of(List.of(session), pageRequest, 1);
 
-		when(sessionQueryRepository.findByMemberIdWithFilters(any(), any(), any(), any(), any(), any()))
+		when(
+			sessionQueryRepository.findByMemberIdWithFilters(any(), any(), any(), any(), any(), any(PageRequest.class)))
 			.thenReturn(sessions);
 
 		var request = new SessionListRetrieval.UserSessionListRequest(
@@ -249,20 +261,21 @@ class SessionListServiceTest {
 		);
 
 		// when
-		Page<SessionListRetrieval.SessionListResponse> result =
+		PageResult<SessionListRetrieval.SessionListResponse> result =
 			sessionListService.getUserSessionList(memberId, request);
 
 		// then
 		assertThat(result).isNotNull();
-		assertThat(result.getContent()).hasSize(1);
-		assertThat(result.getContent().get(0).id()).isEqualTo(1L);
-		assertThat(result.getContent().get(0).title()).isEqualTo("사용자 세션");
+		assertThat(result.content()).hasSize(1);
+		assertThat(result.content().get(0).id()).isEqualTo(1L);
+		assertThat(result.content().get(0).title()).isEqualTo("사용자 세션");
 
 		verify(sessionQueryRepository).findByMemberIdWithFilters(
 			eq(memberId), eq(null), eq(null), eq(null), eq(null),
-			argThat(pageable -> pageable.getPageNumber() == 0 &&
-				pageable.getPageSize() == 20 &&
-				pageable.getSort().equals(Sort.by(Sort.Direction.DESC, "scheduledAt")))
+			argThat(pr -> pr.page() == 0 &&
+				pr.size() == 20 &&
+				"scheduledAt".equals(pr.sortBy()) &&
+				pr.sortOrder() == SortOrder.DESC)
 		);
 	}
 

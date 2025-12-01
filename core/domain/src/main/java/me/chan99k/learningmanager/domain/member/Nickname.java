@@ -4,9 +4,6 @@ import static me.chan99k.learningmanager.domain.member.MemberProblemCode.*;
 
 import java.util.regex.Pattern;
 
-import jakarta.persistence.Embeddable;
-
-@Embeddable
 public record Nickname(String value) {
 	private static final int MIN_LENGTH = 2;
 	private static final int MAX_LENGTH = 17;

@@ -17,10 +17,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import me.chan99k.learningmanager.application.attendance.provides.AttendanceCheckIn;
-import me.chan99k.learningmanager.application.attendance.requires.AttendanceCommandRepository;
-import me.chan99k.learningmanager.application.attendance.requires.AttendanceQueryRepository;
-import me.chan99k.learningmanager.application.auth.requires.UserContext;
-import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
+import me.chan99k.learningmanager.application.auth.UserContext;
+import me.chan99k.learningmanager.application.session.SessionQueryRepository;
 import me.chan99k.learningmanager.domain.attendance.Attendance;
 import me.chan99k.learningmanager.domain.attendance.AttendanceStatus;
 import me.chan99k.learningmanager.domain.exception.AuthProblemCode;

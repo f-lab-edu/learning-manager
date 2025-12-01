@@ -14,8 +14,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import me.chan99k.learningmanager.application.member.provides.MemberProfileRetrieval;
 import me.chan99k.learningmanager.application.member.provides.MemberProfileUpdate;
-import me.chan99k.learningmanager.application.member.requires.MemberCommandRepository;
-import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
 import me.chan99k.learningmanager.domain.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.Member;
 import me.chan99k.learningmanager.domain.member.MemberProblemCode;

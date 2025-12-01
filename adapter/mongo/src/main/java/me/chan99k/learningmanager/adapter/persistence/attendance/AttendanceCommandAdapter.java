@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import me.chan99k.learningmanager.adapter.persistence.attendance.documents.AttendanceDocument;
 import me.chan99k.learningmanager.adapter.persistence.attendance.documents.AttendanceReservationDocument;
-import me.chan99k.learningmanager.application.attendance.requires.AttendanceCommandRepository;
+import me.chan99k.learningmanager.application.attendance.AttendanceCommandRepository;
 import me.chan99k.learningmanager.domain.attendance.Attendance;
 
 @Repository

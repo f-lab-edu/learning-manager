@@ -5,8 +5,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.chan99k.learningmanager.application.member.requires.MemberCourseQueryRepository;
-
 @Service
 @Transactional(readOnly = true)
 public class MemberCourseParticipationService {

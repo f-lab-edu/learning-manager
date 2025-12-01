@@ -8,15 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import me.chan99k.learningmanager.application.session.provides.SessionListRetrieval;
-import me.chan99k.learningmanager.application.session.requires.SessionQueryRepository;
+import me.chan99k.learningmanager.common.PageRequest;
+import me.chan99k.learningmanager.common.PageResult;
+import me.chan99k.learningmanager.common.SortOrder;
 import me.chan99k.learningmanager.domain.session.Session;
 
 @Service
@@ -32,65 +30,66 @@ public class SessionListService implements SessionListRetrieval {
 	}
 
 	@Override
-	public Page<SessionListResponse> getSessionList(SessionListRequest request) {
-		Pageable pageable = createPageable(request.page(), request.size(), request.sort());
+	public PageResult<SessionListResponse> getSessionList(SessionListRequest request) {
+		PageRequest pageRequest = createPageRequest(request.page(), request.size(), request.sort());
 
-		Page<Session> sessions = sessionQueryRepository.findAllWithFilters(
+		PageResult<Session> sessions = sessionQueryRepository.findAllWithFilters(
 			request.type(),
 			request.location(),
 			request.startDate(),
 			request.endDate(),
-			pageable
+			pageRequest
 		);
 
 		return sessions.map(this::toSessionListResponse);
 	}
 
 	@Override
-	public Page<SessionListResponse> getCourseSessionList(Long courseId, CourseSessionListRequest request) {
-		Pageable pageable = createPageable(request.page(), request.size(), request.sort());
+	public PageResult<SessionListResponse> getCourseSessionList(Long courseId, CourseSessionListRequest request) {
+		PageRequest pageRequest = createPageRequest(request.page(), request.size(), request.sort());
 
-		Page<Session> sessions = sessionQueryRepository.findByCourseIdWithFilters(
+		PageResult<Session> sessions = sessionQueryRepository.findByCourseIdWithFilters(
 			courseId,
 			request.type(),
 			request.location(),
 			request.startDate(),
 			request.endDate(),
 			request.includeChildSessions(),
-			pageable
+			pageRequest
 		);
 
 		return sessions.map(this::toSessionListResponse);
 	}
 
 	@Override
-	public Page<SessionListResponse> getCurriculumSessionList(Long curriculumId, CurriculumSessionListRequest request) {
-		Pageable pageable = createPageable(request.page(), request.size(), request.sort());
+	public PageResult<SessionListResponse> getCurriculumSessionList(Long curriculumId,
+		CurriculumSessionListRequest request) {
+		PageRequest pageRequest = createPageRequest(request.page(), request.size(), request.sort());
 
-		Page<Session> sessions = sessionQueryRepository.findByCurriculumIdWithFilters(
+		PageResult<Session> sessions = sessionQueryRepository.findByCurriculumIdWithFilters(
 			curriculumId,
 			request.type(),
 			request.location(),
 			request.startDate(),
 			request.endDate(),
 			request.includeChildSessions(),
-			pageable
+			pageRequest
 		);
 
 		return sessions.map(this::toSessionListResponse);
 	}
 
 	@Override
-	public Page<SessionListResponse> getUserSessionList(Long memberId, UserSessionListRequest request) {
-		Pageable pageable = createPageable(request.page(), request.size(), request.sort());
+	public PageResult<SessionListResponse> getUserSessionList(Long memberId, UserSessionListRequest request) {
+		PageRequest pageRequest = createPageRequest(request.page(), request.size(), request.sort());
 
-		Page<Session> sessions = sessionQueryRepository.findByMemberIdWithFilters(
+		PageResult<Session> sessions = sessionQueryRepository.findByMemberIdWithFilters(
 			memberId,
 			request.type(),
 			request.location(),
 			request.startDate(),
 			request.endDate(),
-			pageable
+			pageRequest
 		);
 
 		return sessions.map(this::toSessionListResponse);
@@ -114,18 +113,18 @@ public class SessionListService implements SessionListRetrieval {
 			));
 	}
 
-	private Pageable createPageable(int page, int size, String sort) {
+	private PageRequest createPageRequest(int page, int size, String sort) {
 		if (sort == null || sort.isEmpty()) {
 			return PageRequest.of(page, size);
 		}
 
 		String[] sortParts = sort.split(",");
-		String property = sortParts[0];
-		Sort.Direction direction = sortParts.length > 1 && "asc".equalsIgnoreCase(sortParts[1])
-			? Sort.Direction.ASC
-			: Sort.Direction.DESC;
+		String sortBy = sortParts[0];
+		SortOrder sortOrder = sortParts.length > 1 && "asc".equalsIgnoreCase(sortParts[1])
+			? SortOrder.ASC
+			: SortOrder.DESC;
 
-		return PageRequest.of(page, size, Sort.by(direction, property));
+		return PageRequest.of(page, size, sortBy, sortOrder);
 	}
 
 	private SessionListResponse toSessionListResponse(Session session) {

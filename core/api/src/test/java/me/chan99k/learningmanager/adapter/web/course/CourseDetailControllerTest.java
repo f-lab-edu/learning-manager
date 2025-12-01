@@ -1,6 +1,7 @@
 package me.chan99k.learningmanager.adapter.web.course;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
 import java.time.Instant;
@@ -13,16 +14,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.task.SyncTaskExecutor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 
 import me.chan99k.learningmanager.application.course.CourseDetailInfo;
 import me.chan99k.learningmanager.application.course.CourseMemberInfo;
 import me.chan99k.learningmanager.application.course.provides.CourseDetailRetrieval;
+import me.chan99k.learningmanager.common.PageRequest;
+import me.chan99k.learningmanager.common.PageResult;
 import me.chan99k.learningmanager.domain.course.CourseRole;
+import me.chan99k.learningmanager.web.course.CourseDetailController;
 
 @ExtendWith(MockitoExtension.class)
 class CourseDetailControllerTest {
@@ -57,25 +57,25 @@ class CourseDetailControllerTest {
 	@DisplayName("[Success] 과정 멤버 목록 조회가 정상 동작한다")
 	void getCourseMembers() throws Exception {
 		Long courseId = 1L;
-		Pageable pageable = PageRequest.of(0, 20);
+		PageRequest pageRequest = PageRequest.of(0, 20);
 		List<CourseMemberInfo> members = List.of(
 			new CourseMemberInfo(1L, "사용자1", "user1@test.com", CourseRole.MENTEE, Instant.now()),
 			new CourseMemberInfo(2L, "사용자2", "user2@test.com", CourseRole.MANAGER, Instant.now())
 		);
-		Page<CourseMemberInfo> memberPage = new PageImpl<>(members, pageable, 2);
+		PageResult<CourseMemberInfo> memberPage = PageResult.of(members, pageRequest, 2);
 
-		given(courseDetailRetrieval.getCourseMembers(courseId, pageable))
+		given(courseDetailRetrieval.getCourseMembers(eq(courseId), any(PageRequest.class)))
 			.willReturn(memberPage);
 
 		CourseDetailController controller = new CourseDetailController(courseDetailRetrieval, new SyncTaskExecutor());
-		ResponseEntity<Page<CourseMemberInfo>> result =
-			controller.getCourseMembers(courseId, pageable).get();
+		ResponseEntity<PageResult<CourseMemberInfo>> result =
+			controller.getCourseMembers(courseId, 0, 20).get();
 
 		assertThat(result.getStatusCode().value()).isEqualTo(200);
 		Assertions.assertNotNull(result.getBody());
-		assertThat(result.getBody().getContent()).hasSize(2);
-		assertThat(result.getBody().getContent().get(0).nickname()).isEqualTo("사용자1");
-		assertThat(result.getBody().getTotalElements()).isEqualTo(2);
-		verify(courseDetailRetrieval).getCourseMembers(courseId, pageable);
+		assertThat(result.getBody().content()).hasSize(2);
+		assertThat(result.getBody().content().get(0).nickname()).isEqualTo("사용자1");
+		assertThat(result.getBody().totalElements()).isEqualTo(2);
+		verify(courseDetailRetrieval).getCourseMembers(eq(courseId), any(PageRequest.class));
 	}
 }

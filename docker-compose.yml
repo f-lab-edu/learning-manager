@@ -39,17 +39,18 @@ services:
   mysql:
     image: mysql:8.0.36
     container_name: lm-mysql
+    platform: linux/amd64
     restart: unless-stopped
     ports:
       - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME:-lm_db_dev}
-      MYSQL_USER: ${DB_USER:-lm-admin}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: lm_db_dev
+      MYSQL_USER: lm-admin
+      MYSQL_PASSWORD: 1q2w3e4r
     volumes:
       - mysql_data:/var/lib/mysql
-    command: --default-authentication-plugin=mysql_native_password
+    command: --default-authentication-plugin=caching_sha2_password
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       timeout: 20s

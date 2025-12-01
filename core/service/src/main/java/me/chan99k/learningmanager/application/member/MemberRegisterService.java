@@ -11,8 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import me.chan99k.learningmanager.application.member.provides.AccountAddition;
 import me.chan99k.learningmanager.application.member.provides.MemberRegistration;
 import me.chan99k.learningmanager.application.member.provides.SignUpConfirmation;
-import me.chan99k.learningmanager.application.member.requires.MemberCommandRepository;
-import me.chan99k.learningmanager.application.member.requires.MemberQueryRepository;
 import me.chan99k.learningmanager.domain.exception.DomainException;
 import me.chan99k.learningmanager.domain.member.Account;
 import me.chan99k.learningmanager.domain.member.EmailSender;

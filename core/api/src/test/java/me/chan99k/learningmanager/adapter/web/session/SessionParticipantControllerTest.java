@@ -19,8 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.adapter.web.GlobalExceptionHandler;
-import me.chan99k.learningmanager.application.auth.requires.UserContext;
+import me.chan99k.learningmanager.application.auth.UserContext;
 import me.chan99k.learningmanager.application.session.SessionParticipantService;
 import me.chan99k.learningmanager.application.session.provides.SessionParticipantManagement.AddParticipantRequest;
 import me.chan99k.learningmanager.application.session.provides.SessionParticipantManagement.ChangeParticipantRoleRequest;
@@ -34,6 +33,8 @@ import me.chan99k.learningmanager.domain.exception.AuthorizationException;
 import me.chan99k.learningmanager.domain.exception.DomainException;
 import me.chan99k.learningmanager.domain.session.SessionParticipantRole;
 import me.chan99k.learningmanager.domain.session.SessionProblemCode;
+import me.chan99k.learningmanager.web.GlobalExceptionHandler;
+import me.chan99k.learningmanager.web.session.SessionParticipantController;
 
 @WebMvcTest(controllers = SessionParticipantController.class,
 	excludeAutoConfiguration = {
