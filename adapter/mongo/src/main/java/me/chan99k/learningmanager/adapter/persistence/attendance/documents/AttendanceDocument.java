@@ -13,11 +13,11 @@ import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import me.chan99k.learningmanager.domain.attendance.Attendance;
-import me.chan99k.learningmanager.domain.attendance.AttendanceEvent;
-import me.chan99k.learningmanager.domain.attendance.AttendanceStatus;
-import me.chan99k.learningmanager.domain.attendance.CheckedIn;
-import me.chan99k.learningmanager.domain.attendance.CheckedOut;
+import me.chan99k.learningmanager.attendance.Attendance;
+import me.chan99k.learningmanager.attendance.AttendanceEvent;
+import me.chan99k.learningmanager.attendance.AttendanceStatus;
+import me.chan99k.learningmanager.attendance.CheckedIn;
+import me.chan99k.learningmanager.attendance.CheckedOut;
 
 @Document
 @CompoundIndex(name = "session_member_idx",

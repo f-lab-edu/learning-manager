@@ -4,22 +4,23 @@ pluginManagement {
 
 rootProject.name = "learning-manager"
 
-// Core 모듈들
 include(
-    ":core:api",
+    ":app:api"
+)
+
+include(
     ":core:domain",
     ":core:provides",
     ":core:requires",
     ":core:service"
 )
 
-// Adapter 모듈들
 include(
-    ":adapter:mysql",
-    ":adapter:mongo"
+    ":adapter:persistence",
+    ":adapter:mongo",
+    ":adapter:infra"
 )
 
-// Support 모듈들
 include(
     ":support:logging",
     ":support:monitoring"
