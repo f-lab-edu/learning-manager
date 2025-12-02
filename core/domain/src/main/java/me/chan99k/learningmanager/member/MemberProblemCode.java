@@ -22,6 +22,8 @@ public enum MemberProblemCode implements ProblemCode {
 	// TODO :: 예외 메시지들을 종류별로 묶어 놓았는데, 식별 코드를 +1 씩 증가 시켜서 사용 하다보니 계층 구조적으로 관리가 안됨 -> 정책 수정 필요 -> 애플리케이션 시작시 code를 generate 하는 방법?
 	INVALID_EMAIL_FORMAT("DML011", "[System] 유효하지 않은 이메일 형식입니다."),
 	INVALID_CREDENTIAL("DML028", "[System] 유효하지 않은 자격 증명 정보입니다."),
+	CREDENTIAL_ALREADY_EXISTS("DML033", "[System] 이미 동일한 유형의 인증 수단이 등록되어 있습니다."),
+	CREDENTIAL_NOT_FOUND("DML034", "[System] 해당 유형의 인증 수단을 찾을 수 없습니다."),
 
 	PASSWORD_LENGTH_INVALID("DML012", "[System] 비밀번호는 최소 8자 이상, 64자 이하여야 합니다."),
 	PASSWORD_NO_LOWERCASE("DML013", "[System] 비밀번호에는 소문자가 최소 1개 이상 포함되어야 합니다."),

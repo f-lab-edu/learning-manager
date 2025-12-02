@@ -24,7 +24,7 @@ public class MemberProfileService implements MemberProfileRetrieval, MemberProfi
 		Member member = memberQueryRepository.findById(memberId)
 			.orElseThrow(() -> new DomainException(MemberProblemCode.MEMBER_NOT_FOUND));
 
-		// 회원 상태 검증이 필요 하다면 여기에 추가
+		// NOTE :: 회원 상태 검증이 필요 하다면 여기에 추가
 
 		return new MemberProfileRetrieval.Response(
 			member.getProfileImageUrl(),
