@@ -33,10 +33,12 @@ spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-te
 micrometer-prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
 
 # Spring Framework
+spring-core = { module = "org.springframework:spring-core" }
 spring-context = { module = "org.springframework:spring-context" }
 spring-tx = { module = "org.springframework:spring-tx" }
 spring-security-test = { module = "org.springframework.security:spring-security-test" }
 spring-data-commons = { module = "org.springframework.data:spring-data-commons" }
+spring-security-crypto = { module = "org.springframework.security:spring-security-crypto" }
 
 # Jakarta
 jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api" }
@@ -64,6 +66,10 @@ testcontainers-junit = { module = "org.testcontainers:junit-jupiter" }
 testcontainers-mysql = { module = "org.testcontainers:mysql" }
 testcontainers-mongodb = { module = "org.testcontainers:mongodb" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+
+# Logging
+slf4j-api = { module = "org.slf4j:slf4j-api" }
+logback-classic = { module = "ch.qos.logback:logback-classic" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
