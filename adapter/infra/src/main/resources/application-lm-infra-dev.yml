@@ -9,3 +9,5 @@ auth:
       issuer: "lxm-dev-api"
       audience: "lxm-dev-auth"
       validity-in-seconds: 300
+  refresh-token:
+    ttl-hours: 24  # 24시간 (개발 편의)

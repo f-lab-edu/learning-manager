@@ -22,7 +22,7 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
-			.csrf(AbstractHttpConfigurer::disable)
+			.csrf(AbstractHttpConfigurer::disable) // JWT 토큰이 쿠키가 아닌 Authorization 헤더로 전달되므로 CSRF 공격 불가
 			.httpBasic(AbstractHttpConfigurer::disable)
 			.formLogin(AbstractHttpConfigurer::disable)
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

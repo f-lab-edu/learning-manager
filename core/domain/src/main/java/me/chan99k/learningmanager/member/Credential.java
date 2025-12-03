@@ -29,7 +29,9 @@ public class Credential {
 
 	public static Credential reconstitute(CredentialType type, String secret, Instant lastUsedAt) {
 		Credential credential = new Credential(type, secret);
-		credential.lastUsedAt = LocalDateTime.ofInstant(lastUsedAt, ZoneId.of("Asia/Seoul"));
+		if (lastUsedAt != null) {
+			credential.lastUsedAt = LocalDateTime.ofInstant(lastUsedAt, ZoneId.of("Asia/Seoul"));
+		}
 
 		return credential;
 	}

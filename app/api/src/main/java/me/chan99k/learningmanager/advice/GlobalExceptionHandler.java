@@ -14,6 +14,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import me.chan99k.learningmanager.auth.AuthProblemCode;
 import me.chan99k.learningmanager.course.CourseProblemCode;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.exception.ProblemCode;
@@ -31,6 +32,16 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(DomainException.class)
 	public ResponseEntity<ProblemDetail> handleDomainException(DomainException e) {
 		ProblemCode problemCode = e.getProblemCode();
+
+		// 인증 관련 예외 - 401 UNAUTHORIZED
+		if (isAuthenticationError(problemCode)) {
+			return createErrorResponse(HttpStatus.UNAUTHORIZED, "Domain Error", e);
+		}
+
+		// 토큰 없음 예외 - 404 NOT_FOUND
+		if (problemCode == AuthProblemCode.TOKEN_NOT_FOUND) {
+			return createErrorResponse(HttpStatus.NOT_FOUND, "Domain Error", e);
+		}
 
 		// 접근 제어 관련 예외 - 403 FORBIDDEN
 		if (isAccessControlError(problemCode)) {
@@ -51,6 +62,16 @@ public class GlobalExceptionHandler {
 
 		// 기타 도메인 예외 - 400 BAD_REQUEST
 		return createErrorResponse(HttpStatus.BAD_REQUEST, "Domain Error", e);
+	}
+
+	/**
+	 * 인증 관련 에러인지 확인한다.
+	 */
+	private boolean isAuthenticationError(ProblemCode problemCode) {
+		return problemCode == AuthProblemCode.INVALID_CREDENTIALS
+			|| problemCode == AuthProblemCode.INVALID_TOKEN
+			|| problemCode == AuthProblemCode.EXPIRED_TOKEN
+			|| problemCode == AuthProblemCode.REVOKED_TOKEN;
 	}
 
 	/**

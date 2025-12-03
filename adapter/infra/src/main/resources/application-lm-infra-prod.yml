@@ -9,3 +9,5 @@ auth:
       issuer: "lxm-prod-api"
       audience: "lxm-prod-auth"
       validity-in-seconds: 300
+  refresh-token:
+    ttl-hours: ${AUTH_REFRESH_TOKEN_TTL_HOURS:168}  # 기본 7일 (168시간)

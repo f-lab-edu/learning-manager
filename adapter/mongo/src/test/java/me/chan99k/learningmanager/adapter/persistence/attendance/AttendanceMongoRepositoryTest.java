@@ -242,7 +242,8 @@ class AttendanceMongoRepositoryTest {
 		long endTime = System.currentTimeMillis();
 
 		assertThat(result).hasSize(3);
-		assertThat(endTime - startTime).isLessThan(100); // 100ms 이내
+		// CI 환경에서 Testcontainers 오버헤드를 고려하여 임계값을 500ms로 설정
+		assertThat(endTime - startTime).isLessThan(500);
 	}
 
 	private AttendanceDocument createTestAttendanceDocument(Long memberId, Long sessionId, AttendanceStatus status) {

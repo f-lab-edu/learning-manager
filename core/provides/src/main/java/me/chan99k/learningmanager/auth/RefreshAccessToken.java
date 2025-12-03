@@ -1,10 +1,13 @@
 package me.chan99k.learningmanager.auth;
 
+import jakarta.validation.constraints.NotBlank;
+
 public interface RefreshAccessToken {
 
 	Response refresh(Request request);
 
 	record Request(
+		@NotBlank(message = "[AUTH] 리프레시 토큰은 필수입니다.")
 		String refreshToken
 	) {
 	}

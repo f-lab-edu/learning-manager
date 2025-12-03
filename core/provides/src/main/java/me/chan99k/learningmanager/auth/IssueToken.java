@@ -1,11 +1,15 @@
 package me.chan99k.learningmanager.auth;
 
+import jakarta.validation.constraints.NotBlank;
+
 public interface IssueToken {
 
 	Response issueToken(Request request);
 
 	record Request(
+		@NotBlank(message = "[AUTH] 이메일은 필수입니다.")
 		String email,
+		@NotBlank(message = "[AUTH] 비밀번호는 필수입니다.")
 		String password
 	) {
 	}
