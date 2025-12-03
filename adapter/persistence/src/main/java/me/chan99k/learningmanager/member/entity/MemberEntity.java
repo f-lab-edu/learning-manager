@@ -3,6 +3,7 @@ package me.chan99k.learningmanager.member.entity;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
@@ -21,7 +22,7 @@ import me.chan99k.learningmanager.member.SystemRole;
 public class MemberEntity extends MutableEntity {
 
 	@Embedded
-	@Column(name = "primary_email")
+	@AttributeOverride(name = "address", column = @Column(name = "primary_email"))
 	private Email primaryEmail;
 
 	@OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)

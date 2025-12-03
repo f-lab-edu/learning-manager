@@ -1,5 +1,0 @@
-auth:
-  jwt:
-    secret: ${JWT_SECRET:0HWYpnc4xWeXkYeUq20PORikZz19xkUzWk6fZisTilI=}
-    access-token-expiration-seconds: 3600  # 1시간
-    issuer: learning-manager

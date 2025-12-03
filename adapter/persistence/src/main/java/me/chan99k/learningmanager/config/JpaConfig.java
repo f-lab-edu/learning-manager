@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @Configuration
 @EnableJpaAuditing
-@EnableJpaRepositories(basePackages = "me.chan99k.learningmanager.adapter.persistence")
+@EnableJpaRepositories(basePackages = "me.chan99k.learningmanager")
 public class JpaConfig {
 	@Bean
 	public AuditorAware<Long> auditorAware() {

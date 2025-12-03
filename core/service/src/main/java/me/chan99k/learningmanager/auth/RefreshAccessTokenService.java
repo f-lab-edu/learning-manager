@@ -23,7 +23,7 @@ public class RefreshAccessTokenService implements RefreshAccessToken {
 
 	public RefreshAccessTokenService(RefreshTokenRepository refreshTokenRepository,
 		MemberQueryRepository memberQueryRepository, JwtProvider jwtProvider,
-		@Value("${auth.refresh-token.ttl-hours:7}") int refreshTokenTtlHours
+		@Value("${auth.refresh-token.ttl-hours}") int refreshTokenTtlHours
 	) {
 		this.refreshTokenRepository = refreshTokenRepository;
 		this.memberQueryRepository = memberQueryRepository;

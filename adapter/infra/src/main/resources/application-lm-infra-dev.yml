@@ -1,0 +1,11 @@
+auth:
+  jwt:
+    secret: jyLn8WGhNyR7fSHKPqPSrMCWbGW6x0EXRuqutT8nzg4=
+    access-token:
+      expiration-seconds: 3600  # 1시간
+      issuer: "lxm-dev-api"
+      audience: "lxm-dev-auth"
+    password-reset-token:
+      issuer: "lxm-dev-api"
+      audience: "lxm-dev-auth"
+      validity-in-seconds: 300

@@ -1,0 +1,11 @@
+auth:
+  jwt:
+    secret: ${AUTH_JWT_SECRET}
+    access-token:
+      expiration-seconds: ${AUTH_JWT_ACCESS_TOKEN_EXPIRATION:1800}
+      issuer: "lxm-prod-api"
+      audience: "lxm-prod-auth"
+    password-reset-token:
+      issuer: "lxm-prod-api"
+      audience: "lxm-prod-auth"
+      validity-in-seconds: 300

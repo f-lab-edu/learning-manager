@@ -27,7 +27,7 @@ public class IssueTokenService implements IssueToken {
 
 	public IssueTokenService(MemberQueryRepository accountQueryRepository, PasswordEncoder passwordEncoder,
 		JwtProvider jwtProvider, RefreshTokenRepository refreshTokenRepository,
-		@Value("${auth.refresh-token.ttl-hours:7}") int refreshTokenTtlHours) {
+		@Value("${auth.refresh-token.ttl-hours}") int refreshTokenTtlHours) {
 		this.memberQueryRepository = accountQueryRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.jwtProvider = jwtProvider;

@@ -25,8 +25,8 @@ public class JwtProviderAdapter implements JwtProvider {
 
 	public JwtProviderAdapter(
 		@Value("${auth.jwt.secret}") String secret,
-		@Value("${auth.jwt.access-token-expiration-seconds:3600}") long accessTokenExpirationSeconds,
-		@Value("${auth.jwt.issuer:learning-manager}") String issuer
+		@Value("${auth.jwt.access-token.expiration-seconds}") long accessTokenExpirationSeconds,
+		@Value("${auth.jwt.access-token.issuer}") String issuer
 	) {
 		this.secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
 		this.accessTokenExpirationSeconds = accessTokenExpirationSeconds;
