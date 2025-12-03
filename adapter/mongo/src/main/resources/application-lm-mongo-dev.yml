@@ -1,0 +1,4 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://admin:mongopassword@localhost:27017/learning_manager?authSource=admin

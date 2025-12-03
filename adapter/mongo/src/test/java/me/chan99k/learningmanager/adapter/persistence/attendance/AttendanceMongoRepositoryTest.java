@@ -20,8 +20,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import me.chan99k.learningmanager.adapter.persistence.attendance.config.TestMongoConfig;
 import me.chan99k.learningmanager.adapter.persistence.attendance.documents.AttendanceDocument;
-import me.chan99k.learningmanager.domain.attendance.Attendance;
-import me.chan99k.learningmanager.domain.attendance.AttendanceStatus;
+import me.chan99k.learningmanager.attendance.Attendance;
+import me.chan99k.learningmanager.attendance.AttendanceStatus;
 
 @DataMongoTest
 @Testcontainers
@@ -242,7 +242,8 @@ class AttendanceMongoRepositoryTest {
 		long endTime = System.currentTimeMillis();
 
 		assertThat(result).hasSize(3);
-		assertThat(endTime - startTime).isLessThan(100); // 100ms 이내
+		// CI 환경에서 Testcontainers 오버헤드를 고려하여 임계값을 500ms로 설정
+		assertThat(endTime - startTime).isLessThan(500);
 	}
 
 	private AttendanceDocument createTestAttendanceDocument(Long memberId, Long sessionId, AttendanceStatus status) {

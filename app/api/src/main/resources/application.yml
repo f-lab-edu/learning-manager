@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: learning-manager
+  profiles:
+    active: dev
+    group:
+      dev:
+        - lm-infra
+        - lm-infra-dev
+        - lm-persistence
+        - lm-persistence-dev
+        - lm-mongo
+        - lm-mongo-dev
+      prod:
+        - lm-infra
+        - lm-infra-prod
+        - lm-persistence
+        - lm-persistence-prod
+        - lm-mongo
+        - lm-mongo-prod
+
+server:
+  port: 8080
+
+course:
+  member:
+    bulk:
+      max-size: 100

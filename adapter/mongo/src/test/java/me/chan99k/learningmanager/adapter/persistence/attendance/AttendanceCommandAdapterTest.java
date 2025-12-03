@@ -16,7 +16,7 @@ import org.springframework.dao.DuplicateKeyException;
 
 import me.chan99k.learningmanager.adapter.persistence.attendance.documents.AttendanceDocument;
 import me.chan99k.learningmanager.adapter.persistence.attendance.documents.AttendanceReservationDocument;
-import me.chan99k.learningmanager.domain.attendance.Attendance;
+import me.chan99k.learningmanager.attendance.Attendance;
 
 @ExtendWith(MockitoExtension.class)
 class AttendanceCommandAdapterTest {

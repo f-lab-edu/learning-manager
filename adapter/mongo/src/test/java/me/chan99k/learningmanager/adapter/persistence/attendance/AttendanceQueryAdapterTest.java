@@ -19,9 +19,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import me.chan99k.learningmanager.adapter.persistence.attendance.config.TestMongoConfig;
 import me.chan99k.learningmanager.adapter.persistence.attendance.documents.AttendanceDocument;
-import me.chan99k.learningmanager.application.attendance.AttendanceQueryRepository;
-import me.chan99k.learningmanager.domain.attendance.Attendance;
-import me.chan99k.learningmanager.domain.attendance.AttendanceStatus;
+import me.chan99k.learningmanager.attendance.Attendance;
+import me.chan99k.learningmanager.attendance.AttendanceQueryRepository;
+import me.chan99k.learningmanager.attendance.AttendanceStatus;
 
 @DataMongoTest
 @Testcontainers
