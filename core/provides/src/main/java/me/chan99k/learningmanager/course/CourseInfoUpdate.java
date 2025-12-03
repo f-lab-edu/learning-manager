@@ -4,7 +4,7 @@ package me.chan99k.learningmanager.course;
  * [P1] 스터디 과정 정보 수정
  */
 public interface CourseInfoUpdate {
-	void updateCourseInfo(Long courseId, Request request);
+	void updateCourseInfo(Long requestedBy, Long courseId, Request request);
 
 	/**
 	 * 과정 정보 수정 요청 record

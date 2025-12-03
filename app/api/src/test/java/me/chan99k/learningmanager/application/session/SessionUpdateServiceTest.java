@@ -16,7 +16,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.course.Course;
 import me.chan99k.learningmanager.course.CourseProblemCode;
 import me.chan99k.learningmanager.course.CourseQueryRepository;
@@ -56,9 +55,6 @@ class SessionUpdateServiceTest {
 	private MemberQueryRepository memberQueryRepository;
 
 	@Mock
-	private UserContext userContext;
-
-	@Mock
 	private Session session;
 
 	@Mock
@@ -86,14 +82,13 @@ class SessionUpdateServiceTest {
 		);
 
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
 		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(member));
 		when(session.getCourseId()).thenReturn(courseId);
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 
 		// when
-		sessionUpdateService.updateSession(sessionId, request);
+		sessionUpdateService.updateSession(managerId, sessionId, request);
 
 		// then
 		verify(session).reschedule(scheduledAt, scheduledEndAt, clock);
@@ -120,7 +115,6 @@ class SessionUpdateServiceTest {
 		);
 
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(adminId);
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
 		when(memberQueryRepository.findById(adminId)).thenReturn(Optional.of(member));
 		when(session.getCourseId()).thenReturn(null);
@@ -128,36 +122,13 @@ class SessionUpdateServiceTest {
 		when(member.getRole()).thenReturn(SystemRole.ADMIN);
 
 		// when
-		sessionUpdateService.updateSession(sessionId, request);
+		sessionUpdateService.updateSession(adminId, sessionId, request);
 
 		// then
 		verify(session).reschedule(scheduledAt, scheduledEndAt, clock);
 		verify(session).changeInfo("Updated Standalone Session", SessionType.OFFLINE, clock);
 		verify(session).changeLocation(SessionLocation.SITE, "Conference Room A", clock);
 		verify(sessionCommandRepository).save(session);
-	}
-
-	@Test
-	@DisplayName("[Failure] 인증되지 않은 사용자는 IllegalStateException이 발생한다")
-	void updateSession_Fail_Unauthenticated() {
-		long sessionId = 1L;
-		SessionUpdate.Request request = new SessionUpdate.Request(
-			"Title", LocalDateTime.now().plusDays(1).toInstant(ZoneOffset.UTC),
-			LocalDateTime.now().plusDays(1).plusHours(1).toInstant(ZoneOffset.UTC),
-			SessionType.ONLINE, SessionLocation.ZOOM, null
-		);
-
-		// given
-		when(userContext.getCurrentMemberId()).thenThrow(
-			new IllegalStateException("인증된 사용자의 컨텍스트를 찾을 수 없습니다"));
-
-		// when & then
-		assertThatThrownBy(() -> sessionUpdateService.updateSession(sessionId, request))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessageContaining("인증된 사용자의 컨텍스트를 찾을 수 없습니다");
-
-		verify(sessionQueryRepository, never()).findById(anyLong());
-		verify(sessionCommandRepository, never()).save(any());
 	}
 
 	@Test
@@ -172,11 +143,10 @@ class SessionUpdateServiceTest {
 		);
 
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.empty());
 
 		// when & then
-		assertThatThrownBy(() -> sessionUpdateService.updateSession(sessionId, request))
+		assertThatThrownBy(() -> sessionUpdateService.updateSession(managerId, sessionId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.SESSION_NOT_FOUND);
 
@@ -196,14 +166,13 @@ class SessionUpdateServiceTest {
 		);
 
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(nonManagerId);
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
 		when(memberQueryRepository.findById(nonManagerId)).thenReturn(Optional.of(member));
 		when(session.getCourseId()).thenReturn(courseId);
 		when(courseQueryRepository.findManagedCourseById(courseId, nonManagerId)).thenReturn(Optional.empty());
 
 		// when & then
-		assertThatThrownBy(() -> sessionUpdateService.updateSession(sessionId, request))
+		assertThatThrownBy(() -> sessionUpdateService.updateSession(nonManagerId, sessionId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", CourseProblemCode.NOT_COURSE_MANAGER);
 
@@ -222,7 +191,6 @@ class SessionUpdateServiceTest {
 		);
 
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(userId);
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
 		when(memberQueryRepository.findById(userId)).thenReturn(Optional.of(member));
 		when(session.getCourseId()).thenReturn(null);
@@ -230,7 +198,7 @@ class SessionUpdateServiceTest {
 		when(member.getRole()).thenReturn(SystemRole.MEMBER);
 
 		// when & then
-		assertThatThrownBy(() -> sessionUpdateService.updateSession(sessionId, request))
+		assertThatThrownBy(() -> sessionUpdateService.updateSession(userId, sessionId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.ADMIN_ONLY_ACTION);
 
@@ -249,12 +217,11 @@ class SessionUpdateServiceTest {
 		);
 
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(invalidMemberId);
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
 		when(memberQueryRepository.findById(invalidMemberId)).thenReturn(Optional.empty());
 
 		// when & then
-		assertThatThrownBy(() -> sessionUpdateService.updateSession(sessionId, request))
+		assertThatThrownBy(() -> sessionUpdateService.updateSession(invalidMemberId, sessionId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.MEMBER_NOT_FOUND);
 
@@ -274,14 +241,13 @@ class SessionUpdateServiceTest {
 		);
 
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
 		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(member));
 		when(session.getCourseId()).thenReturn(courseId);
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 
 		// when
-		sessionUpdateService.updateSession(sessionId, request);
+		sessionUpdateService.updateSession(managerId, sessionId, request);
 
 		// then
 		verify(sessionCommandRepository).save(session);

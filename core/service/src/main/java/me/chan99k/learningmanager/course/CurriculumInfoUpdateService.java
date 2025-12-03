@@ -3,7 +3,6 @@ package me.chan99k.learningmanager.course;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.exception.DomainException;
 
 @Service
@@ -12,24 +11,22 @@ public class CurriculumInfoUpdateService implements CurriculumInfoUpdate {
 
 	private final CourseQueryRepository queryRepository;
 	private final CourseCommandRepository commandRepository;
-	private final UserContext userContext;
 
 	public CurriculumInfoUpdateService(
 		CourseQueryRepository queryRepository,
-		CourseCommandRepository commandRepository,
-		UserContext userContext) {
+		CourseCommandRepository commandRepository) {
 		this.queryRepository = queryRepository;
 		this.commandRepository = commandRepository;
-		this.userContext = userContext;
 	}
 
 	@Override
-	public void updateCurriculumInfo(Long courseId, Long curriculumId, CurriculumInfoUpdate.Request request) {
+	public void updateCurriculumInfo(Long requestedBy, Long courseId, Long curriculumId,
+		CurriculumInfoUpdate.Request request) {
 		if (request.title() == null && request.description() == null) {
 			throw new IllegalArgumentException("제목 또는 설명 중 하나 이상을 입력해주세요");
 		}
 
-		Course course = authenticatedAndAuthorizedCourseByManager(courseId);
+		Course course = authenticatedAndAuthorizedCourseByManager(requestedBy, courseId);
 
 		Curriculum curriculum = course.findCurriculumById(curriculumId);
 
@@ -44,10 +41,8 @@ public class CurriculumInfoUpdateService implements CurriculumInfoUpdate {
 		commandRepository.save(course);
 	}
 
-	private Course authenticatedAndAuthorizedCourseByManager(Long courseId) {
-		Long managerId = userContext.getCurrentMemberId();
-
-		return queryRepository.findManagedCourseById(courseId, managerId)
+	private Course authenticatedAndAuthorizedCourseByManager(Long requestedBy, Long courseId) {
+		return queryRepository.findManagedCourseById(courseId, requestedBy)
 			.orElseThrow(() -> new DomainException(CourseProblemCode.NOT_COURSE_MANAGER));
 	}
 }

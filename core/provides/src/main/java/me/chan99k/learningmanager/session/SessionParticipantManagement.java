@@ -7,13 +7,13 @@ import jakarta.validation.constraints.NotNull;
  */
 public interface SessionParticipantManagement {
 
-	SessionParticipantResponse addParticipant(Long sessionId, AddParticipantRequest request);
+	SessionParticipantResponse addParticipant(Long requestedBy, Long sessionId, AddParticipantRequest request);
 
-	SessionParticipantResponse removeParticipant(RemoveParticipantRequest request);
+	SessionParticipantResponse removeParticipant(Long requestedBy, RemoveParticipantRequest request);
 
-	SessionParticipantResponse changeParticipantRole(ChangeParticipantRoleRequest request);
+	SessionParticipantResponse changeParticipantRole(Long requestedBy, ChangeParticipantRoleRequest request);
 
-	SessionParticipantResponse leaveSession(LeaveSessionRequest request);
+	SessionParticipantResponse leaveSession(Long requestedBy, LeaveSessionRequest request);
 
 	record AddParticipantRequest(
 		@NotNull Long memberId,

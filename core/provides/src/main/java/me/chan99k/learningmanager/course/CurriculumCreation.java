@@ -19,7 +19,7 @@ import jakarta.validation.constraints.NotBlank;
  * - **연관 도메인:** 없음
  */
 public interface CurriculumCreation {
-	Response createCurriculum(Long courseId, Request request);
+	Response createCurriculum(Long requestedBy, Long courseId, Request request);
 
 	record Request(
 		@NotBlank(message = "커리큘럼 제목은 필수입니다")

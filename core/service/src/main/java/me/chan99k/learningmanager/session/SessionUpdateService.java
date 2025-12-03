@@ -5,7 +5,6 @@ import java.time.Clock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.course.CourseProblemCode;
 import me.chan99k.learningmanager.course.CourseQueryRepository;
 import me.chan99k.learningmanager.exception.DomainException;
@@ -22,36 +21,28 @@ public class SessionUpdateService implements SessionUpdate {
 	private final CourseQueryRepository courseQueryRepository;
 	private final MemberQueryRepository memberQueryRepository;
 	private final Clock clock;
-	private final UserContext userContext;
 
 	public SessionUpdateService(SessionQueryRepository sessionQueryRepository,
 		SessionCommandRepository sessionCommandRepository,
 		CourseQueryRepository courseQueryRepository,
 		MemberQueryRepository memberQueryRepository,
-		Clock clock,
-		UserContext userContext) {
+		Clock clock) {
 		this.sessionQueryRepository = sessionQueryRepository;
 		this.sessionCommandRepository = sessionCommandRepository;
 		this.courseQueryRepository = courseQueryRepository;
 		this.memberQueryRepository = memberQueryRepository;
 		this.clock = clock;
-		this.userContext = userContext;
 	}
 
 	@Override
-	public void updateSession(Long sessionId, Request request) {
-		Long currentMemberId = getCurrentMemberId();
+	public void updateSession(Long requestedBy, Long sessionId, Request request) {
 		Session session = getSessionById(sessionId);
 
-		validateUpdatePermission(session, currentMemberId);
+		validateUpdatePermission(session, requestedBy);
 
 		updateSessionInfo(session, request);
 
 		sessionCommandRepository.save(session);
-	}
-
-	private Long getCurrentMemberId() {
-		return userContext.getCurrentMemberId();
 	}
 
 	private Session getSessionById(Long sessionId) {

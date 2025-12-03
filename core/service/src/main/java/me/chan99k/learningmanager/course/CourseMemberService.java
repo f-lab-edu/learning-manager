@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.member.Email;
 import me.chan99k.learningmanager.member.Member;
@@ -26,24 +25,21 @@ public class CourseMemberService implements CourseMemberAddition, CourseMemberRe
 	private final CourseQueryRepository queryRepository;
 	private final CourseCommandRepository commandRepository;
 	private final MemberQueryRepository memberQueryRepository;
-	private final UserContext userContext;
 
 	public CourseMemberService(
 		@Value("${course.member.bulk.max-size}")
 		int maxBulkSize,
 		CourseQueryRepository queryRepository,
-		CourseCommandRepository commandRepository, MemberQueryRepository memberQueryRepository,
-		UserContext userContext) {
+		CourseCommandRepository commandRepository, MemberQueryRepository memberQueryRepository) {
 		MAX_BULK_SIZE = maxBulkSize;
 		this.queryRepository = queryRepository;
 		this.commandRepository = commandRepository;
 		this.memberQueryRepository = memberQueryRepository;
-		this.userContext = userContext;
 	}
 
 	@Override
-	public void addSingleMember(Long courseId, MemberAdditionItem item) {
-		Course course = queryRepository.findManagedCourseById(courseId, userContext.getCurrentMemberId())
+	public void addSingleMember(Long requestedBy, Long courseId, MemberAdditionItem item) {
+		Course course = queryRepository.findManagedCourseById(courseId, requestedBy)
 			.orElseThrow(() -> new DomainException(CourseProblemCode.NOT_COURSE_MANAGER));
 
 		Member member = memberQueryRepository.findByEmail(Email.of(item.email()))
@@ -58,12 +54,13 @@ public class CourseMemberService implements CourseMemberAddition, CourseMemberRe
 	 * 벌크 멤버 추가 로직 + 각 멤버별 상세 결과 수집 , 예외 잡아서 MemberResult로 변환
 	 */
 	@Override
-	public CourseMemberAddition.Response addMultipleMembers(Long courseId, List<MemberAdditionItem> members) {
+	public CourseMemberAddition.Response addMultipleMembers(Long requestedBy, Long courseId,
+		List<MemberAdditionItem> members) {
 		if (members.size() > MAX_BULK_SIZE) {
 			throw new IllegalArgumentException("과정 멤버 추가 요청은 한번에 최대 " + MAX_BULK_SIZE + "개까지 가능합니다");
 		}
 
-		Course course = queryRepository.findManagedCourseById(courseId, userContext.getCurrentMemberId())
+		Course course = queryRepository.findManagedCourseById(courseId, requestedBy)
 			.orElseThrow(() -> new DomainException(CourseProblemCode.NOT_COURSE_MANAGER));
 
 		// 멤버 조회 로직
@@ -99,8 +96,8 @@ public class CourseMemberService implements CourseMemberAddition, CourseMemberRe
 	}
 
 	@Override
-	public void removeMemberFromCourse(Long courseId, Long memberId) {
-		Course course = queryRepository.findManagedCourseById(courseId, userContext.getCurrentMemberId())
+	public void removeMemberFromCourse(Long requestedBy, Long courseId, Long memberId) {
+		Course course = queryRepository.findManagedCourseById(courseId, requestedBy)
 			.orElseThrow(() -> new DomainException(CourseProblemCode.NOT_COURSE_MANAGER));
 		course.removeMember(memberId);
 		commandRepository.save(course);

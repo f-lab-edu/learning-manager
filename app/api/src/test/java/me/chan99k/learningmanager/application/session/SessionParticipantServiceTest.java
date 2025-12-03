@@ -14,7 +14,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.course.Course;
 import me.chan99k.learningmanager.course.CourseQueryRepository;
 import me.chan99k.learningmanager.exception.DomainException;
@@ -48,9 +47,6 @@ class SessionParticipantServiceTest {
 	private CourseQueryRepository courseQueryRepository;
 
 	@Mock
-	private UserContext userContext;
-
-	@Mock
 	private Session session;
 	@Mock
 	private Course course;
@@ -61,11 +57,10 @@ class SessionParticipantServiceTest {
 	@DisplayName("Course Manager는 참여자를 추가할 수 있다")
 	void addParticipant_AsCourseManager_Success() {
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(session.getCourseId()).thenReturn(courseId); // 권한 확인용
-		when(session.getId()).thenReturn(sessionId); // 응답 생성용
-		when(session.getTitle()).thenReturn("테스트 세션"); // 응답 생성용
+		when(session.getCourseId()).thenReturn(courseId);
+		when(session.getId()).thenReturn(sessionId);
+		when(session.getTitle()).thenReturn("테스트 세션");
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId))
 			.thenReturn(Optional.of(course));
 		when(session.getParticipants()).thenReturn(List.of());
@@ -74,7 +69,7 @@ class SessionParticipantServiceTest {
 		var request = new AddParticipantRequest(memberId, SessionParticipantRole.ATTENDEE);
 
 		// when
-		var response = sessionParticipantService.addParticipant(sessionId, request);
+		var response = sessionParticipantService.addParticipant(managerId, sessionId, request);
 
 		// then
 		assertThat(response).isNotNull();
@@ -87,25 +82,23 @@ class SessionParticipantServiceTest {
 	@DisplayName("Session Host는 참여자를 추가할 수 있다")
 	void addParticipant_AsSessionHost_Success() {
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(hostId);
-
 		var hostParticipant = mock(SessionParticipant.class);
 		when(hostParticipant.getMemberId()).thenReturn(hostId);
 		when(hostParticipant.getRole()).thenReturn(SessionParticipantRole.HOST);
 
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(session.getCourseId()).thenReturn(courseId); // 권한 확인용
-		when(session.getId()).thenReturn(sessionId); // 응답 생성용  
-		when(session.getTitle()).thenReturn("테스트 세션"); // 응답 생성용
+		when(session.getCourseId()).thenReturn(courseId);
+		when(session.getId()).thenReturn(sessionId);
+		when(session.getTitle()).thenReturn("테스트 세션");
 		when(courseQueryRepository.findManagedCourseById(courseId, hostId))
-			.thenReturn(Optional.empty()); // Course Manager 아님
+			.thenReturn(Optional.empty());
 		when(session.getParticipants()).thenReturn(List.of(hostParticipant));
 		when(sessionCommandRepository.save(session)).thenReturn(session);
 
 		var request = new AddParticipantRequest(memberId, SessionParticipantRole.SPEAKER);
 
 		// when
-		var response = sessionParticipantService.addParticipant(sessionId, request);
+		var response = sessionParticipantService.addParticipant(hostId, sessionId, request);
 
 		// then
 		assertThat(response).isNotNull();
@@ -116,37 +109,18 @@ class SessionParticipantServiceTest {
 	@DisplayName("권한이 없는 사용자는 참여자를 추가할 수 없다")
 	void addParticipant_NoPermission_ThrowsDomainException() {
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(memberId);
-
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(session.getCourseId()).thenReturn(courseId); // 권한 확인용
+		when(session.getCourseId()).thenReturn(courseId);
 		when(courseQueryRepository.findManagedCourseById(courseId, memberId))
-			.thenReturn(Optional.empty()); // Course Manager 아님
-		when(session.getParticipants()).thenReturn(List.of()); // Host 아님
+			.thenReturn(Optional.empty());
+		when(session.getParticipants()).thenReturn(List.of());
 
 		var request = new AddParticipantRequest(999L, SessionParticipantRole.ATTENDEE);
 
 		// when & then
-		assertThatThrownBy(() -> sessionParticipantService.addParticipant(sessionId, request))
+		assertThatThrownBy(() -> sessionParticipantService.addParticipant(memberId, sessionId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.NOT_SESSION_HOST);
-	}
-
-	@Test
-	@DisplayName("인증되지 않은 사용자는 참여자를 추가할 수 없다")
-	void addParticipant_NotAuthenticated_ThrowsIllegalStateException() {
-		// given
-		when(userContext.getCurrentMemberId()).thenThrow(
-			new IllegalStateException("인증된 사용자의 컨텍스트를 찾을 수 없습니다"));
-
-		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-
-		var request = new AddParticipantRequest(memberId, SessionParticipantRole.ATTENDEE);
-
-		// when & then
-		assertThatThrownBy(() -> sessionParticipantService.addParticipant(sessionId, request))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessageContaining("인증된 사용자의 컨텍스트를 찾을 수 없습니다");
 	}
 
 	@Test
@@ -157,7 +131,7 @@ class SessionParticipantServiceTest {
 		var request = new AddParticipantRequest(memberId, SessionParticipantRole.ATTENDEE);
 
 		// when & then
-		assertThatThrownBy(() -> sessionParticipantService.addParticipant(sessionId, request))
+		assertThatThrownBy(() -> sessionParticipantService.addParticipant(managerId, sessionId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.SESSION_NOT_FOUND);
 	}
@@ -166,12 +140,10 @@ class SessionParticipantServiceTest {
 	@DisplayName("Course Manager는 참여자를 제거할 수 있다")
 	void removeParticipant_AsCourseManager_Success() {
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
-
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(session.getCourseId()).thenReturn(courseId); // 권한 확인용
-		when(session.getId()).thenReturn(sessionId); // 응답 생성용
-		when(session.getTitle()).thenReturn("테스트 세션"); // 응답 생성용
+		when(session.getCourseId()).thenReturn(courseId);
+		when(session.getId()).thenReturn(sessionId);
+		when(session.getTitle()).thenReturn("테스트 세션");
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId))
 			.thenReturn(Optional.of(course));
 		when(session.getParticipants()).thenReturn(List.of());
@@ -180,7 +152,7 @@ class SessionParticipantServiceTest {
 		var request = new RemoveParticipantRequest(sessionId, memberId);
 
 		// when
-		var response = sessionParticipantService.removeParticipant(request);
+		var response = sessionParticipantService.removeParticipant(managerId, request);
 
 		// then
 		assertThat(response).isNotNull();
@@ -193,23 +165,21 @@ class SessionParticipantServiceTest {
 	@DisplayName("Session Host는 참여자를 제거할 수 있다")
 	void removeParticipant_AsSessionHost_Success() {
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(hostId);
-
 		var hostParticipant = mock(SessionParticipant.class);
 		when(hostParticipant.getMemberId()).thenReturn(hostId);
 		when(hostParticipant.getRole()).thenReturn(SessionParticipantRole.HOST);
 
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(session.getCourseId()).thenReturn(null); // standalone 세션 (Course 없음)
-		when(session.getId()).thenReturn(sessionId); // 응답 생성용
-		when(session.getTitle()).thenReturn("테스트 세션"); // 응답 생성용
+		when(session.getCourseId()).thenReturn(null);
+		when(session.getId()).thenReturn(sessionId);
+		when(session.getTitle()).thenReturn("테스트 세션");
 		when(session.getParticipants()).thenReturn(List.of(hostParticipant));
 		when(sessionCommandRepository.save(session)).thenReturn(session);
 
 		var request = new RemoveParticipantRequest(sessionId, memberId);
 
 		// when
-		var response = sessionParticipantService.removeParticipant(request);
+		var response = sessionParticipantService.removeParticipant(hostId, request);
 
 		// then
 		assertThat(response).isNotNull();
@@ -220,18 +190,16 @@ class SessionParticipantServiceTest {
 	@DisplayName("권한이 없는 사용자는 참여자를 제거할 수 없다")
 	void removeParticipant_NoPermission_ThrowsDomainException() {
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(memberId);
-
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(session.getCourseId()).thenReturn(courseId); // 권한 확인용
+		when(session.getCourseId()).thenReturn(courseId);
 		when(courseQueryRepository.findManagedCourseById(courseId, memberId))
-			.thenReturn(Optional.empty()); // Course Manager 아님
-		when(session.getParticipants()).thenReturn(List.of()); // Host 아님
+			.thenReturn(Optional.empty());
+		when(session.getParticipants()).thenReturn(List.of());
 
 		var request = new RemoveParticipantRequest(sessionId, 999L);
 
 		// when & then
-		assertThatThrownBy(() -> sessionParticipantService.removeParticipant(request))
+		assertThatThrownBy(() -> sessionParticipantService.removeParticipant(memberId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.NOT_SESSION_HOST);
 	}
@@ -240,12 +208,10 @@ class SessionParticipantServiceTest {
 	@DisplayName("Course Manager는 참여자 역할을 변경할 수 있다")
 	void changeParticipantRole_AsCourseManager_Success() {
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
-
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(session.getCourseId()).thenReturn(courseId); // 권한 확인용
-		when(session.getId()).thenReturn(sessionId); // 응답 생성용
-		when(session.getTitle()).thenReturn("테스트 세션"); // 응답 생성용
+		when(session.getCourseId()).thenReturn(courseId);
+		when(session.getId()).thenReturn(sessionId);
+		when(session.getTitle()).thenReturn("테스트 세션");
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId))
 			.thenReturn(Optional.of(course));
 		when(session.getParticipants()).thenReturn(List.of());
@@ -254,7 +220,7 @@ class SessionParticipantServiceTest {
 		var request = new ChangeParticipantRoleRequest(sessionId, memberId, SessionParticipantRole.SPEAKER);
 
 		// when
-		var response = sessionParticipantService.changeParticipantRole(request);
+		var response = sessionParticipantService.changeParticipantRole(managerId, request);
 
 		// then
 		assertThat(response).isNotNull();
@@ -267,23 +233,21 @@ class SessionParticipantServiceTest {
 	@DisplayName("Session Host는 참여자 역할을 변경할 수 있다")
 	void changeParticipantRole_AsSessionHost_Success() {
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(hostId);
-
 		var hostParticipant = mock(SessionParticipant.class);
 		when(hostParticipant.getMemberId()).thenReturn(hostId);
 		when(hostParticipant.getRole()).thenReturn(SessionParticipantRole.HOST);
 
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(session.getCourseId()).thenReturn(null); // standalone 세션 (Course 없음)
-		when(session.getId()).thenReturn(sessionId); // 응답 생성용
-		when(session.getTitle()).thenReturn("테스트 세션"); // 응답 생성용
+		when(session.getCourseId()).thenReturn(null);
+		when(session.getId()).thenReturn(sessionId);
+		when(session.getTitle()).thenReturn("테스트 세션");
 		when(session.getParticipants()).thenReturn(List.of(hostParticipant));
 		when(sessionCommandRepository.save(session)).thenReturn(session);
 
 		var request = new ChangeParticipantRoleRequest(sessionId, memberId, SessionParticipantRole.ATTENDEE);
 
 		// when
-		var response = sessionParticipantService.changeParticipantRole(request);
+		var response = sessionParticipantService.changeParticipantRole(hostId, request);
 
 		// then
 		assertThat(response).isNotNull();
@@ -294,18 +258,16 @@ class SessionParticipantServiceTest {
 	@DisplayName("권한이 없는 사용자는 참여자 역할을 변경할 수 없다")
 	void changeParticipantRole_NoPermission_ThrowsDomainException() {
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(memberId);
-
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(session.getCourseId()).thenReturn(courseId); // 권한 확인용
+		when(session.getCourseId()).thenReturn(courseId);
 		when(courseQueryRepository.findManagedCourseById(courseId, memberId))
-			.thenReturn(Optional.empty()); // Course Manager 아님
-		when(session.getParticipants()).thenReturn(List.of()); // Host 아님
+			.thenReturn(Optional.empty());
+		when(session.getParticipants()).thenReturn(List.of());
 
 		var request = new ChangeParticipantRoleRequest(sessionId, 999L, SessionParticipantRole.SPEAKER);
 
 		// when & then
-		assertThatThrownBy(() -> sessionParticipantService.changeParticipantRole(request))
+		assertThatThrownBy(() -> sessionParticipantService.changeParticipantRole(memberId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.NOT_SESSION_HOST);
 	}
@@ -313,11 +275,9 @@ class SessionParticipantServiceTest {
 	@Test
 	@DisplayName("단독 세션(Course 없음)의 경우 Host만 참여자 관리가 가능하다")
 	void addParticipant_StandaloneSession_OnlyHostCanManage() {
-		when(session.getCourseId()).thenReturn(null); // 단독 세션
+		when(session.getCourseId()).thenReturn(null);
 
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(hostId);
-
 		var hostParticipant = mock(SessionParticipant.class);
 		when(hostParticipant.getMemberId()).thenReturn(hostId);
 		when(hostParticipant.getRole()).thenReturn(SessionParticipantRole.HOST);
@@ -329,34 +289,30 @@ class SessionParticipantServiceTest {
 		var request = new AddParticipantRequest(memberId, SessionParticipantRole.ATTENDEE);
 
 		// when
-		var response = sessionParticipantService.addParticipant(sessionId, request);
+		var response = sessionParticipantService.addParticipant(hostId, sessionId, request);
 
 		// then
 		assertThat(response).isNotNull();
 		verify(session).addParticipant(memberId, SessionParticipantRole.ATTENDEE);
-		// Course 조회는 발생하지 않아야 함
 		verifyNoInteractions(courseQueryRepository);
 	}
 
 	@Test
 	@DisplayName("단독 세션에서 Host가 아닌 사용자는 참여자 관리를 할 수 없다")
 	void addParticipant_StandaloneSession_NonHostCannotManage() {
-		when(session.getCourseId()).thenReturn(null); // 단독 세션
+		when(session.getCourseId()).thenReturn(null);
 
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(memberId);
-
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(session.getParticipants()).thenReturn(List.of()); // Host 아님
+		when(session.getParticipants()).thenReturn(List.of());
 
 		var request = new AddParticipantRequest(999L, SessionParticipantRole.ATTENDEE);
 
 		// when & then
-		assertThatThrownBy(() -> sessionParticipantService.addParticipant(sessionId, request))
+		assertThatThrownBy(() -> sessionParticipantService.addParticipant(memberId, sessionId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.NOT_SESSION_HOST);
 
-		// Course 조회는 발생하지 않아야 함
 		verifyNoInteractions(courseQueryRepository);
 	}
 
@@ -364,8 +320,6 @@ class SessionParticipantServiceTest {
 	@DisplayName("HOST 자신을 제거할 때 다른 HOST가 있으면 성공한다")
 	void removeParticipant_HostSelfRemoval_SuccessWithOtherHost() {
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(hostId);
-
 		var hostParticipant1 = mock(SessionParticipant.class);
 		when(hostParticipant1.getMemberId()).thenReturn(hostId);
 		when(hostParticipant1.getRole()).thenReturn(SessionParticipantRole.HOST);
@@ -375,15 +329,15 @@ class SessionParticipantServiceTest {
 		when(hostParticipant2.getRole()).thenReturn(SessionParticipantRole.HOST);
 
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(session.getCourseId()).thenReturn(null); // standalone 세션 (Course 없음)
-		when(session.getId()).thenReturn(sessionId); // 응답 생성용
-		when(session.getTitle()).thenReturn("테스트 세션"); // 응답 생성용
+		when(session.getCourseId()).thenReturn(null);
+		when(session.getId()).thenReturn(sessionId);
+		when(session.getTitle()).thenReturn("테스트 세션");
 		when(session.getParticipants()).thenReturn(List.of(hostParticipant1, hostParticipant2));
 		when(sessionCommandRepository.save(session)).thenReturn(session);
 
-		var request = new RemoveParticipantRequest(sessionId, hostId); // 자신을 제거
+		var request = new RemoveParticipantRequest(sessionId, hostId);
 
-		var response = sessionParticipantService.removeParticipant(request);
+		var response = sessionParticipantService.removeParticipant(hostId, request);
 
 		assertThat(response).isNotNull();
 		verify(session).removeParticipant(hostId);
@@ -393,8 +347,6 @@ class SessionParticipantServiceTest {
 	@DisplayName("HOST 자신을 제거할 때 다른 HOST가 없으면 실패한다")
 	void removeParticipant_HostSelfRemoval_FailWithoutOtherHost() {
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(hostId);
-
 		var hostParticipant = mock(SessionParticipant.class);
 		when(hostParticipant.getMemberId()).thenReturn(hostId);
 		when(hostParticipant.getRole()).thenReturn(SessionParticipantRole.HOST);
@@ -402,13 +354,13 @@ class SessionParticipantServiceTest {
 		var attendeeParticipant = mock(SessionParticipant.class);
 
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(session.getCourseId()).thenReturn(null); // standalone 세션 (Course 없음)
+		when(session.getCourseId()).thenReturn(null);
 		when(session.getParticipants()).thenReturn(List.of(hostParticipant, attendeeParticipant));
 
-		var request = new RemoveParticipantRequest(sessionId, hostId); // 자신을 제거
+		var request = new RemoveParticipantRequest(sessionId, hostId);
 
 		// when & then
-		assertThatThrownBy(() -> sessionParticipantService.removeParticipant(request))
+		assertThatThrownBy(() -> sessionParticipantService.removeParticipant(hostId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.HOST_CANNOT_LEAVE_ALONE);
 
@@ -419,24 +371,21 @@ class SessionParticipantServiceTest {
 	@DisplayName("HOST가 아닌 사용자를 제거하는 것은 자유롭게 가능하다")
 	void removeParticipant_NonHostRemoval_Success() {
 		// given
-		// given
-		when(userContext.getCurrentMemberId()).thenReturn(hostId);
-
 		var hostParticipant = mock(SessionParticipant.class);
 		when(hostParticipant.getMemberId()).thenReturn(hostId);
 		when(hostParticipant.getRole()).thenReturn(SessionParticipantRole.HOST);
 
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(session.getCourseId()).thenReturn(null); // standalone 세션 (Course 없음)
-		when(session.getId()).thenReturn(sessionId); // 응답 생성용
-		when(session.getTitle()).thenReturn("테스트 세션"); // 응답 생성용
+		when(session.getCourseId()).thenReturn(null);
+		when(session.getId()).thenReturn(sessionId);
+		when(session.getTitle()).thenReturn("테스트 세션");
 		when(session.getParticipants()).thenReturn(List.of(hostParticipant));
 		when(sessionCommandRepository.save(session)).thenReturn(session);
 
-		var request = new RemoveParticipantRequest(sessionId, memberId); // 다른 사용자 제거
+		var request = new RemoveParticipantRequest(sessionId, memberId);
 
 		// when
-		var response = sessionParticipantService.removeParticipant(request);
+		var response = sessionParticipantService.removeParticipant(hostId, request);
 
 		// then
 		assertThat(response).isNotNull();
@@ -447,13 +396,10 @@ class SessionParticipantServiceTest {
 	@DisplayName("여러 HOST가 허용된다 - changeParticipantRole 테스트")
 	void changeParticipantRole_MultipleHostsAllowed() {
 		// given
-		// given
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
-
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(session.getCourseId()).thenReturn(courseId); // 권한 확인용
-		when(session.getId()).thenReturn(sessionId); // 응답 생성용
-		when(session.getTitle()).thenReturn("테스트 세션"); // 응답 생성용
+		when(session.getCourseId()).thenReturn(courseId);
+		when(session.getId()).thenReturn(sessionId);
+		when(session.getTitle()).thenReturn("테스트 세션");
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId))
 			.thenReturn(Optional.of(course));
 		when(session.getParticipants()).thenReturn(List.of());
@@ -462,7 +408,7 @@ class SessionParticipantServiceTest {
 		var request = new ChangeParticipantRoleRequest(sessionId, memberId, SessionParticipantRole.HOST);
 
 		// when
-		var response = sessionParticipantService.changeParticipantRole(request);
+		var response = sessionParticipantService.changeParticipantRole(managerId, request);
 
 		// then
 		assertThat(response).isNotNull();
@@ -474,10 +420,8 @@ class SessionParticipantServiceTest {
 	@DisplayName("하위 세션에서 자가 탈퇴가 성공한다")
 	void leaveSession_ChildSession_Success() {
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(memberId);
-
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(session.isRootSession()).thenReturn(false); // 하위 세션
+		when(session.isRootSession()).thenReturn(false);
 		when(session.getId()).thenReturn(sessionId);
 		when(session.getTitle()).thenReturn("테스트 하위 세션");
 		when(session.getParticipants()).thenReturn(List.of());
@@ -486,7 +430,7 @@ class SessionParticipantServiceTest {
 		var request = new LeaveSessionRequest(sessionId);
 
 		// when
-		var response = sessionParticipantService.leaveSession(request);
+		var response = sessionParticipantService.leaveSession(memberId, request);
 
 		// then
 		assertThat(response).isNotNull();
@@ -500,12 +444,12 @@ class SessionParticipantServiceTest {
 	void leaveSession_RootSession_ThrowsDomainException() {
 		// given
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(session.isRootSession()).thenReturn(true); // 루트 세션
+		when(session.isRootSession()).thenReturn(true);
 
 		var request = new LeaveSessionRequest(sessionId);
 
 		// when & then
-		assertThatThrownBy(() -> sessionParticipantService.leaveSession(request))
+		assertThatThrownBy(() -> sessionParticipantService.leaveSession(memberId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.ROOT_SESSION_SELF_LEAVE_NOT_ALLOWED);
 
@@ -517,20 +461,18 @@ class SessionParticipantServiceTest {
 	@DisplayName("하위 세션에서 HOST 자가 탈퇴시 다른 HOST가 없으면 실패한다")
 	void leaveSession_ChildSession_HostWithoutOtherHost_ThrowsDomainException() {
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(hostId);
-
 		var hostParticipant = mock(SessionParticipant.class);
 		when(hostParticipant.getMemberId()).thenReturn(hostId);
 		when(hostParticipant.getRole()).thenReturn(SessionParticipantRole.HOST);
 
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(session.isRootSession()).thenReturn(false); // 하위 세션
+		when(session.isRootSession()).thenReturn(false);
 		when(session.getParticipants()).thenReturn(List.of(hostParticipant));
 
 		var request = new LeaveSessionRequest(sessionId);
 
 		// when & then
-		assertThatThrownBy(() -> sessionParticipantService.leaveSession(request))
+		assertThatThrownBy(() -> sessionParticipantService.leaveSession(hostId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.HOST_CANNOT_LEAVE_ALONE);
 
@@ -542,8 +484,6 @@ class SessionParticipantServiceTest {
 	@DisplayName("하위 세션에서 HOST 자가 탈퇴시 다른 HOST가 있으면 성공한다")
 	void leaveSession_ChildSession_HostWithOtherHost_Success() {
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(hostId);
-
 		var hostParticipant1 = mock(SessionParticipant.class);
 		when(hostParticipant1.getMemberId()).thenReturn(hostId);
 		when(hostParticipant1.getRole()).thenReturn(SessionParticipantRole.HOST);
@@ -553,7 +493,7 @@ class SessionParticipantServiceTest {
 		when(hostParticipant2.getRole()).thenReturn(SessionParticipantRole.HOST);
 
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(session.isRootSession()).thenReturn(false); // 하위 세션
+		when(session.isRootSession()).thenReturn(false);
 		when(session.getId()).thenReturn(sessionId);
 		when(session.getTitle()).thenReturn("테스트 하위 세션");
 		when(session.getParticipants()).thenReturn(List.of(hostParticipant1, hostParticipant2));
@@ -562,30 +502,12 @@ class SessionParticipantServiceTest {
 		var request = new LeaveSessionRequest(sessionId);
 
 		// when
-		var response = sessionParticipantService.leaveSession(request);
+		var response = sessionParticipantService.leaveSession(hostId, request);
 
 		// then
 		assertThat(response).isNotNull();
 		verify(session).removeParticipant(hostId);
 		verify(sessionCommandRepository).save(session);
-	}
-
-	@Test
-	@DisplayName("자가 탈퇴시 인증되지 않은 사용자는 실패한다")
-	void leaveSession_NotAuthenticated_ThrowsIllegalStateException() {
-		// given
-		when(userContext.getCurrentMemberId()).thenThrow(
-			new IllegalStateException("인증된 사용자의 컨텍스트를 찾을 수 없습니다"));
-
-		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(session.isRootSession()).thenReturn(false); // 하위 세션
-
-		var request = new LeaveSessionRequest(sessionId);
-
-		// when & then
-		assertThatThrownBy(() -> sessionParticipantService.leaveSession(request))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessageContaining("인증된 사용자의 컨텍스트를 찾을 수 없습니다");
 	}
 
 	@Test
@@ -596,7 +518,7 @@ class SessionParticipantServiceTest {
 		var request = new LeaveSessionRequest(sessionId);
 
 		// when & then
-		assertThatThrownBy(() -> sessionParticipantService.leaveSession(request))
+		assertThatThrownBy(() -> sessionParticipantService.leaveSession(memberId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.SESSION_NOT_FOUND);
 	}

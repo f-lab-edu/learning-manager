@@ -3,7 +3,6 @@ package me.chan99k.learningmanager.member;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.exception.DomainException;
 
 @Service
@@ -12,22 +11,17 @@ public class MemberStatusChangeService implements MemberStatusChange {
 
 	private final MemberQueryRepository memberQueryRepository;
 	private final MemberCommandRepository memberCommandRepository;
-	private final UserContext userContext;
 
 	public MemberStatusChangeService(
 		MemberQueryRepository memberQueryRepository,
-		MemberCommandRepository memberCommandRepository,
-		UserContext userContext) {
+		MemberCommandRepository memberCommandRepository) {
 		this.memberQueryRepository = memberQueryRepository;
 		this.memberCommandRepository = memberCommandRepository;
-		this.userContext = userContext;
 	}
 
 	@Override
-	public void changeStatus(Request request) {
-		Long currentMemberId = userContext.getCurrentMemberId();
-
-		Member currentMember = memberQueryRepository.findById(currentMemberId)
+	public void changeStatus(Long requestedBy, Request request) {
+		Member currentMember = memberQueryRepository.findById(requestedBy)
 			.orElseThrow(() -> new DomainException(MemberProblemCode.MEMBER_NOT_FOUND));
 
 		if (currentMember.getRole() != SystemRole.ADMIN) {

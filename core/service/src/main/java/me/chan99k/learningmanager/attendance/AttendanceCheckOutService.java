@@ -6,7 +6,6 @@ import java.time.Instant;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.session.Session;
 import me.chan99k.learningmanager.session.SessionProblemCode;
@@ -19,37 +18,32 @@ public class AttendanceCheckOutService implements AttendanceCheckOut {
 	private final AttendanceCommandRepository attendanceCommandRepository;
 	private final SessionQueryRepository sessionQueryRepository;
 	private final Clock clock;
-	private final UserContext userContext;
 
 	public AttendanceCheckOutService(AttendanceQueryRepository attendanceQueryRepository,
 		AttendanceCommandRepository attendanceCommandRepository, SessionQueryRepository sessionQueryRepository,
-		Clock clock, UserContext userContext) {
+		Clock clock) {
 		this.attendanceQueryRepository = attendanceQueryRepository;
 		this.attendanceCommandRepository = attendanceCommandRepository;
 		this.sessionQueryRepository = sessionQueryRepository;
 		this.clock = clock;
-		this.userContext = userContext;
 	}
 
 	@Override
-	public Response checkOut(Request request) {
-		// 1. 멤버 아이디 확보
-		Long currentMemberId = userContext.getCurrentMemberId();
-
-		// 2. 대상 세션 확보
+	public Response checkOut(Long requestedBy, Request request) {
+		// 1. 대상 세션 확보
 		Session session = sessionQueryRepository.findById(request.sessionId())
 			.orElseThrow(() -> new DomainException(SessionProblemCode.SESSION_NOT_FOUND));
 
-		// 3. 인가 - 세션 참여자 여부 확인
+		// 2. 인가 - 세션 참여자 여부 확인
 		boolean isParticipant = session.getParticipants().stream()
-			.anyMatch(p -> p.getMemberId().equals(currentMemberId));
+			.anyMatch(p -> p.getMemberId().equals(requestedBy));
 
 		if (!isParticipant) {
 			throw new DomainException(SessionProblemCode.NOT_SESSION_PARTICIPANT);
 		}
 
 		Attendance attendance = attendanceQueryRepository
-			.findBySessionIdAndMemberId(request.sessionId(), currentMemberId)
+			.findBySessionIdAndMemberId(request.sessionId(), requestedBy)
 			.orElseThrow(() -> new IllegalArgumentException("[System] 출석 정보가 없습니다."));
 
 		attendance.checkOut(clock);

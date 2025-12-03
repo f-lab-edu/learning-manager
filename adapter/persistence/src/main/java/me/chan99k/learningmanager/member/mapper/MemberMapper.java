@@ -20,6 +20,7 @@ public final class MemberMapper {
 
 		MemberEntity entity = new MemberEntity();
 		entity.setId(domain.getId());
+		entity.setPrimaryEmail(domain.getPrimaryEmail());
 		entity.setNickname(domain.getNickname().value());
 		entity.setRole(domain.getRole());
 		entity.setStatus(domain.getStatus());
@@ -50,6 +51,7 @@ public final class MemberMapper {
 
 		return Member.reconstitute(
 			entity.getId(),
+			entity.getPrimaryEmail(),
 			Nickname.of(entity.getNickname()),
 			entity.getRole(),
 			entity.getStatus(),

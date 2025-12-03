@@ -15,7 +15,7 @@ import jakarta.validation.constraints.NotBlank;
  * - **연관 도메인:** Member
  */
 public interface CourseCreation {
-	Response createCourse(Request request);
+	Response createCourse(Long requestedBy, Request request);
 
 	record Request(
 		@NotBlank(message = "과정 명은 과정 생성에 필수입니다")

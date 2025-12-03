@@ -39,6 +39,7 @@ public interface SessionCreation {
 	Session createSession(Request request);
 
 	record Request( // 과정, 커리큘럼, 세션 식별자가 모두 없으면 스탠드얼론 세션으로 처리
+					@NotNull(message = "요청자 정보는 필수입니다") Long requestedBy,
 					Long courseId,
 					Long curriculumId,
 					Long sessionId, // 특정 세션의 하위 세션일 경우

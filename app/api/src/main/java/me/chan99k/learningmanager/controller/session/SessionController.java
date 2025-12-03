@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import me.chan99k.learningmanager.common.PageResult;
 import me.chan99k.learningmanager.exception.DomainException;
+import me.chan99k.learningmanager.security.CustomUserDetails;
 import me.chan99k.learningmanager.session.Session;
 import me.chan99k.learningmanager.session.SessionCreation;
 import me.chan99k.learningmanager.session.SessionDeletion;
@@ -81,15 +83,18 @@ public class SessionController {
 
 	@PutMapping("/{sessionId}")
 	public ResponseEntity<Void> updateSession(
+		@AuthenticationPrincipal CustomUserDetails user,
 		@PathVariable Long sessionId,
 		@Valid @RequestBody SessionUpdate.Request request) {
-		sessionUpdate.updateSession(sessionId, request);
+		sessionUpdate.updateSession(user.getMemberId(), sessionId, request);
 		return ResponseEntity.noContent().build();
 	}
 
 	@DeleteMapping("/{sessionId}")
-	public ResponseEntity<Void> deleteSession(@PathVariable Long sessionId) {
-		sessionDeletion.deleteSession(sessionId);
+	public ResponseEntity<Void> deleteSession(
+		@AuthenticationPrincipal CustomUserDetails user,
+		@PathVariable Long sessionId) {
+		sessionDeletion.deleteSession(user.getMemberId(), sessionId);
 		return ResponseEntity.noContent().build();
 	}
 

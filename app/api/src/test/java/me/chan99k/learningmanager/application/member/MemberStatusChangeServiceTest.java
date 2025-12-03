@@ -13,7 +13,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.member.Member;
 import me.chan99k.learningmanager.member.MemberCommandRepository;
@@ -37,9 +36,6 @@ class MemberStatusChangeServiceTest {
 	private MemberCommandRepository memberCommandRepository;
 
 	@Mock
-	private UserContext userContext;
-
-	@Mock
 	private Member adminMember;
 
 	@Mock
@@ -51,7 +47,6 @@ class MemberStatusChangeServiceTest {
 		// given
 		Long adminId = 1L;
 		Long targetMemberId = 2L;
-		when(userContext.getCurrentMemberId()).thenReturn(adminId);
 		when(memberQueryRepository.findById(adminId)).thenReturn(Optional.of(adminMember));
 		when(memberQueryRepository.findById(targetMemberId)).thenReturn(Optional.of(targetMember));
 		when(adminMember.getRole()).thenReturn(SystemRole.ADMIN);
@@ -59,7 +54,7 @@ class MemberStatusChangeServiceTest {
 		MemberStatusChange.Request request = new MemberStatusChange.Request(targetMemberId, MemberStatus.BANNED);
 
 		// when
-		memberStatusChangeService.changeStatus(request);
+		memberStatusChangeService.changeStatus(adminId, request);
 
 		// then
 		verify(targetMember).ban();
@@ -72,7 +67,6 @@ class MemberStatusChangeServiceTest {
 		// given
 		Long adminId = 1L;
 		Long targetMemberId = 2L;
-		when(userContext.getCurrentMemberId()).thenReturn(adminId);
 		when(memberQueryRepository.findById(adminId)).thenReturn(Optional.of(adminMember));
 		when(memberQueryRepository.findById(targetMemberId)).thenReturn(Optional.of(targetMember));
 		when(adminMember.getRole()).thenReturn(SystemRole.ADMIN);
@@ -80,7 +74,7 @@ class MemberStatusChangeServiceTest {
 		MemberStatusChange.Request request = new MemberStatusChange.Request(targetMemberId, MemberStatus.ACTIVE);
 
 		// when
-		memberStatusChangeService.changeStatus(request);
+		memberStatusChangeService.changeStatus(adminId, request);
 
 		// then
 		verify(targetMember).activate();
@@ -88,35 +82,17 @@ class MemberStatusChangeServiceTest {
 	}
 
 	@Test
-	@DisplayName("[Failure] 인증되지 않은 사용자는 IllegalStateException이 발생한다")
-	void changeStatus_Fail_Unauthenticated() {
-		// given
-		when(userContext.getCurrentMemberId()).thenThrow(
-			new IllegalStateException("인증된 사용자의 컨텍스트를 찾을 수 없습니다"));
-		MemberStatusChange.Request request = new MemberStatusChange.Request(2L, MemberStatus.BANNED);
-
-		// when & then
-		assertThatThrownBy(() -> memberStatusChangeService.changeStatus(request))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessageContaining("인증된 사용자의 컨텍스트를 찾을 수 없습니다");
-
-		verify(memberQueryRepository, never()).findById(anyLong());
-		verify(memberCommandRepository, never()).save(any());
-	}
-
-	@Test
 	@DisplayName("[Failure] 관리자가 아닌 사용자는 DomainException이 발생한다")
 	void changeStatus_Fail_NotAdmin() {
 		// given
 		Long memberId = 1L;
-		when(userContext.getCurrentMemberId()).thenReturn(memberId);
 		when(memberQueryRepository.findById(memberId)).thenReturn(Optional.of(adminMember));
 		when(adminMember.getRole()).thenReturn(SystemRole.MEMBER);
 
 		MemberStatusChange.Request request = new MemberStatusChange.Request(2L, MemberStatus.BANNED);
 
 		// when & then
-		assertThatThrownBy(() -> memberStatusChangeService.changeStatus(request))
+		assertThatThrownBy(() -> memberStatusChangeService.changeStatus(memberId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.ADMIN_ONLY_ACTION);
 
@@ -129,7 +105,6 @@ class MemberStatusChangeServiceTest {
 		// given
 		Long adminId = 1L;
 		Long targetMemberId = 999L;
-		when(userContext.getCurrentMemberId()).thenReturn(adminId);
 		when(memberQueryRepository.findById(adminId)).thenReturn(Optional.of(adminMember));
 		when(memberQueryRepository.findById(targetMemberId)).thenReturn(Optional.empty());
 		when(adminMember.getRole()).thenReturn(SystemRole.ADMIN);
@@ -137,7 +112,7 @@ class MemberStatusChangeServiceTest {
 		MemberStatusChange.Request request = new MemberStatusChange.Request(targetMemberId, MemberStatus.BANNED);
 
 		// when & then
-		assertThatThrownBy(() -> memberStatusChangeService.changeStatus(request))
+		assertThatThrownBy(() -> memberStatusChangeService.changeStatus(adminId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.MEMBER_NOT_FOUND);
 

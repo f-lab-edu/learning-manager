@@ -2,6 +2,7 @@ package me.chan99k.learningmanager.adapter.web.session;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -21,20 +22,21 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import me.chan99k.learningmanager.advice.GlobalExceptionHandler;
-import me.chan99k.learningmanager.auth.UserContext;
+import me.chan99k.learningmanager.auth.JwtProvider;
 import me.chan99k.learningmanager.controller.session.SessionController;
 import me.chan99k.learningmanager.course.CourseProblemCode;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.member.MemberProblemCode;
+import me.chan99k.learningmanager.security.CustomUserDetails;
 import me.chan99k.learningmanager.session.Session;
 import me.chan99k.learningmanager.session.SessionCreation;
-import me.chan99k.learningmanager.session.SessionCreationService;
 import me.chan99k.learningmanager.session.SessionDeletion;
 import me.chan99k.learningmanager.session.SessionListRetrieval;
 import me.chan99k.learningmanager.session.SessionLocation;
@@ -43,14 +45,11 @@ import me.chan99k.learningmanager.session.SessionQueryRepository;
 import me.chan99k.learningmanager.session.SessionType;
 import me.chan99k.learningmanager.session.SessionUpdate;
 
-@WebMvcTest(controllers = SessionController.class,
-	excludeAutoConfiguration = {
-		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}
-)
-@Import({
-	GlobalExceptionHandler.class
-})
+@WebMvcTest(controllers = SessionController.class)
+@Import(GlobalExceptionHandler.class)
 class SessionControllerTest {
+
+	private static final Long MEMBER_ID = 1L;
 
 	@Autowired
 	MockMvc mockMvc;
@@ -59,7 +58,7 @@ class SessionControllerTest {
 	ObjectMapper objectMapper;
 
 	@MockBean
-	SessionCreationService sessionCreationService;
+	SessionCreation sessionCreation;
 
 	@MockBean
 	SessionUpdate sessionUpdate;
@@ -77,7 +76,15 @@ class SessionControllerTest {
 	AsyncTaskExecutor sessionTaskExecutor;
 
 	@MockBean
-	UserContext userContext;
+	JwtProvider jwtProvider;
+
+	private CustomUserDetails createMockUser() {
+		return new CustomUserDetails(
+			MEMBER_ID,
+			"test@example.com",
+			List.of(new SimpleGrantedAuthority("ROLE_USER"))
+		);
+	}
 
 	@BeforeEach
 	void setUp() {
@@ -91,8 +98,9 @@ class SessionControllerTest {
 	@Test
 	@DisplayName("[Success] 세션 생성 요청이 성공한다")
 	void createSession_Success() throws Exception {
+		Long requestedBy = 1L;
 		SessionCreation.Request request = new SessionCreation.Request(
-			null, null, null,
+			requestedBy, null, null, null,
 			"테스트 세션",
 			LocalDateTime.now().plusDays(1).toInstant(ZoneOffset.UTC),
 			LocalDateTime.now().plusDays(1).plusHours(2).toInstant(ZoneOffset.UTC),
@@ -110,10 +118,12 @@ class SessionControllerTest {
 		when(mockSession.getCourseId()).thenReturn(null);
 		when(mockSession.getCurriculumId()).thenReturn(null);
 
-		given(sessionCreationService.createSession(any(SessionCreation.Request.class)))
+		given(sessionCreation.createSession(any(SessionCreation.Request.class)))
 			.willReturn(mockSession);
 
 		mockMvc.perform(post("/api/v1/sessions")
+				.with(user(createMockUser()))
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andDo(print())
@@ -128,18 +138,21 @@ class SessionControllerTest {
 	@Test
 	@DisplayName("[Failure] 권한이 없는 사용자의 세션 생성 시 403 응답")
 	void createSession_AuthorizationFail() throws Exception {
+		Long requestedBy = 1L;
 		SessionCreation.Request request = new SessionCreation.Request(
-			null, null, null,
+			requestedBy, null, null, null,
 			"테스트 세션",
 			LocalDateTime.now().plusDays(1).toInstant(ZoneOffset.UTC),
 			LocalDateTime.now().plusDays(1).plusHours(2).toInstant(ZoneOffset.UTC),
 			SessionType.ONLINE, SessionLocation.ZOOM, "Zoom 링크"
 		);
 
-		given(sessionCreationService.createSession(any(SessionCreation.Request.class)))
+		given(sessionCreation.createSession(any(SessionCreation.Request.class)))
 			.willThrow(new DomainException(MemberProblemCode.ADMIN_ONLY_ACTION));
 
 		mockMvc.perform(post("/api/v1/sessions")
+				.with(user(createMockUser()))
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andDo(print())
@@ -147,41 +160,23 @@ class SessionControllerTest {
 	}
 
 	@Test
-	@DisplayName("[Failure] 인증되지 않은 사용자의 세션 생성 시 401 응답")
-	void createSession_AuthenticationFail() throws Exception {
-		SessionCreation.Request request = new SessionCreation.Request(
-			null, null, null,
-			"테스트 세션",
-			LocalDateTime.now().plusDays(1).toInstant(ZoneOffset.UTC),
-			LocalDateTime.now().plusDays(1).plusHours(2).toInstant(ZoneOffset.UTC),
-			SessionType.ONLINE, SessionLocation.ZOOM, "Zoom 링크"
-		);
-
-		given(sessionCreationService.createSession(any(SessionCreation.Request.class)))
-			.willThrow(new IllegalStateException("인증된 사용자의 컨텍스트를 찾을 수 없습니다"));
-
-		mockMvc.perform(post("/api/v1/sessions")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(request)))
-			.andDo(print())
-			.andExpect(status().isUnauthorized());
-	}
-
-	@Test
 	@DisplayName("[Failure] 도메인 예외 발생 시 400 응답")
 	void createSession_DomainException() throws Exception {
+		Long requestedBy = 1L;
 		SessionCreation.Request request = new SessionCreation.Request(
-			null, null, null,
+			requestedBy, null, null, null,
 			"테스트 세션",
 			LocalDateTime.now().plusDays(1).toInstant(ZoneOffset.UTC),
 			LocalDateTime.now().plusDays(1).plusHours(2).toInstant(ZoneOffset.UTC),
 			SessionType.ONLINE, SessionLocation.ZOOM, "Zoom 링크"
 		);
 
-		given(sessionCreationService.createSession(any(SessionCreation.Request.class)))
+		given(sessionCreation.createSession(any(SessionCreation.Request.class)))
 			.willThrow(new DomainException(SessionProblemCode.SESSION_NOT_FOUND));
 
 		mockMvc.perform(post("/api/v1/sessions")
+				.with(user(createMockUser()))
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andDo(print())
@@ -209,7 +204,8 @@ class SessionControllerTest {
 
 		given(sessionQueryRepository.findById(sessionId)).willReturn(Optional.of(mockSession));
 
-		MvcResult mvcResult = mockMvc.perform(get("/api/v1/sessions/{id}", sessionId))
+		MvcResult mvcResult = mockMvc.perform(get("/api/v1/sessions/{id}", sessionId)
+				.with(user(createMockUser())))
 			.andDo(print())
 			.andExpect(request().asyncStarted())
 			.andReturn();
@@ -232,7 +228,8 @@ class SessionControllerTest {
 
 		given(sessionQueryRepository.findById(invalidSessionId)).willReturn(Optional.empty());
 
-		MvcResult mvcResult = mockMvc.perform(get("/api/v1/sessions/{id}", invalidSessionId))
+		MvcResult mvcResult = mockMvc.perform(get("/api/v1/sessions/{id}", invalidSessionId)
+				.with(user(createMockUser())))
 			.andDo(print())
 			.andExpect(request().asyncStarted())
 			.andReturn();
@@ -247,6 +244,8 @@ class SessionControllerTest {
 		String invalidRequest = "{\"title\":\"\"}";
 
 		mockMvc.perform(post("/api/v1/sessions")
+				.with(user(createMockUser()))
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(invalidRequest))
 			.andDo(print())
@@ -266,36 +265,17 @@ class SessionControllerTest {
 			"Updated Room 101"
 		);
 
-		doNothing().when(sessionUpdate).updateSession(sessionId, request);
+		doNothing().when(sessionUpdate).updateSession(any(), eq(sessionId), eq(request));
 
 		mockMvc.perform(put("/api/v1/sessions/{sessionId}", sessionId)
+				.with(user(createMockUser()))
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andDo(print())
 			.andExpect(status().isNoContent());
 
-		verify(sessionUpdate).updateSession(sessionId, request);
-	}
-
-	@Test
-	@DisplayName("[Failure] 인증되지 않은 사용자의 세션 수정 시 401 응답")
-	void updateSession_AuthenticationFail() throws Exception {
-		Long sessionId = 1L;
-		SessionUpdate.Request request = new SessionUpdate.Request(
-			"Title", LocalDateTime.now().plusDays(1).toInstant(ZoneOffset.UTC),
-			LocalDateTime.now().plusDays(1).plusHours(1).toInstant(ZoneOffset.UTC),
-			SessionType.ONLINE, SessionLocation.ZOOM, null
-		);
-
-		doThrow(new IllegalStateException("인증된 사용자의 컨텍스트를 찾을 수 없습니다"))
-			.when(sessionUpdate).updateSession(sessionId, request);
-
-		mockMvc.perform(put("/api/v1/sessions/{sessionId}", sessionId)
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(request)))
-			.andDo(print())
-			.andExpect(status().isUnauthorized())
-			.andExpect(jsonPath("$.code").value("AUTH007"));
+		verify(sessionUpdate).updateSession(any(), eq(sessionId), eq(request));
 	}
 
 	@Test
@@ -309,9 +289,11 @@ class SessionControllerTest {
 		);
 
 		doThrow(new DomainException(CourseProblemCode.NOT_COURSE_MANAGER))
-			.when(sessionUpdate).updateSession(sessionId, request);
+			.when(sessionUpdate).updateSession(any(), eq(sessionId), eq(request));
 
 		mockMvc.perform(put("/api/v1/sessions/{sessionId}", sessionId)
+				.with(user(createMockUser()))
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andDo(print())
@@ -330,9 +312,11 @@ class SessionControllerTest {
 		);
 
 		doThrow(new DomainException(SessionProblemCode.SESSION_NOT_FOUND))
-			.when(sessionUpdate).updateSession(sessionId, request);
+			.when(sessionUpdate).updateSession(any(), eq(sessionId), eq(request));
 
 		mockMvc.perform(put("/api/v1/sessions/{sessionId}", sessionId)
+				.with(user(createMockUser()))
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andDo(print())
@@ -346,6 +330,8 @@ class SessionControllerTest {
 		String invalidRequest = "{\"title\":\"\"}";
 
 		mockMvc.perform(put("/api/v1/sessions/{sessionId}", sessionId)
+				.with(user(createMockUser()))
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(invalidRequest))
 			.andDo(print())
@@ -365,15 +351,17 @@ class SessionControllerTest {
 			null
 		);
 
-		doNothing().when(sessionUpdate).updateSession(sessionId, request);
+		doNothing().when(sessionUpdate).updateSession(any(), eq(sessionId), eq(request));
 
 		mockMvc.perform(put("/api/v1/sessions/{sessionId}", sessionId)
+				.with(user(createMockUser()))
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andDo(print())
 			.andExpect(status().isNoContent());
 
-		verify(sessionUpdate).updateSession(sessionId, request);
+		verify(sessionUpdate).updateSession(any(), eq(sessionId), eq(request));
 	}
 
 	@Test
@@ -381,13 +369,15 @@ class SessionControllerTest {
 	void deleteSession_Success() throws Exception {
 		Long sessionId = 1L;
 
-		doNothing().when(sessionDeletion).deleteSession(sessionId);
+		doNothing().when(sessionDeletion).deleteSession(any(), eq(sessionId));
 
-		mockMvc.perform(delete("/api/v1/sessions/{sessionId}", sessionId))
+		mockMvc.perform(delete("/api/v1/sessions/{sessionId}", sessionId)
+				.with(user(createMockUser()))
+				.with(csrf()))
 			.andDo(print())
 			.andExpect(status().isNoContent());
 
-		verify(sessionDeletion).deleteSession(sessionId);
+		verify(sessionDeletion).deleteSession(any(), eq(sessionId));
 	}
 
 	@Test
@@ -396,26 +386,14 @@ class SessionControllerTest {
 		Long sessionId = 1L;
 
 		doThrow(new DomainException(CourseProblemCode.NOT_COURSE_MANAGER))
-			.when(sessionDeletion).deleteSession(sessionId);
+			.when(sessionDeletion).deleteSession(any(), eq(sessionId));
 
-		mockMvc.perform(delete("/api/v1/sessions/{sessionId}", sessionId))
+		mockMvc.perform(delete("/api/v1/sessions/{sessionId}", sessionId)
+				.with(user(createMockUser()))
+				.with(csrf()))
 			.andDo(print())
 			.andExpect(status().isForbidden())
 			.andExpect(jsonPath("$.code").value(CourseProblemCode.NOT_COURSE_MANAGER.getCode()));
-	}
-
-	@Test
-	@DisplayName("[Failure] 인증되지 않은 사용자의 세션 삭제 시 401 응답")
-	void deleteSession_AuthenticationFail() throws Exception {
-		Long sessionId = 1L;
-
-		doThrow(new IllegalStateException("인증된 사용자의 컨텍스트를 찾을 수 없습니다"))
-			.when(sessionDeletion).deleteSession(sessionId);
-
-		mockMvc.perform(delete("/api/v1/sessions/{sessionId}", sessionId))
-			.andDo(print())
-			.andExpect(status().isUnauthorized())
-			.andExpect(jsonPath("$.code").value("AUTH007"));
 	}
 
 	@Test
@@ -424,9 +402,11 @@ class SessionControllerTest {
 		Long sessionId = 999L;
 
 		doThrow(new DomainException(SessionProblemCode.SESSION_NOT_FOUND))
-			.when(sessionDeletion).deleteSession(sessionId);
+			.when(sessionDeletion).deleteSession(any(), eq(sessionId));
 
-		mockMvc.perform(delete("/api/v1/sessions/{sessionId}", sessionId))
+		mockMvc.perform(delete("/api/v1/sessions/{sessionId}", sessionId)
+				.with(user(createMockUser()))
+				.with(csrf()))
 			.andDo(print())
 			.andExpect(status().isBadRequest())
 			.andExpect(jsonPath("$.code").value(SessionProblemCode.SESSION_NOT_FOUND.getCode()));
@@ -438,9 +418,11 @@ class SessionControllerTest {
 		Long sessionId = 1L;
 
 		doThrow(new IllegalArgumentException(SessionProblemCode.CANNOT_DELETE_WHEN_CHILD_EXISTS.getMessage()))
-			.when(sessionDeletion).deleteSession(sessionId);
+			.when(sessionDeletion).deleteSession(any(), eq(sessionId));
 
-		mockMvc.perform(delete("/api/v1/sessions/{sessionId}", sessionId))
+		mockMvc.perform(delete("/api/v1/sessions/{sessionId}", sessionId)
+				.with(user(createMockUser()))
+				.with(csrf()))
 			.andDo(print())
 			.andExpect(status().isBadRequest());
 	}

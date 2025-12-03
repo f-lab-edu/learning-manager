@@ -23,5 +23,5 @@ package me.chan99k.learningmanager.session;
  * - 연관 도메인: Course
  */
 public interface SessionDeletion {
-	void deleteSession(Long sessionId);
+	void deleteSession(Long requestedBy, Long sessionId);
 }

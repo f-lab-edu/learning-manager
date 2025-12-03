@@ -21,7 +21,6 @@ import me.chan99k.learningmanager.attendance.AttendanceCheckOutService;
 import me.chan99k.learningmanager.attendance.AttendanceCommandRepository;
 import me.chan99k.learningmanager.attendance.AttendanceQueryRepository;
 import me.chan99k.learningmanager.attendance.AttendanceStatus;
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.session.Session;
 import me.chan99k.learningmanager.session.SessionParticipant;
@@ -43,8 +42,6 @@ class AttendanceCheckOutServiceTest {
 	private SessionQueryRepository sessionQueryRepository;
 	@Mock
 	private Clock clock;
-	@Mock
-	private UserContext userContext;
 	@InjectMocks
 	private AttendanceCheckOutService attendanceCheckOutService;
 
@@ -53,7 +50,6 @@ class AttendanceCheckOutServiceTest {
 	void test01() {
 		// Given
 		Session session = createMockSession();
-		when(userContext.getCurrentMemberId()).thenReturn(MEMBER_ID);
 		when(sessionQueryRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
 
 		Attendance existingAttendance = createMockAttendance();
@@ -65,7 +61,7 @@ class AttendanceCheckOutServiceTest {
 		AttendanceCheckOut.Request request = new AttendanceCheckOut.Request(SESSION_ID);
 
 		// When
-		AttendanceCheckOut.Response response = attendanceCheckOutService.checkOut(request);
+		AttendanceCheckOut.Response response = attendanceCheckOutService.checkOut(MEMBER_ID, request);
 
 		// Then
 		assertThat(response.attendanceId()).isEqualTo("attendance-id");
@@ -78,29 +74,14 @@ class AttendanceCheckOutServiceTest {
 	}
 
 	@Test
-	@DisplayName("[Failure] 인증되지 않은 사용자 체크아웃 시도")
-	void test02() {
-		// Given
-		AttendanceCheckOut.Request request = new AttendanceCheckOut.Request(SESSION_ID);
-		when(userContext.getCurrentMemberId()).thenThrow(
-			new IllegalStateException("인증된 사용자의 컨텍스트를 찾을 수 없습니다"));
-
-		// When & Then
-		assertThatThrownBy(() -> attendanceCheckOutService.checkOut(request))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessageContaining("인증된 사용자의 컨텍스트를 찾을 수 없습니다");
-	}
-
-	@Test
 	@DisplayName("[Failure] 존재하지 않는 세션에 체크아웃 시도")
 	void test03() {
 		// Given
-		when(userContext.getCurrentMemberId()).thenReturn(MEMBER_ID);
 		when(sessionQueryRepository.findById(SESSION_ID)).thenReturn(Optional.empty());
 		AttendanceCheckOut.Request request = new AttendanceCheckOut.Request(SESSION_ID);
 
 		// When & Then
-		assertThatThrownBy(() -> attendanceCheckOutService.checkOut(request))
+		assertThatThrownBy(() -> attendanceCheckOutService.checkOut(MEMBER_ID, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.SESSION_NOT_FOUND);
 	}
@@ -110,12 +91,11 @@ class AttendanceCheckOutServiceTest {
 	void test04() {
 		// Given
 		Session session = createMockSession();
-		when(userContext.getCurrentMemberId()).thenReturn(NON_PARTICIPANT_ID);
 		when(sessionQueryRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
 		AttendanceCheckOut.Request request = new AttendanceCheckOut.Request(SESSION_ID);
 
 		// When & Then
-		assertThatThrownBy(() -> attendanceCheckOutService.checkOut(request))
+		assertThatThrownBy(() -> attendanceCheckOutService.checkOut(NON_PARTICIPANT_ID, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.NOT_SESSION_PARTICIPANT);
 	}
@@ -125,7 +105,6 @@ class AttendanceCheckOutServiceTest {
 	void test05() {
 		// Given
 		Session session = createMockSession();
-		when(userContext.getCurrentMemberId()).thenReturn(MEMBER_ID);
 		when(sessionQueryRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
 		when(attendanceQueryRepository.findBySessionIdAndMemberId(SESSION_ID, MEMBER_ID))
 			.thenReturn(Optional.empty());
@@ -133,7 +112,7 @@ class AttendanceCheckOutServiceTest {
 		AttendanceCheckOut.Request request = new AttendanceCheckOut.Request(SESSION_ID);
 
 		// When & Then
-		assertThatThrownBy(() -> attendanceCheckOutService.checkOut(request))
+		assertThatThrownBy(() -> attendanceCheckOutService.checkOut(MEMBER_ID, request))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("[System] 출석 정보가 없습니다.");
 	}

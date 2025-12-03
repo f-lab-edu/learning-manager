@@ -1,6 +1,7 @@
 package me.chan99k.learningmanager.controller.attendance;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,6 +12,7 @@ import me.chan99k.learningmanager.attendance.AttendanceCheckIn;
 import me.chan99k.learningmanager.attendance.AttendanceProblemCode;
 import me.chan99k.learningmanager.attendance.QRCodeGenerator;
 import me.chan99k.learningmanager.exception.DomainException;
+import me.chan99k.learningmanager.security.CustomUserDetails;
 
 @RestController
 @RequestMapping("/api/v1/attendance")
@@ -27,12 +29,13 @@ public class AttendanceCheckInController {
 
 	@PostMapping("/check-in/{token}")
 	public ResponseEntity<AttendanceCheckIn.Response> checkIn(
+		@AuthenticationPrincipal CustomUserDetails user,
 		@RequestBody AttendanceCheckIn.Request request,
 		@PathVariable String token
 	) {
 		validateQrCode(request.sessionId(), token);
 
-		var response = attendanceCheckInService.checkIn(request);
+		var response = attendanceCheckInService.checkIn(user.getMemberId(), request);
 
 		return ResponseEntity.ok(response);
 	}

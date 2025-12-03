@@ -14,7 +14,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.course.Course;
 import me.chan99k.learningmanager.course.CourseProblemCode;
 import me.chan99k.learningmanager.course.CourseQueryRepository;
@@ -48,9 +47,6 @@ class SessionDeletionServiceTest {
 	private MemberQueryRepository memberQueryRepository;
 
 	@Mock
-	private UserContext userContext;
-
-	@Mock
 	private Session session;
 
 	@Mock
@@ -67,7 +63,6 @@ class SessionDeletionServiceTest {
 		long courseId = 10L;
 		long managerId = 100L;
 
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
 		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(member));
 		when(session.getCourseId()).thenReturn(courseId);
@@ -75,7 +70,7 @@ class SessionDeletionServiceTest {
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 
 		// when
-		sessionDeletionService.deleteSession(sessionId);
+		sessionDeletionService.deleteSession(managerId, sessionId);
 
 		// then
 		verify(sessionCommandRepository).delete(session);
@@ -87,7 +82,6 @@ class SessionDeletionServiceTest {
 		long sessionId = 1L;
 		long adminId = 100L;
 
-		when(userContext.getCurrentMemberId()).thenReturn(adminId);
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
 		when(memberQueryRepository.findById(adminId)).thenReturn(Optional.of(member));
 		when(session.getCourseId()).thenReturn(null);
@@ -96,27 +90,10 @@ class SessionDeletionServiceTest {
 		when(member.getRole()).thenReturn(SystemRole.ADMIN);
 
 		// when
-		sessionDeletionService.deleteSession(sessionId);
+		sessionDeletionService.deleteSession(adminId, sessionId);
 
 		// then
 		verify(sessionCommandRepository).delete(session);
-	}
-
-	@Test
-	@DisplayName("[Failure] 인증되지 않은 사용자는 IllegalStateException이 발생한다")
-	void deleteSession_Fail_Unauthenticated() {
-		long sessionId = 1L;
-
-		when(userContext.getCurrentMemberId()).thenThrow(
-			new IllegalStateException("인증된 사용자의 컨텍스트를 찾을 수 없습니다"));
-
-		// when & then
-		assertThatThrownBy(() -> sessionDeletionService.deleteSession(sessionId))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessageContaining("인증된 사용자의 컨텍스트를 찾을 수 없습니다");
-
-		verify(sessionQueryRepository, never()).findById(anyLong());
-		verify(sessionCommandRepository, never()).delete(any());
 	}
 
 	@Test
@@ -125,11 +102,10 @@ class SessionDeletionServiceTest {
 		long sessionId = 999L;
 		long managerId = 100L;
 
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.empty());
 
 		// when & then
-		assertThatThrownBy(() -> sessionDeletionService.deleteSession(sessionId))
+		assertThatThrownBy(() -> sessionDeletionService.deleteSession(managerId, sessionId))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.SESSION_NOT_FOUND);
 
@@ -144,14 +120,13 @@ class SessionDeletionServiceTest {
 		long nonManagerId = 101L;
 
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(nonManagerId);
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
 		when(memberQueryRepository.findById(nonManagerId)).thenReturn(Optional.of(member));
 		when(session.getCourseId()).thenReturn(courseId);
 		when(courseQueryRepository.findManagedCourseById(courseId, nonManagerId)).thenReturn(Optional.empty());
 
 		// when & then
-		assertThatThrownBy(() -> sessionDeletionService.deleteSession(sessionId))
+		assertThatThrownBy(() -> sessionDeletionService.deleteSession(nonManagerId, sessionId))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", CourseProblemCode.NOT_COURSE_MANAGER);
 
@@ -165,7 +140,6 @@ class SessionDeletionServiceTest {
 		long userId = 100L;
 
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(userId);
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
 		when(memberQueryRepository.findById(userId)).thenReturn(Optional.of(member));
 		when(session.getCourseId()).thenReturn(null);
@@ -173,7 +147,7 @@ class SessionDeletionServiceTest {
 		when(member.getRole()).thenReturn(SystemRole.MEMBER);
 
 		// when & then
-		assertThatThrownBy(() -> sessionDeletionService.deleteSession(sessionId))
+		assertThatThrownBy(() -> sessionDeletionService.deleteSession(userId, sessionId))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.ADMIN_ONLY_ACTION);
 
@@ -189,7 +163,6 @@ class SessionDeletionServiceTest {
 		Session childSession = mock(Session.class);
 
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
 		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(member));
 		when(session.getCourseId()).thenReturn(courseId);
@@ -197,7 +170,7 @@ class SessionDeletionServiceTest {
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 
 		// when & then
-		assertThatThrownBy(() -> sessionDeletionService.deleteSession(sessionId))
+		assertThatThrownBy(() -> sessionDeletionService.deleteSession(managerId, sessionId))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("하위 세션이 있는 세션은 삭제할 수 없습니다");
 
@@ -211,12 +184,11 @@ class SessionDeletionServiceTest {
 		long invalidMemberId = 999L;
 
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(invalidMemberId);
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
 		when(memberQueryRepository.findById(invalidMemberId)).thenReturn(Optional.empty());
 
 		// when & then
-		assertThatThrownBy(() -> sessionDeletionService.deleteSession(sessionId))
+		assertThatThrownBy(() -> sessionDeletionService.deleteSession(invalidMemberId, sessionId))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.MEMBER_NOT_FOUND);
 
@@ -231,7 +203,6 @@ class SessionDeletionServiceTest {
 		long managerId = 100L;
 
 		// given
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
 		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(member));
 		when(session.getCourseId()).thenReturn(courseId);
@@ -239,7 +210,7 @@ class SessionDeletionServiceTest {
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 
 		// when
-		sessionDeletionService.deleteSession(sessionId);
+		sessionDeletionService.deleteSession(managerId, sessionId);
 
 		// then
 		verify(sessionCommandRepository).delete(session);

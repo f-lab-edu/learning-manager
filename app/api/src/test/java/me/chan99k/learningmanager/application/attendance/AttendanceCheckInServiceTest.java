@@ -22,7 +22,6 @@ import me.chan99k.learningmanager.attendance.AttendanceCheckInService;
 import me.chan99k.learningmanager.attendance.AttendanceCommandRepository;
 import me.chan99k.learningmanager.attendance.AttendanceQueryRepository;
 import me.chan99k.learningmanager.attendance.AttendanceStatus;
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.session.Session;
 import me.chan99k.learningmanager.session.SessionParticipant;
@@ -44,8 +43,6 @@ class AttendanceCheckInServiceTest {
 	private SessionQueryRepository sessionQueryRepository;
 	@Mock
 	private Clock clock;
-	@Mock
-	private UserContext userContext;
 	@InjectMocks
 	private AttendanceCheckInService attendanceCheckInService;
 
@@ -54,7 +51,6 @@ class AttendanceCheckInServiceTest {
 	void test01() {
 		// Given
 		Session session = createMockSession();
-		when(userContext.getCurrentMemberId()).thenReturn(MEMBER_ID);
 		when(sessionQueryRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
 		when(attendanceQueryRepository.findBySessionIdAndMemberId(SESSION_ID, MEMBER_ID))
 			.thenReturn(Optional.empty());
@@ -66,7 +62,7 @@ class AttendanceCheckInServiceTest {
 		AttendanceCheckIn.Request request = new AttendanceCheckIn.Request(SESSION_ID);
 
 		// When
-		AttendanceCheckIn.Response response = attendanceCheckInService.checkIn(request);
+		AttendanceCheckIn.Response response = attendanceCheckInService.checkIn(MEMBER_ID, request);
 
 		// Then
 		assertThat(response.attendanceId()).isEqualTo("attendance-id");
@@ -78,29 +74,14 @@ class AttendanceCheckInServiceTest {
 	}
 
 	@Test
-	@DisplayName("[Failure] 인증되지 않은 사용자 체크인 시도")
-	void test02() {
-		// Given
-		AttendanceCheckIn.Request request = new AttendanceCheckIn.Request(SESSION_ID);
-		when(userContext.getCurrentMemberId()).thenThrow(
-			new IllegalStateException("인증된 사용자의 컨텍스트를 찾을 수 없습니다"));
-
-		// When & Then
-		assertThatThrownBy(() -> attendanceCheckInService.checkIn(request))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessageContaining("인증된 사용자의 컨텍스트를 찾을 수 없습니다");
-	}
-
-	@Test
 	@DisplayName("[Failure] 존재하지 않는 세션에 체크인 시도")
 	void test03() {
 		// Given
-		when(userContext.getCurrentMemberId()).thenReturn(MEMBER_ID);
 		when(sessionQueryRepository.findById(SESSION_ID)).thenReturn(Optional.empty());
 		AttendanceCheckIn.Request request = new AttendanceCheckIn.Request(SESSION_ID);
 
 		// When & Then
-		assertThatThrownBy(() -> attendanceCheckInService.checkIn(request))
+		assertThatThrownBy(() -> attendanceCheckInService.checkIn(MEMBER_ID, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.SESSION_NOT_FOUND);
 	}
@@ -110,12 +91,11 @@ class AttendanceCheckInServiceTest {
 	void test04() {
 		// Given
 		Session session = createMockSession();
-		when(userContext.getCurrentMemberId()).thenReturn(NON_PARTICIPANT_ID);
 		when(sessionQueryRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
 		AttendanceCheckIn.Request request = new AttendanceCheckIn.Request(SESSION_ID);
 
 		// When & Then
-		assertThatThrownBy(() -> attendanceCheckInService.checkIn(request))
+		assertThatThrownBy(() -> attendanceCheckInService.checkIn(NON_PARTICIPANT_ID, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.NOT_SESSION_PARTICIPANT);
 	}

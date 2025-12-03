@@ -13,7 +13,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.course.Course;
 import me.chan99k.learningmanager.course.CourseCommandRepository;
 import me.chan99k.learningmanager.course.CourseCreation;
@@ -34,9 +33,6 @@ class CourseCreationServiceTest {
 	@Mock
 	private MemberQueryRepository memberQueryRepository;
 
-	@Mock
-	private UserContext userContext;
-
 	@InjectMocks
 	private CourseCreationService courseCreationService;
 
@@ -47,7 +43,6 @@ class CourseCreationServiceTest {
 		Long adminId = 1L;
 		Member admin = mock(Member.class);
 		when(admin.getRole()).thenReturn(SystemRole.ADMIN);
-		when(userContext.getCurrentMemberId()).thenReturn(adminId);
 		when(memberQueryRepository.findById(adminId)).thenReturn(Optional.of(admin));
 
 		Course mockCourse = mock(Course.class);
@@ -57,7 +52,7 @@ class CourseCreationServiceTest {
 		CourseCreation.Request request = new CourseCreation.Request("Test Course", "Test Description");
 
 		// when
-		CourseCreation.Response response = courseCreationService.createCourse(request);
+		CourseCreation.Response response = courseCreationService.createCourse(adminId, request);
 
 		// then
 		assertThat(response.courseId()).isEqualTo(100L);
@@ -71,29 +66,14 @@ class CourseCreationServiceTest {
 		Long memberId = 1L;
 		Member member = mock(Member.class);
 		when(member.getRole()).thenReturn(SystemRole.MEMBER);
-		when(userContext.getCurrentMemberId()).thenReturn(memberId);
 		when(memberQueryRepository.findById(memberId)).thenReturn(Optional.of(member));
 
 		CourseCreation.Request request = new CourseCreation.Request("Test Course", "Test Description");
 
 		// when & then
-		assertThatThrownBy(() -> courseCreationService.createCourse(request))
+		assertThatThrownBy(() -> courseCreationService.createCourse(memberId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", CourseProblemCode.ADMIN_ONLY_COURSE_CREATION);
-	}
-
-	@Test
-	@DisplayName("[Failure] 인증되지 않은 사용자는 과정 생성에 실패한다")
-	void test03() {
-		// given
-		CourseCreation.Request request = new CourseCreation.Request("Test Course", "Test Description");
-		when(userContext.getCurrentMemberId()).thenThrow(
-			new IllegalStateException("인증된 사용자의 컨텍스트를 찾을 수 없습니다"));
-
-		// when & then
-		assertThatThrownBy(() -> courseCreationService.createCourse(request))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessageContaining("인증된 사용자의 컨텍스트를 찾을 수 없습니다");
 	}
 
 	@Test
@@ -101,13 +81,12 @@ class CourseCreationServiceTest {
 	void test04() {
 		// given
 		Long nonExistentMemberId = 999L;
-		when(userContext.getCurrentMemberId()).thenReturn(nonExistentMemberId);
 		when(memberQueryRepository.findById(nonExistentMemberId)).thenReturn(Optional.empty());
 
 		CourseCreation.Request request = new CourseCreation.Request("Test Course", "Test Description");
 
 		// when & then
-		assertThatThrownBy(() -> courseCreationService.createCourse(request))
+		assertThatThrownBy(() -> courseCreationService.createCourse(nonExistentMemberId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.MEMBER_NOT_FOUND);
 	}

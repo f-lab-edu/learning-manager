@@ -29,7 +29,7 @@ import jakarta.validation.constraints.NotNull;
  * - **연관 도메인:** Course
  */
 public interface SessionUpdate {
-	void updateSession(Long sessionId, Request request);
+	void updateSession(Long requestedBy, Long sessionId, Request request);
 
 	record Request(
 		@NotBlank(message = "세션 제목은 필수입니다")

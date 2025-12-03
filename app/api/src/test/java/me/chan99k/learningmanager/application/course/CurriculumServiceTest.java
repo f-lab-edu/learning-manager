@@ -12,7 +12,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.course.Course;
 import me.chan99k.learningmanager.course.CourseCommandRepository;
 import me.chan99k.learningmanager.course.CourseProblemCode;
@@ -37,9 +36,6 @@ class CurriculumServiceTest {
 	@Mock
 	private Course course;
 
-	@Mock
-	private UserContext userContext;
-
 	@Test
 	@DisplayName("[Success] 과정 관리자가 커리큘럼 생성에 성공한다")
 	void createCurriculum_Success() {
@@ -51,11 +47,10 @@ class CurriculumServiceTest {
 		when(newCurriculum.getId()).thenReturn(101L);
 		when(newCurriculum.getTitle()).thenReturn(request.title());
 
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 		when(course.addCurriculum(request.title(), request.description())).thenReturn(newCurriculum);
 
-		CurriculumCreation.Response response = curriculumService.createCurriculum(courseId, request);
+		CurriculumCreation.Response response = curriculumService.createCurriculum(managerId, courseId, request);
 
 		assertThat(response).isNotNull();
 		assertThat(response.curriculumId()).isEqualTo(101L);
@@ -70,26 +65,11 @@ class CurriculumServiceTest {
 		long nonManagerId = 11L;
 		CurriculumCreation.Request request = new CurriculumCreation.Request("JPA 기초", null);
 
-		when(userContext.getCurrentMemberId()).thenReturn(nonManagerId);
 		when(courseQueryRepository.findManagedCourseById(courseId, nonManagerId)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> curriculumService.createCurriculum(courseId, request))
+		assertThatThrownBy(() -> curriculumService.createCurriculum(nonManagerId, courseId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", CourseProblemCode.NOT_COURSE_MANAGER);
-	}
-
-	@Test
-	@DisplayName("[Failure] 인증되지 않은 사용자는 IllegalStateException이 발생한다")
-	void createCurriculum_Fail_Unauthenticated() {
-		long courseId = 1L;
-		CurriculumCreation.Request request = new CurriculumCreation.Request("JPA 기초", null);
-
-		when(userContext.getCurrentMemberId())
-			.thenThrow(new IllegalStateException("인증된 사용자의 컨텍스트를 찾을 수 없습니다"));
-
-		assertThatThrownBy(() -> curriculumService.createCurriculum(courseId, request))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessageContaining("인증된 사용자의 컨텍스트를 찾을 수 없습니다");
 	}
 
 	@Test
@@ -103,11 +83,10 @@ class CurriculumServiceTest {
 		when(newCurriculum.getId()).thenReturn(102L);
 		when(newCurriculum.getTitle()).thenReturn(request.title());
 
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 		when(course.addCurriculum(request.title(), request.description())).thenReturn(newCurriculum);
 
-		CurriculumCreation.Response response = curriculumService.createCurriculum(courseId, request);
+		CurriculumCreation.Response response = curriculumService.createCurriculum(managerId, courseId, request);
 
 		assertThat(response).isNotNull();
 		assertThat(response.curriculumId()).isEqualTo(102L);
@@ -125,11 +104,10 @@ class CurriculumServiceTest {
 		when(newCurriculum.getId()).thenReturn(103L);
 		when(newCurriculum.getTitle()).thenReturn(request.title());
 
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 		when(course.addCurriculum(request.title(), request.description())).thenReturn(newCurriculum);
 
-		CurriculumCreation.Response response = curriculumService.createCurriculum(courseId, request);
+		CurriculumCreation.Response response = curriculumService.createCurriculum(managerId, courseId, request);
 
 		assertThat(response).isNotNull();
 		assertThat(response.curriculumId()).isEqualTo(103L);
@@ -145,11 +123,10 @@ class CurriculumServiceTest {
 
 		Curriculum newCurriculum = Curriculum.create(course, request.title(), request.description());
 
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 		when(course.addCurriculum(request.title(), request.description())).thenReturn(newCurriculum);
 
-		curriculumService.createCurriculum(courseId, request);
+		curriculumService.createCurriculum(managerId, courseId, request);
 
 		verify(courseCommandRepository).save(course);
 	}

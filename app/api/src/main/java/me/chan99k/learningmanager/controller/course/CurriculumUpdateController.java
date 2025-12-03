@@ -1,6 +1,7 @@
 package me.chan99k.learningmanager.controller.course;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import me.chan99k.learningmanager.course.CurriculumInfoUpdate;
+import me.chan99k.learningmanager.security.CustomUserDetails;
 
 @RestController
 @RequestMapping("/api/v1/courses")
@@ -22,11 +24,12 @@ public class CurriculumUpdateController {
 
 	@PutMapping("/{courseId}/curriculums/{curriculumId}")
 	public ResponseEntity<Void> updateCurriculum(
+		@AuthenticationPrincipal CustomUserDetails user,
 		@PathVariable Long courseId,
 		@PathVariable Long curriculumId,
 		@RequestBody CurriculumInfoUpdate.Request request
 	) {
-		curriculumInfoUpdate.updateCurriculumInfo(courseId, curriculumId, request);
+		curriculumInfoUpdate.updateCurriculumInfo(user.getMemberId(), courseId, curriculumId, request);
 		return ResponseEntity.ok().build();
 	}
 }

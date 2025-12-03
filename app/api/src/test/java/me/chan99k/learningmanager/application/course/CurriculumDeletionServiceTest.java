@@ -12,7 +12,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.course.Course;
 import me.chan99k.learningmanager.course.CourseCommandRepository;
 import me.chan99k.learningmanager.course.CourseProblemCode;
@@ -34,9 +33,6 @@ class CurriculumDeletionServiceTest {
 	private CourseCommandRepository courseCommandRepository;
 
 	@Mock
-	private UserContext userContext;
-
-	@Mock
 	private Course course;
 
 	@Mock
@@ -49,12 +45,11 @@ class CurriculumDeletionServiceTest {
 		long courseId = 1L;
 		long curriculumId = 10L;
 		long managerId = 100L;
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 		when(course.findCurriculumById(curriculumId)).thenReturn(curriculum);
 
 		// when
-		curriculumDeletionService.deleteCurriculum(courseId, curriculumId);
+		curriculumDeletionService.deleteCurriculum(managerId, courseId, curriculumId);
 
 		// then
 		verify(course).findCurriculumById(curriculumId);
@@ -69,34 +64,13 @@ class CurriculumDeletionServiceTest {
 		long courseId = 1L;
 		long curriculumId = 10L;
 		long nonManagerId = 101L;
-		when(userContext.getCurrentMemberId()).thenReturn(nonManagerId);
 		when(courseQueryRepository.findManagedCourseById(courseId, nonManagerId)).thenReturn(Optional.empty());
 
 		// when & then
-		assertThatThrownBy(() -> curriculumDeletionService.deleteCurriculum(courseId, curriculumId))
+		assertThatThrownBy(() -> curriculumDeletionService.deleteCurriculum(nonManagerId, courseId, curriculumId))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", CourseProblemCode.NOT_COURSE_MANAGER);
 
-		verify(course, never()).findCurriculumById(anyLong());
-		verify(course, never()).removeCurriculum(any());
-		verify(courseCommandRepository, never()).save(any());
-	}
-
-	@Test
-	@DisplayName("[Failure] 인증되지 않은 사용자는 IllegalStateException이 발생한다")
-	void deleteCurriculum_Fail_Unauthenticated() {
-		// given
-		long courseId = 1L;
-		long curriculumId = 10L;
-		when(userContext.getCurrentMemberId()).thenThrow(
-			new IllegalStateException("인증된 사용자의 컨텍스트를 찾을 수 없습니다"));
-
-		// when & then
-		assertThatThrownBy(() -> curriculumDeletionService.deleteCurriculum(courseId, curriculumId))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessageContaining("인증된 사용자의 컨텍스트를 찾을 수 없습니다");
-
-		verify(courseQueryRepository, never()).findManagedCourseById(anyLong(), anyLong());
 		verify(course, never()).findCurriculumById(anyLong());
 		verify(course, never()).removeCurriculum(any());
 		verify(courseCommandRepository, never()).save(any());
@@ -109,13 +83,12 @@ class CurriculumDeletionServiceTest {
 		long courseId = 1L;
 		long curriculumId = 999L;
 		long managerId = 100L;
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 		when(course.findCurriculumById(curriculumId))
 			.thenThrow(new IllegalArgumentException("해당 과정에 존재하지 않는 커리큘럼입니다. ID: " + curriculumId));
 
 		// when & then
-		assertThatThrownBy(() -> curriculumDeletionService.deleteCurriculum(courseId, curriculumId))
+		assertThatThrownBy(() -> curriculumDeletionService.deleteCurriculum(managerId, courseId, curriculumId))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("해당 과정에 존재하지 않는 커리큘럼입니다");
 
@@ -131,12 +104,11 @@ class CurriculumDeletionServiceTest {
 		long courseId = 1L;
 		long curriculumId = 10L;
 		long managerId = 100L;
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 		when(course.findCurriculumById(curriculumId)).thenReturn(curriculum);
 
 		// when
-		curriculumDeletionService.deleteCurriculum(courseId, curriculumId);
+		curriculumDeletionService.deleteCurriculum(managerId, courseId, curriculumId);
 
 		// then
 		verify(courseCommandRepository).save(course);

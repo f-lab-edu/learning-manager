@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import me.chan99k.learningmanager.course.CourseMemberAddition;
 import me.chan99k.learningmanager.course.CourseMemberRemoval;
+import me.chan99k.learningmanager.security.CustomUserDetails;
 
 @RestController
 @RequestMapping("/api/v1/courses")
@@ -29,13 +31,15 @@ public class CourseMemberController {
 
 	@PostMapping("/{courseId}/members")
 	public ResponseEntity<CourseMemberAddition.Response> addMembersToCourse(
+		@AuthenticationPrincipal CustomUserDetails user,
 		@PathVariable Long courseId,
 		@Valid @RequestBody CourseMemberAddition.Request request
 	) {
+		Long requestedBy = user.getMemberId();
 		if (request.members().size() == 1) {    // 단일 요청: 예외 발생 시 전역 핸들러가 처리
 			CourseMemberAddition.MemberAdditionItem item = request.members().get(0);
 
-			courseMemberAddition.addSingleMember(courseId, item);
+			courseMemberAddition.addSingleMember(requestedBy, courseId, item);
 
 			CourseMemberAddition.Response response = new CourseMemberAddition.Response(
 				1, 1, 0,
@@ -44,7 +48,7 @@ public class CourseMemberController {
 
 			return ResponseEntity.ok(response);
 		} else {    // 벌크 요청: 207 Multi-Status
-			CourseMemberAddition.Response response = courseMemberAddition.addMultipleMembers(courseId,
+			CourseMemberAddition.Response response = courseMemberAddition.addMultipleMembers(requestedBy, courseId,
 				request.members());
 
 			return ResponseEntity.status(HttpStatus.MULTI_STATUS).body(response);
@@ -53,10 +57,11 @@ public class CourseMemberController {
 
 	@DeleteMapping("/{courseId}/members/{memberId}")
 	public ResponseEntity<Void> removeMemberFromCourse(
+		@AuthenticationPrincipal CustomUserDetails user,
 		@PathVariable Long courseId,
 		@PathVariable Long memberId
 	) {
-		courseMemberRemoval.removeMemberFromCourse(courseId, memberId);
+		courseMemberRemoval.removeMemberFromCourse(user.getMemberId(), courseId, memberId);
 
 		return ResponseEntity.noContent().build();
 	}

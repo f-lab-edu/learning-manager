@@ -19,7 +19,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.course.Course;
 import me.chan99k.learningmanager.course.CourseProblemCode;
 import me.chan99k.learningmanager.course.CourseQueryRepository;
@@ -56,9 +55,6 @@ class SessionCreationServiceTest {
 	@Mock
 	private MemberQueryRepository memberQueryRepository;
 
-	@Mock
-	private UserContext userContext;
-
 	@InjectMocks
 	private SessionCreationService sessionCreationService;
 
@@ -79,6 +75,7 @@ class SessionCreationServiceTest {
 		Instant endTime = fixedTime.plusSeconds(86400 + 7200); // +1 day +2 hours
 
 		SessionCreation.Request request = new SessionCreation.Request(
+			adminId,
 			null, null, null,
 			"테스트 세션",
 			startTime,
@@ -88,7 +85,6 @@ class SessionCreationServiceTest {
 
 		Session mockSession = mock(Session.class);
 		when(sessionCommandRepository.create(any(Session.class))).thenReturn(mockSession);
-		when(userContext.getCurrentMemberId()).thenReturn(adminId);
 
 		// when
 		Session result = sessionCreationService.createSession(request);
@@ -106,9 +102,9 @@ class SessionCreationServiceTest {
 		Member user = mock(Member.class);
 		when(user.getRole()).thenReturn(SystemRole.MEMBER);
 		when(memberQueryRepository.findById(userId)).thenReturn(Optional.of(user));
-		when(userContext.getCurrentMemberId()).thenReturn(userId);
 
 		SessionCreation.Request request = new SessionCreation.Request(
+			userId,
 			null, null, null,
 			"테스트 세션",
 			LocalDateTime.now().plusDays(1).toInstant(ZoneOffset.UTC),
@@ -137,12 +133,12 @@ class SessionCreationServiceTest {
 
 		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(manager));
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 
 		Instant startTime = fixedTime.plusSeconds(86400); // +1 day
 		Instant endTime = fixedTime.plusSeconds(86400 + 7200); // +1 day +2 hours
 
 		SessionCreation.Request request = new SessionCreation.Request(
+			managerId,
 			courseId, null, null,
 			"과정 세션",
 			startTime,
@@ -172,9 +168,9 @@ class SessionCreationServiceTest {
 
 		when(memberQueryRepository.findById(userId)).thenReturn(Optional.of(user));
 		when(courseQueryRepository.findManagedCourseById(courseId, userId)).thenReturn(Optional.empty());
-		when(userContext.getCurrentMemberId()).thenReturn(userId);
 
 		SessionCreation.Request request = new SessionCreation.Request(
+			userId,
 			courseId, null, null,
 			"과정 세션",
 			LocalDateTime.now().plusDays(1).toInstant(ZoneOffset.UTC),
@@ -207,12 +203,12 @@ class SessionCreationServiceTest {
 		when(course.getCurriculumList()).thenReturn(List.of(curriculum));
 		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(manager));
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 
 		Instant startTime = fixedTime.plusSeconds(86400); // +1 day
 		Instant endTime = fixedTime.plusSeconds(86400 + 7200); // +1 day +2 hours
 
 		SessionCreation.Request request = new SessionCreation.Request(
+			managerId,
 			courseId, curriculumId, null,
 			"커리큘럼 세션",
 			startTime,
@@ -245,9 +241,9 @@ class SessionCreationServiceTest {
 		when(course.getCurriculumList()).thenReturn(List.of());
 		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(manager));
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 
 		SessionCreation.Request request = new SessionCreation.Request(
+			managerId,
 			courseId, invalidCurriculumId, null,
 			"커리큘럼 세션",
 			LocalDateTime.now().plusDays(1).toInstant(ZoneOffset.UTC),
@@ -279,9 +275,9 @@ class SessionCreationServiceTest {
 			any(SessionType.class), any(SessionLocation.class), anyString(), any(Clock.class))).thenReturn(
 			childSession);
 		when(sessionCommandRepository.create(childSession)).thenReturn(childSession);
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 
 		SessionCreation.Request request = new SessionCreation.Request(
+			managerId,
 			null, null, parentSessionId,
 			"하위 세션",
 			LocalDateTime.now().plusDays(1).toInstant(ZoneOffset.UTC),
@@ -313,6 +309,7 @@ class SessionCreationServiceTest {
 		when(sessionQueryRepository.findById(invalidParentSessionId)).thenReturn(Optional.empty());
 
 		SessionCreation.Request request = new SessionCreation.Request(
+			managerId,
 			null, null, invalidParentSessionId,
 			"하위 세션",
 			LocalDateTime.now().plusDays(1).toInstant(ZoneOffset.UTC),
@@ -322,32 +319,10 @@ class SessionCreationServiceTest {
 			"Zoom 링크"
 		);
 
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
-
 		// when & then
 		assertThatThrownBy(() -> sessionCreationService.createSession(request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.SESSION_NOT_FOUND);
-	}
-
-	@Test
-	@DisplayName("[Failure] 인증되지 않은 사용자의 세션 생성 시 IllegalStateException 발생")
-	void createSession_AuthenticationFail() {
-		SessionCreation.Request request = new SessionCreation.Request(
-			null, null, null,
-			"테스트 세션",
-			LocalDateTime.now().plusDays(1).toInstant(ZoneOffset.UTC),
-			LocalDateTime.now().plusDays(1).plusHours(2).toInstant(ZoneOffset.UTC),
-			SessionType.ONLINE, SessionLocation.ZOOM, "Zoom 링크"
-		);
-
-		when(userContext.getCurrentMemberId()).thenThrow(
-			new IllegalStateException("인증된 사용자의 컨텍스트를 찾을 수 없습니다"));
-
-		// when & then
-		assertThatThrownBy(() -> sessionCreationService.createSession(request))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessageContaining("인증된 사용자의 컨텍스트를 찾을 수 없습니다");
 	}
 
 	@Test
@@ -357,14 +332,13 @@ class SessionCreationServiceTest {
 		when(memberQueryRepository.findById(invalidMemberId)).thenReturn(Optional.empty());
 
 		SessionCreation.Request request = new SessionCreation.Request(
+			invalidMemberId,
 			null, null, null,
 			"테스트 세션",
 			LocalDateTime.now().plusDays(1).toInstant(ZoneOffset.UTC),
 			LocalDateTime.now().plusDays(1).plusHours(2).toInstant(ZoneOffset.UTC),
 			SessionType.ONLINE, SessionLocation.ZOOM, "Zoom 링크"
 		);
-
-		when(userContext.getCurrentMemberId()).thenReturn(invalidMemberId);
 
 		// when & then
 		assertThatThrownBy(() -> sessionCreationService.createSession(request))

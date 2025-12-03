@@ -13,7 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.course.Course;
 import me.chan99k.learningmanager.course.CourseCommandRepository;
 import me.chan99k.learningmanager.course.CourseInfoUpdate;
@@ -36,13 +35,11 @@ class CourseInfoUpdateServiceTest {
 	@Mock
 	private CourseCommandRepository commandRepository;
 	@Mock
-	private UserContext userContext;
-	@Mock
 	private Course course;
 
 	@BeforeEach
 	void setUp() {
-		service = new CourseInfoUpdateService(queryRepository, commandRepository, userContext);
+		service = new CourseInfoUpdateService(queryRepository, commandRepository);
 	}
 
 	@Test
@@ -50,11 +47,10 @@ class CourseInfoUpdateServiceTest {
 	void updateCourseInfo_Success() {
 		// given
 		CourseInfoUpdate.Request request = new CourseInfoUpdate.Request(newTitle, newDescription);
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 
 		// when
-		service.updateCourseInfo(courseId, request);
+		service.updateCourseInfo(managerId, courseId, request);
 
 		// then
 		verify(course).updateTitle(newTitle);
@@ -67,11 +63,10 @@ class CourseInfoUpdateServiceTest {
 	void updateCourseInfo_TitleOnly() {
 		// given
 		CourseInfoUpdate.Request request = new CourseInfoUpdate.Request(newTitle, null);
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 
 		// when
-		service.updateCourseInfo(courseId, request);
+		service.updateCourseInfo(managerId, courseId, request);
 
 		// then
 		verify(course).updateTitle(newTitle);
@@ -84,11 +79,10 @@ class CourseInfoUpdateServiceTest {
 	void updateCourseInfo_DescriptionOnly() {
 		// given
 		CourseInfoUpdate.Request request = new CourseInfoUpdate.Request(null, newDescription);
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 
 		// when
-		service.updateCourseInfo(courseId, request);
+		service.updateCourseInfo(managerId, courseId, request);
 
 		// then
 		verify(course, never()).updateTitle(any());
@@ -97,29 +91,14 @@ class CourseInfoUpdateServiceTest {
 	}
 
 	@Test
-	@DisplayName("[Failure] 인증된 사용자 정보가 없으면 IllegalStateException이 발생한다")
-	void updateCourseInfo_Fail_Unauthenticated() {
-		// given
-		CourseInfoUpdate.Request request = new CourseInfoUpdate.Request(newTitle, newDescription);
-		when(userContext.getCurrentMemberId()).thenThrow(
-			new IllegalStateException("인증된 사용자의 컨텍스트를 찾을 수 없습니다"));
-
-		// when & then
-		assertThatThrownBy(() -> service.updateCourseInfo(courseId, request))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessageContaining("인증된 사용자의 컨텍스트를 찾을 수 없습니다");
-	}
-
-	@Test
 	@DisplayName("[Failure] 과정이 존재하지 않거나 매니저가 아니면 DomainException이 발생한다")
 	void updateCourseInfo_Fail_CourseNotFoundOrNotManager() {
 		// given
 		CourseInfoUpdate.Request request = new CourseInfoUpdate.Request(newTitle, newDescription);
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.empty());
 
 		// when & then
-		assertThatThrownBy(() -> service.updateCourseInfo(courseId, request))
+		assertThatThrownBy(() -> service.updateCourseInfo(managerId, courseId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", CourseProblemCode.NOT_COURSE_MANAGER);
 	}
@@ -131,7 +110,7 @@ class CourseInfoUpdateServiceTest {
 		CourseInfoUpdate.Request request = new CourseInfoUpdate.Request(null, null);
 
 		// when & then
-		assertThatThrownBy(() -> service.updateCourseInfo(courseId, request))
+		assertThatThrownBy(() -> service.updateCourseInfo(managerId, courseId, request))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("제목 또는 설명 중 하나 이상을 입력해주세요");
 	}
@@ -141,13 +120,12 @@ class CourseInfoUpdateServiceTest {
 	void updateCourseInfo_Fail_InvalidTitle() {
 		// given
 		CourseInfoUpdate.Request request = new CourseInfoUpdate.Request("", newDescription);
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 		doThrow(new IllegalArgumentException("과정 제목은 필수입니다"))
 			.when(course).updateTitle("");
 
 		// when & then
-		assertThatThrownBy(() -> service.updateCourseInfo(courseId, request))
+		assertThatThrownBy(() -> service.updateCourseInfo(managerId, courseId, request))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("과정 제목은 필수입니다");
 	}
@@ -157,13 +135,12 @@ class CourseInfoUpdateServiceTest {
 	void updateCourseInfo_Fail_InvalidDescription() {
 		// given
 		CourseInfoUpdate.Request request = new CourseInfoUpdate.Request(newTitle, "");
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 		doThrow(new IllegalArgumentException("과정 설명은 필수입니다"))
 			.when(course).updateDescription("");
 
 		// when & then
-		assertThatThrownBy(() -> service.updateCourseInfo(courseId, request))
+		assertThatThrownBy(() -> service.updateCourseInfo(managerId, courseId, request))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("과정 설명은 필수입니다");
 	}

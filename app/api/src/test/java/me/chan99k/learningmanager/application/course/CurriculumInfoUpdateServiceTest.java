@@ -13,7 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.course.Course;
 import me.chan99k.learningmanager.course.CourseCommandRepository;
 import me.chan99k.learningmanager.course.CourseProblemCode;
@@ -38,15 +37,13 @@ class CurriculumInfoUpdateServiceTest {
 	@Mock
 	private CourseCommandRepository commandRepository;
 	@Mock
-	private UserContext userContext;
-	@Mock
 	private Course course;
 	@Mock
 	private Curriculum curriculum;
 
 	@BeforeEach
 	void setUp() {
-		service = new CurriculumInfoUpdateService(queryRepository, commandRepository, userContext);
+		service = new CurriculumInfoUpdateService(queryRepository, commandRepository);
 	}
 
 	@Test
@@ -54,12 +51,11 @@ class CurriculumInfoUpdateServiceTest {
 	void updateCurriculumInfo_Success() {
 		// given
 		CurriculumInfoUpdate.Request request = new CurriculumInfoUpdate.Request(newTitle, newDescription);
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 		when(course.findCurriculumById(curriculumId)).thenReturn(curriculum);
 
 		// when
-		service.updateCurriculumInfo(courseId, curriculumId, request);
+		service.updateCurriculumInfo(managerId, courseId, curriculumId, request);
 
 		// then
 		verify(curriculum).updateTitle(newTitle);
@@ -72,12 +68,11 @@ class CurriculumInfoUpdateServiceTest {
 	void updateCurriculumInfo_TitleOnly() {
 		// given
 		CurriculumInfoUpdate.Request request = new CurriculumInfoUpdate.Request(newTitle, null);
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 		when(course.findCurriculumById(curriculumId)).thenReturn(curriculum);
 
 		// when
-		service.updateCurriculumInfo(courseId, curriculumId, request);
+		service.updateCurriculumInfo(managerId, courseId, curriculumId, request);
 
 		// then
 		verify(curriculum).updateTitle(newTitle);
@@ -90,12 +85,11 @@ class CurriculumInfoUpdateServiceTest {
 	void updateCurriculumInfo_DescriptionOnly() {
 		// given
 		CurriculumInfoUpdate.Request request = new CurriculumInfoUpdate.Request(null, newDescription);
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 		when(course.findCurriculumById(curriculumId)).thenReturn(curriculum);
 
 		// when
-		service.updateCurriculumInfo(courseId, curriculumId, request);
+		service.updateCurriculumInfo(managerId, courseId, curriculumId, request);
 
 		// then
 		verify(curriculum, never()).updateTitle(any());
@@ -104,29 +98,14 @@ class CurriculumInfoUpdateServiceTest {
 	}
 
 	@Test
-	@DisplayName("[Failure] 인증된 사용자 정보가 없으면 IllegalStateException이 발생한다")
-	void updateCurriculumInfo_Fail_Unauthenticated() {
-		// given
-		CurriculumInfoUpdate.Request request = new CurriculumInfoUpdate.Request(newTitle, newDescription);
-		when(userContext.getCurrentMemberId()).thenThrow(
-			new IllegalStateException("인증된 사용자의 컨텍스트를 찾을 수 없습니다"));
-
-		// when & then
-		assertThatThrownBy(() -> service.updateCurriculumInfo(courseId, curriculumId, request))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessageContaining("인증된 사용자의 컨텍스트를 찾을 수 없습니다");
-	}
-
-	@Test
 	@DisplayName("[Failure] 과정이 존재하지 않거나 매니저가 아니면 DomainException이 발생한다")
 	void updateCurriculumInfo_Fail_CourseNotFoundOrNotManager() {
 		// given
 		CurriculumInfoUpdate.Request request = new CurriculumInfoUpdate.Request(newTitle, newDescription);
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.empty());
 
 		// when & then
-		assertThatThrownBy(() -> service.updateCurriculumInfo(courseId, curriculumId, request))
+		assertThatThrownBy(() -> service.updateCurriculumInfo(managerId, courseId, curriculumId, request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", CourseProblemCode.NOT_COURSE_MANAGER);
 	}
@@ -136,13 +115,12 @@ class CurriculumInfoUpdateServiceTest {
 	void updateCurriculumInfo_Fail_CurriculumNotFound() {
 		// given
 		CurriculumInfoUpdate.Request request = new CurriculumInfoUpdate.Request(newTitle, newDescription);
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 		when(course.findCurriculumById(curriculumId))
 			.thenThrow(new IllegalArgumentException("커리큘럼을 찾을 수 없습니다"));
 
 		// when & then
-		assertThatThrownBy(() -> service.updateCurriculumInfo(courseId, curriculumId, request))
+		assertThatThrownBy(() -> service.updateCurriculumInfo(managerId, courseId, curriculumId, request))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("커리큘럼을 찾을 수 없습니다");
 	}
@@ -154,7 +132,7 @@ class CurriculumInfoUpdateServiceTest {
 		CurriculumInfoUpdate.Request request = new CurriculumInfoUpdate.Request(null, null);
 
 		// when & then
-		assertThatThrownBy(() -> service.updateCurriculumInfo(courseId, curriculumId, request))
+		assertThatThrownBy(() -> service.updateCurriculumInfo(managerId, courseId, curriculumId, request))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("제목 또는 설명 중 하나 이상을 입력해주세요");
 	}
@@ -164,14 +142,13 @@ class CurriculumInfoUpdateServiceTest {
 	void updateCurriculumInfo_Fail_InvalidTitle() {
 		// given
 		CurriculumInfoUpdate.Request request = new CurriculumInfoUpdate.Request("", newDescription);
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(queryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 		when(course.findCurriculumById(curriculumId)).thenReturn(curriculum);
 		doThrow(new IllegalArgumentException("커리큘럼 제목은 필수입니다"))
 			.when(curriculum).updateTitle("");
 
 		// when & then
-		assertThatThrownBy(() -> service.updateCurriculumInfo(courseId, curriculumId, request))
+		assertThatThrownBy(() -> service.updateCurriculumInfo(managerId, courseId, curriculumId, request))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("커리큘럼 제목은 필수입니다");
 	}

@@ -2,6 +2,7 @@ package me.chan99k.learningmanager.member;
 
 import me.chan99k.learningmanager.exception.ProblemCode;
 
+// TODO :: 예외 메시지들을 종류별로 묶어 놓았는데, 식별 코드를 +1 씩 증가 시켜서 사용 하다보니 계층 구조적으로 관리가 안됨 -> 정책 수정 필요 -> 애플리케이션 시작시 code를 generate 하는 방법?
 public enum MemberProblemCode implements ProblemCode {
 
 	MEMBER_NOT_GENERAL("DML001", "[System] 일반 회원만 관리자로 승격될 수 있습니다."),
@@ -19,7 +20,7 @@ public enum MemberProblemCode implements ProblemCode {
 	ACCOUNT_NOT_ACTIVE("DML010", "[System] 활성 상태의 계정이 아닙니다."),
 	ACCOUNT_ID_REQUIRED("DML010-1", "[System] 계정 ID는 null일 수 없습니다."),
 	ACCOUNT_NOT_FOUND("DML027", "[System] 해당 계정이 존재하지 않습니다"),
-	// TODO :: 예외 메시지들을 종류별로 묶어 놓았는데, 식별 코드를 +1 씩 증가 시켜서 사용 하다보니 계층 구조적으로 관리가 안됨 -> 정책 수정 필요 -> 애플리케이션 시작시 code를 generate 하는 방법?
+
 	INVALID_EMAIL_FORMAT("DML011", "[System] 유효하지 않은 이메일 형식입니다."),
 	INVALID_CREDENTIAL("DML028", "[System] 유효하지 않은 자격 증명 정보입니다."),
 	CREDENTIAL_ALREADY_EXISTS("DML033", "[System] 이미 동일한 유형의 인증 수단이 등록되어 있습니다."),
@@ -36,6 +37,7 @@ public enum MemberProblemCode implements ProblemCode {
 	PASSWORD_RESET_EMAIL_NOT_FOUND("DML030", "[System] 가입되지 않은 이메일입니다."),
 	INVALID_PASSWORD_RESET_TOKEN("DML031", "[System] 유효하지 않은 비밀번호 재설정 토큰입니다."),
 	EXPIRED_PASSWORD_RESET_TOKEN("DML032", "[System] 비밀번호 재설정 토큰이 만료되었습니다."),
+	CANNOT_REMOVE_PRIMARY_ACCOUNT("DML035", "[System] 대표 이메일 계정은 삭제할 수 없습니다. 먼저 다른 계정을 대표 이메일로 변경해주세요."),
 
 	MEMBER_NICKNAME_REQUIRED("DML019", "[System] 닉네임은 비어 있을 수 없습니다."),
 	MEMBER_NICKNAME_CONSTRAINTS_FOR_LENGTH("DML020", "[System] 닉네임은 %d자 이상 %d자 이하여야 합니다."),

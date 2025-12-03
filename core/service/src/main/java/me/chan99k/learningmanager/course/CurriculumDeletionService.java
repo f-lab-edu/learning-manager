@@ -3,7 +3,6 @@ package me.chan99k.learningmanager.course;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.exception.DomainException;
 
 @Service
@@ -11,18 +10,15 @@ import me.chan99k.learningmanager.exception.DomainException;
 public class CurriculumDeletionService implements CurriculumDeletion {
 	private final CourseCommandRepository commandRepository;
 	private final CourseQueryRepository queryRepository;
-	private final UserContext userContext;
 
-	public CurriculumDeletionService(CourseCommandRepository commandRepository, CourseQueryRepository queryRepository,
-		UserContext userContext) {
+	public CurriculumDeletionService(CourseCommandRepository commandRepository, CourseQueryRepository queryRepository) {
 		this.commandRepository = commandRepository;
 		this.queryRepository = queryRepository;
-		this.userContext = userContext;
 	}
 
 	@Override
-	public void deleteCurriculum(Long courseId, Long curriculumId) {
-		Course course = authenticateAndAuthorizeManager(courseId);
+	public void deleteCurriculum(Long requestedBy, Long courseId, Long curriculumId) {
+		Course course = authenticateAndAuthorizeManager(requestedBy, courseId);
 
 		Curriculum curriculumToDelete = course.findCurriculumById(curriculumId);
 		course.removeCurriculum(curriculumToDelete);
@@ -30,10 +26,8 @@ public class CurriculumDeletionService implements CurriculumDeletion {
 		commandRepository.save(course);
 	}
 
-	private Course authenticateAndAuthorizeManager(Long courseId) {
-		Long managerId = userContext.getCurrentMemberId();
-
-		return queryRepository.findManagedCourseById(courseId, managerId)
+	private Course authenticateAndAuthorizeManager(Long requestedBy, Long courseId) {
+		return queryRepository.findManagedCourseById(courseId, requestedBy)
 			.orElseThrow(() -> new DomainException(CourseProblemCode.NOT_COURSE_MANAGER));
 	}
 }

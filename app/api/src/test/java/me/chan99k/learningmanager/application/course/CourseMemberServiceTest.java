@@ -13,7 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.course.Course;
 import me.chan99k.learningmanager.course.CourseCommandRepository;
 import me.chan99k.learningmanager.course.CourseMemberAddition;
@@ -44,8 +43,6 @@ class CourseMemberServiceTest {
 	@Mock
 	private MemberQueryRepository memberQueryRepository;
 	@Mock
-	private UserContext userContext;
-	@Mock
 	private Course course;
 	@Mock
 	private Member memberToAdd;
@@ -53,12 +50,10 @@ class CourseMemberServiceTest {
 	@BeforeEach
 	void setUp() {
 		courseMemberService = new CourseMemberService(
-			100, // test용 bulk size 직접 지정
+			100,
 			courseQueryRepository,
 			courseCommandRepository,
-			memberQueryRepository,
-			userContext
-
+			memberQueryRepository
 		);
 		lenient().when(memberToAdd.getId()).thenReturn(memberToAddId);
 	}
@@ -69,34 +64,15 @@ class CourseMemberServiceTest {
 		CourseMemberAddition.MemberAdditionItem item = new CourseMemberAddition.MemberAdditionItem(memberToAddEmail,
 			CourseRole.MENTEE);
 
-		given(userContext.getCurrentMemberId()).willReturn(managerId);
 		given(courseQueryRepository.findManagedCourseById(courseId, managerId)).willReturn(Optional.of(course));
 		given(memberQueryRepository.findByEmail(Email.of(memberToAddEmail))).willReturn(Optional.of(memberToAdd));
 		given(memberToAdd.getId()).willReturn(memberToAddId);
 
-		assertThatCode(() -> courseMemberService.addSingleMember(courseId, item))
+		assertThatCode(() -> courseMemberService.addSingleMember(managerId, courseId, item))
 			.doesNotThrowAnyException();
 
 		then(course).should().addMember(memberToAddId, CourseRole.MENTEE);
 		then(courseCommandRepository).should().save(course);
-	}
-
-	@Test
-	@DisplayName("[Failure] 단일 요청에서 인증된 사용자 정보가 없으면 IllegalStateException이 발생한다")
-	void addSingleMember_Fail_Unauthenticated() {
-		CourseMemberAddition.MemberAdditionItem item = new CourseMemberAddition.MemberAdditionItem(memberToAddEmail,
-			CourseRole.MENTEE);
-
-		given(userContext.getCurrentMemberId()).willThrow(
-			new IllegalStateException("인증된 사용자의 컨텍스트를 찾을 수 없습니다"));
-
-		assertThatThrownBy(() -> courseMemberService.addSingleMember(courseId, item))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessageContaining("인증된 사용자의 컨텍스트를 찾을 수 없습니다");
-
-		then(courseQueryRepository).shouldHaveNoInteractions();
-		then(memberQueryRepository).shouldHaveNoInteractions();
-		then(courseCommandRepository).shouldHaveNoInteractions();
 	}
 
 	@Test
@@ -105,10 +81,9 @@ class CourseMemberServiceTest {
 		CourseMemberAddition.MemberAdditionItem item = new CourseMemberAddition.MemberAdditionItem(memberToAddEmail,
 			CourseRole.MENTEE);
 
-		given(userContext.getCurrentMemberId()).willReturn(managerId);
 		given(courseQueryRepository.findManagedCourseById(courseId, managerId)).willReturn(Optional.empty());
 
-		assertThatThrownBy(() -> courseMemberService.addSingleMember(courseId, item))
+		assertThatThrownBy(() -> courseMemberService.addSingleMember(managerId, courseId, item))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", CourseProblemCode.NOT_COURSE_MANAGER);
 
@@ -122,11 +97,10 @@ class CourseMemberServiceTest {
 		CourseMemberAddition.MemberAdditionItem item = new CourseMemberAddition.MemberAdditionItem(memberToAddEmail,
 			CourseRole.MENTEE);
 
-		given(userContext.getCurrentMemberId()).willReturn(managerId);
 		given(courseQueryRepository.findManagedCourseById(courseId, managerId)).willReturn(Optional.of(course));
 		given(memberQueryRepository.findByEmail(Email.of(memberToAddEmail))).willReturn(Optional.empty());
 
-		assertThatThrownBy(() -> courseMemberService.addSingleMember(courseId, item))
+		assertThatThrownBy(() -> courseMemberService.addSingleMember(managerId, courseId, item))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.MEMBER_NOT_FOUND);
 
@@ -141,16 +115,14 @@ class CourseMemberServiceTest {
 			new CourseMemberAddition.MemberAdditionItem("notfound@example.com", CourseRole.MENTEE)
 		);
 
-		// 성공할 멤버만 반환되도록 Mock 설정
 		MemberEmailPair successPair = new MemberEmailPair(memberToAdd, "success@example.com");
 		List<MemberEmailPair> foundPairs = List.of(successPair);
 
-		given(userContext.getCurrentMemberId()).willReturn(managerId);
 		given(courseQueryRepository.findManagedCourseById(courseId, managerId)).willReturn(Optional.of(course));
 		given(memberQueryRepository.findMembersByEmails(any(), eq(100))).willReturn(foundPairs);
 		given(memberToAdd.getId()).willReturn(memberToAddId);
 
-		CourseMemberAddition.Response response = courseMemberService.addMultipleMembers(courseId, members);
+		CourseMemberAddition.Response response = courseMemberService.addMultipleMembers(managerId, courseId, members);
 
 		assertThat(response.totalCount()).isEqualTo(2);
 		assertThat(response.successCount()).isEqualTo(1);
@@ -174,14 +146,13 @@ class CourseMemberServiceTest {
 		MemberEmailPair memberPair = new MemberEmailPair(memberToAdd, memberToAddEmail);
 		List<MemberEmailPair> foundPairs = List.of(memberPair);
 
-		given(userContext.getCurrentMemberId()).willReturn(managerId);
 		given(courseQueryRepository.findManagedCourseById(courseId, managerId)).willReturn(Optional.of(course));
 		given(memberQueryRepository.findMembersByEmails(any(), eq(100))).willReturn(foundPairs);
 		given(memberToAdd.getId()).willReturn(memberToAddId);
 		doThrow(new IllegalArgumentException("이미 과정에 참여 중인 회원입니다"))
 			.when(course).addMember(memberToAddId, CourseRole.MENTEE);
 
-		CourseMemberAddition.Response response = courseMemberService.addMultipleMembers(courseId, members);
+		CourseMemberAddition.Response response = courseMemberService.addMultipleMembers(managerId, courseId, members);
 
 		assertThat(response.totalCount()).isEqualTo(1);
 		assertThat(response.successCount()).isEqualTo(0);
@@ -196,10 +167,9 @@ class CourseMemberServiceTest {
 	@Test
 	@DisplayName("[Success] 과정 매니저가 멤버를 성공적으로 제외한다")
 	void removeMember_Success() {
-		given(userContext.getCurrentMemberId()).willReturn(managerId);
 		given(courseQueryRepository.findManagedCourseById(courseId, managerId)).willReturn(Optional.of(course));
 
-		assertThatCode(() -> courseMemberService.removeMemberFromCourse(courseId, memberToAddId))
+		assertThatCode(() -> courseMemberService.removeMemberFromCourse(managerId, courseId, memberToAddId))
 			.doesNotThrowAnyException();
 
 		then(course).should().removeMember(memberToAddId);
@@ -209,10 +179,9 @@ class CourseMemberServiceTest {
 	@Test
 	@DisplayName("[Failure] 과정 매니저가 아니면 멤버를 제외할 수 없다")
 	void removeMember_Fail_NotManager() {
-		given(userContext.getCurrentMemberId()).willReturn(managerId);
 		given(courseQueryRepository.findManagedCourseById(courseId, managerId)).willReturn(Optional.empty());
 
-		assertThatThrownBy(() -> courseMemberService.removeMemberFromCourse(courseId, memberToAddId))
+		assertThatThrownBy(() -> courseMemberService.removeMemberFromCourse(managerId, courseId, memberToAddId))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", CourseProblemCode.NOT_COURSE_MANAGER);
 

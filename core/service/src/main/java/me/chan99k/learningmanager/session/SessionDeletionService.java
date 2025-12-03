@@ -3,7 +3,6 @@ package me.chan99k.learningmanager.session;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.course.CourseProblemCode;
 import me.chan99k.learningmanager.course.CourseQueryRepository;
 import me.chan99k.learningmanager.exception.DomainException;
@@ -19,33 +18,25 @@ public class SessionDeletionService implements SessionDeletion {
 	private final SessionCommandRepository sessionCommandRepository;
 	private final CourseQueryRepository courseQueryRepository;
 	private final MemberQueryRepository memberQueryRepository;
-	private final UserContext userContext;
 
 	public SessionDeletionService(SessionQueryRepository sessionQueryRepository,
 		SessionCommandRepository sessionCommandRepository,
 		CourseQueryRepository courseQueryRepository,
-		MemberQueryRepository memberQueryRepository,
-		UserContext userContext) {
+		MemberQueryRepository memberQueryRepository) {
 		this.sessionQueryRepository = sessionQueryRepository;
 		this.sessionCommandRepository = sessionCommandRepository;
 		this.courseQueryRepository = courseQueryRepository;
 		this.memberQueryRepository = memberQueryRepository;
-		this.userContext = userContext;
 	}
 
 	@Override
-	public void deleteSession(Long sessionId) {
-		Long currentMemberId = getCurrentMemberId();
+	public void deleteSession(Long requestedBy, Long sessionId) {
 		Session session = getSessionById(sessionId);
 
-		validateDeletionPermission(session, currentMemberId);
+		validateDeletionPermission(session, requestedBy);
 		validateDeletionConstraints(session);
 
 		sessionCommandRepository.delete(session);
-	}
-
-	private Long getCurrentMemberId() {
-		return userContext.getCurrentMemberId();
 	}
 
 	private Session getSessionById(Long sessionId) {

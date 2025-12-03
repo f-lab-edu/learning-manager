@@ -4,7 +4,7 @@ package me.chan99k.learningmanager.course;
  * [P1] 커리큘럼 정보 수정
  */
 public interface CurriculumInfoUpdate {
-	void updateCurriculumInfo(Long courseId, Long curriculumId, Request request);
+	void updateCurriculumInfo(Long requestedBy, Long courseId, Long curriculumId, Request request);
 
 	/**
 	 * 커리큘럼 정보 수정 요청 DTO

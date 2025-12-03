@@ -5,18 +5,24 @@ import java.util.List;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import me.chan99k.learningmanager.common.MutableEntity;
+import me.chan99k.learningmanager.member.Email;
 import me.chan99k.learningmanager.member.MemberStatus;
 import me.chan99k.learningmanager.member.SystemRole;
 
 @Entity
 @Table(name = "member")
 public class MemberEntity extends MutableEntity {
+
+	@Embedded
+	@Column(name = "primary_email")
+	private Email primaryEmail;
 
 	@OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<AccountEntity> accounts = new ArrayList<>();
@@ -48,6 +54,14 @@ public class MemberEntity extends MutableEntity {
 	public void addAccount(AccountEntity account) {
 		accounts.add(account);
 		account.setMember(this);
+	}
+
+	public Email getPrimaryEmail() {
+		return primaryEmail;
+	}
+
+	public void setPrimaryEmail(Email primaryEmail) {
+		this.primaryEmail = primaryEmail;
 	}
 
 	public String getNickname() {

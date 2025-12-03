@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,10 +15,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.member.MemberProfileRetrieval;
 import me.chan99k.learningmanager.member.MemberProfileUpdate;
 import me.chan99k.learningmanager.member.MemberWithdrawal;
+import me.chan99k.learningmanager.security.CustomUserDetails;
 
 @RestController
 @RequestMapping("/api/v1/members")
@@ -28,31 +29,31 @@ public class MemberProfileController {
 	private final MemberProfileRetrieval memberProfileRetrieval;
 	private final MemberWithdrawal memberWithdrawal;
 	private final AsyncTaskExecutor memberTaskExecutor;
-	private final UserContext userContext;
 
 	public MemberProfileController(MemberProfileUpdate memberProfileUpdate,
 		MemberProfileRetrieval memberProfileRetrieval, MemberWithdrawal memberWithdrawal,
-		AsyncTaskExecutor memberTaskExecutor, UserContext userContext) {
+		AsyncTaskExecutor memberTaskExecutor) {
 		this.memberProfileUpdate = memberProfileUpdate;
 		this.memberProfileRetrieval = memberProfileRetrieval;
 		this.memberWithdrawal = memberWithdrawal;
 		this.memberTaskExecutor = memberTaskExecutor;
-		this.userContext = userContext;
 	}
 
 	@PostMapping("/profile")
 	public ResponseEntity<MemberProfileUpdate.Response> updateProfile(
+		@AuthenticationPrincipal CustomUserDetails user,
 		@RequestBody MemberProfileUpdate.Request request
 	) {
-		final Long memberId = extractMemberIdFromAuthentication();
-		MemberProfileUpdate.Response response = memberProfileUpdate.updateProfile(memberId, request);
+		MemberProfileUpdate.Response response = memberProfileUpdate.updateProfile(user.getMemberId(), request);
 
 		return ResponseEntity.ok(response);
 	}
 
 	@GetMapping("/profile")
-	public CompletableFuture<ResponseEntity<MemberProfileRetrieval.Response>> getMemberProfile() {
-		final Long memberId = extractMemberIdFromAuthentication();
+	public CompletableFuture<ResponseEntity<MemberProfileRetrieval.Response>> getMemberProfile(
+		@AuthenticationPrincipal CustomUserDetails user
+	) {
+		final Long memberId = user.getMemberId();
 
 		return CompletableFuture.supplyAsync(() -> {
 			MemberProfileRetrieval.Response profile = memberProfileRetrieval.getProfile(memberId);
@@ -71,13 +72,11 @@ public class MemberProfileController {
 	}
 
 	@DeleteMapping("/withdrawal")
-	public ResponseEntity<Void> withdrawal() {
-		memberWithdrawal.withdrawal();
+	public ResponseEntity<Void> withdrawal(
+		@AuthenticationPrincipal CustomUserDetails user
+	) {
+		memberWithdrawal.withdrawal(user.getMemberId());
 		return ResponseEntity.noContent().build();
-	}
-
-	private Long extractMemberIdFromAuthentication() {
-		return userContext.getCurrentMemberId();
 	}
 
 }

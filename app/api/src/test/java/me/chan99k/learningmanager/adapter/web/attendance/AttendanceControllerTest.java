@@ -2,6 +2,7 @@ package me.chan99k.learningmanager.adapter.web.attendance;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -14,38 +15,49 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 
 import me.chan99k.learningmanager.attendance.AttendanceRetrieval;
 import me.chan99k.learningmanager.attendance.AttendanceStatus;
-import me.chan99k.learningmanager.auth.UserContext;
+import me.chan99k.learningmanager.auth.JwtProvider;
 import me.chan99k.learningmanager.controller.attendance.AttendanceController;
+import me.chan99k.learningmanager.security.CustomUserDetails;
 
-@WebMvcTest(controllers = AttendanceController.class,
-	excludeAutoConfiguration = {
-		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class})
+@WebMvcTest(controllers = AttendanceController.class)
 @DisplayName("AttendanceController 테스트")
 class AttendanceControllerTest {
 
 	private static final Long MEMBER_ID = 123L;
 	private static final Long COURSE_ID = 456L;
 	private static final Long CURRICULUM_ID = 789L;
+
 	@Autowired
 	private MockMvc mockMvc;
+
 	@MockBean
 	private AttendanceRetrieval attendanceRetrieval;
+
 	@MockBean
-	private UserContext userContext;
+	private JwtProvider jwtProvider;
+
+	private CustomUserDetails createMockUser() {
+		return new CustomUserDetails(
+			MEMBER_ID,
+			"test@example.com",
+			List.of(new SimpleGrantedAuthority("ROLE_USER"))
+		);
+	}
 
 	@Test
 	@DisplayName("내 전체 출석 현황 조회 - 성공")
 	void getMyAllAttendanceStatus_Success() throws Exception {
 		AttendanceRetrieval.Response mockResponse = createMockResponse();
-		when(userContext.getCurrentMemberId()).thenReturn(MEMBER_ID);
 		when(attendanceRetrieval.getMyAllAttendanceStatus(any(AttendanceRetrieval.AllAttendanceRequest.class)))
 			.thenReturn(mockResponse);
 
-		mockMvc.perform(get("/api/v1/attendance/status/my"))
+		mockMvc.perform(get("/api/v1/attendance/status/my")
+				.with(user(createMockUser())))
 			.andExpect(status().isOk())
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 			.andExpect(jsonPath("$.sessions").isArray())
@@ -56,7 +68,6 @@ class AttendanceControllerTest {
 			.andExpect(jsonPath("$.statistics.presentCount").value(1))
 			.andExpect(jsonPath("$.statistics.attendanceRate").value(100.0));
 
-		verify(userContext).getCurrentMemberId();
 		verify(attendanceRetrieval).getMyAllAttendanceStatus(
 			argThat(req -> req.memberId().equals(MEMBER_ID))
 		);
@@ -67,19 +78,18 @@ class AttendanceControllerTest {
 	void getMyCourseAttendanceStatus_Success() throws Exception {
 		// Given
 		AttendanceRetrieval.Response mockResponse = createMockResponse();
-		when(userContext.getCurrentMemberId()).thenReturn(MEMBER_ID);
 		when(attendanceRetrieval.getMyCourseAttendanceStatus(any(AttendanceRetrieval.CourseAttendanceRequest.class)))
 			.thenReturn(mockResponse);
 
 		// When & Then
 		mockMvc.perform(get("/api/v1/attendance/status/my/course")
+				.with(user(createMockUser()))
 				.param("courseId", COURSE_ID.toString()))
 			.andExpect(status().isOk())
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 			.andExpect(jsonPath("$.sessions").exists())
 			.andExpect(jsonPath("$.statistics").exists());
 
-		verify(userContext).getCurrentMemberId();
 		verify(attendanceRetrieval).getMyCourseAttendanceStatus(
 			argThat(req -> req.memberId().equals(MEMBER_ID) && req.courseId().equals(COURSE_ID))
 		);
@@ -90,20 +100,19 @@ class AttendanceControllerTest {
 	void getMyCurriculumAttendanceStatus_Success() throws Exception {
 		// Given
 		AttendanceRetrieval.Response mockResponse = createMockResponse();
-		when(userContext.getCurrentMemberId()).thenReturn(MEMBER_ID);
 		when(attendanceRetrieval.getMyCurriculumAttendanceStatus(
 			any(AttendanceRetrieval.CurriculumAttendanceRequest.class)))
 			.thenReturn(mockResponse);
 
 		// When & Then
 		mockMvc.perform(get("/api/v1/attendance/status/my/curriculum")
+				.with(user(createMockUser()))
 				.param("curriculumId", CURRICULUM_ID.toString()))
 			.andExpect(status().isOk())
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 			.andExpect(jsonPath("$.sessions").exists())
 			.andExpect(jsonPath("$.statistics").exists());
 
-		verify(userContext).getCurrentMemberId();
 		verify(attendanceRetrieval).getMyCurriculumAttendanceStatus(
 			argThat(req -> req.memberId().equals(MEMBER_ID) && req.curriculumId().equals(CURRICULUM_ID))
 		);
@@ -116,12 +125,12 @@ class AttendanceControllerTest {
 		int year = 2025;
 		int month = 1;
 		AttendanceRetrieval.Response mockResponse = createMockResponse();
-		when(userContext.getCurrentMemberId()).thenReturn(MEMBER_ID);
 		when(attendanceRetrieval.getMyMonthlyAttendanceStatus(any(AttendanceRetrieval.MonthlyAttendanceRequest.class)))
 			.thenReturn(mockResponse);
 
 		// When & Then
 		mockMvc.perform(get("/api/v1/attendance/status/my/monthly")
+				.with(user(createMockUser()))
 				.param("year", String.valueOf(year))
 				.param("month", String.valueOf(month))
 				.param("courseId", COURSE_ID.toString())
@@ -131,7 +140,6 @@ class AttendanceControllerTest {
 			.andExpect(jsonPath("$.sessions").exists())
 			.andExpect(jsonPath("$.statistics").exists());
 
-		verify(userContext).getCurrentMemberId();
 		verify(attendanceRetrieval).getMyMonthlyAttendanceStatus(
 			argThat(req -> req.memberId().equals(MEMBER_ID)
 				&& req.year() == year
@@ -150,12 +158,12 @@ class AttendanceControllerTest {
 		String status = "PRESENT";
 
 		AttendanceRetrieval.Response mockResponse = createMockResponse();
-		when(userContext.getCurrentMemberId()).thenReturn(MEMBER_ID);
 		when(attendanceRetrieval.getMyPeriodAttendanceStatus(any(AttendanceRetrieval.PeriodAttendanceRequest.class)))
 			.thenReturn(mockResponse);
 
 		// When & Then
 		mockMvc.perform(get("/api/v1/attendance/status/my/period")
+				.with(user(createMockUser()))
 				.param("startDate", startDate)
 				.param("endDate", endDate)
 				.param("courseId", COURSE_ID.toString())
@@ -166,7 +174,6 @@ class AttendanceControllerTest {
 			.andExpect(jsonPath("$.sessions").exists())
 			.andExpect(jsonPath("$.statistics").exists());
 
-		verify(userContext).getCurrentMemberId();
 		verify(attendanceRetrieval).getMyPeriodAttendanceStatus(
 			argThat(req -> req.memberId().equals(MEMBER_ID)
 				&& req.startDate().equals(Instant.parse(startDate))
@@ -185,18 +192,17 @@ class AttendanceControllerTest {
 		String endDate = "2025-01-31T23:59:59Z";
 
 		AttendanceRetrieval.Response mockResponse = createMockResponse();
-		when(userContext.getCurrentMemberId()).thenReturn(MEMBER_ID);
 		when(attendanceRetrieval.getMyPeriodAttendanceStatus(any(AttendanceRetrieval.PeriodAttendanceRequest.class)))
 			.thenReturn(mockResponse);
 
 		// When & Then
 		mockMvc.perform(get("/api/v1/attendance/status/my/period")
+				.with(user(createMockUser()))
 				.param("startDate", startDate)
 				.param("endDate", endDate))
 			.andExpect(status().isOk())
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-		verify(userContext).getCurrentMemberId();
 		verify(attendanceRetrieval).getMyPeriodAttendanceStatus(
 			argThat(req -> req.memberId().equals(MEMBER_ID)
 				&& req.startDate().equals(Instant.parse(startDate))
@@ -211,10 +217,10 @@ class AttendanceControllerTest {
 	@DisplayName("과정별 출석 현황 조회 - courseId 누락 시 400 에러")
 	void getMyCourseAttendanceStatus_MissingCourseId_BadRequest() throws Exception {
 		// When & Then
-		mockMvc.perform(get("/api/v1/attendance/status/my/course"))
+		mockMvc.perform(get("/api/v1/attendance/status/my/course")
+				.with(user(createMockUser())))
 			.andExpect(status().isBadRequest());
 
-		verifyNoInteractions(userContext);
 		verifyNoInteractions(attendanceRetrieval);
 	}
 
@@ -222,10 +228,10 @@ class AttendanceControllerTest {
 	@DisplayName("커리큘럼별 출석 현황 조회 - curriculumId 누락 시 400 에러")
 	void getMyCurriculumAttendanceStatus_MissingCurriculumId_BadRequest() throws Exception {
 		// When & Then
-		mockMvc.perform(get("/api/v1/attendance/status/my/curriculum"))
+		mockMvc.perform(get("/api/v1/attendance/status/my/curriculum")
+				.with(user(createMockUser())))
 			.andExpect(status().isBadRequest());
 
-		verifyNoInteractions(userContext);
 		verifyNoInteractions(attendanceRetrieval);
 	}
 
@@ -234,10 +240,10 @@ class AttendanceControllerTest {
 	void getMyPeriodAttendanceStatus_MissingStartDate_BadRequest() throws Exception {
 		// When & Then
 		mockMvc.perform(get("/api/v1/attendance/status/my/period")
+				.with(user(createMockUser()))
 				.param("endDate", "2025-01-31T23:59:59Z"))
 			.andExpect(status().isBadRequest());
 
-		verifyNoInteractions(userContext);
 		verifyNoInteractions(attendanceRetrieval);
 	}
 

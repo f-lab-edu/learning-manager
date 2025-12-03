@@ -12,7 +12,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.course.Course;
 import me.chan99k.learningmanager.course.CourseCommandRepository;
 import me.chan99k.learningmanager.course.CourseDeletionService;
@@ -33,9 +32,6 @@ class CourseDeletionServiceTest {
 	private CourseCommandRepository courseCommandRepository;
 
 	@Mock
-	private UserContext userContext;
-
-	@Mock
 	private Course course;
 
 	@Test
@@ -44,11 +40,10 @@ class CourseDeletionServiceTest {
 		// given
 		long courseId = 1L;
 		long managerId = 10L;
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 
 		// when
-		courseDeletionService.deleteCourse(courseId);
+		courseDeletionService.deleteCourse(managerId, courseId);
 
 		// then
 		verify(courseCommandRepository).delete(course);
@@ -60,29 +55,12 @@ class CourseDeletionServiceTest {
 		// given
 		long courseId = 1L;
 		long nonManagerId = 11L;
-		when(userContext.getCurrentMemberId()).thenReturn(nonManagerId);
 		when(courseQueryRepository.findManagedCourseById(courseId, nonManagerId)).thenReturn(Optional.empty());
 
 		// when & then
-		assertThatThrownBy(() -> courseDeletionService.deleteCourse(courseId))
+		assertThatThrownBy(() -> courseDeletionService.deleteCourse(nonManagerId, courseId))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", CourseProblemCode.NOT_COURSE_MANAGER);
-
-		verify(courseCommandRepository, never()).delete(any());
-	}
-
-	@Test
-	@DisplayName("[Failure] 인증되지 않은 사용자는 IllegalStateException이 발생한다")
-	void deleteCourse_Fail_Unauthenticated() {
-		// given
-		long courseId = 1L;
-		when(userContext.getCurrentMemberId()).thenThrow(
-			new IllegalStateException("인증된 사용자의 컨텍스트를 찾을 수 없습니다"));
-
-		// when & then
-		assertThatThrownBy(() -> courseDeletionService.deleteCourse(courseId))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessageContaining("인증된 사용자의 컨텍스트를 찾을 수 없습니다");
 
 		verify(courseCommandRepository, never()).delete(any());
 	}
@@ -93,11 +71,10 @@ class CourseDeletionServiceTest {
 		// given
 		long courseId = 999L;
 		long managerId = 10L;
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.empty());
 
 		// when & then
-		assertThatThrownBy(() -> courseDeletionService.deleteCourse(courseId))
+		assertThatThrownBy(() -> courseDeletionService.deleteCourse(managerId, courseId))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", CourseProblemCode.NOT_COURSE_MANAGER);
 
@@ -110,11 +87,10 @@ class CourseDeletionServiceTest {
 		// given
 		long courseId = 1L;
 		long managerId = 10L;
-		when(userContext.getCurrentMemberId()).thenReturn(managerId);
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 
 		// when
-		courseDeletionService.deleteCourse(courseId);
+		courseDeletionService.deleteCourse(managerId, courseId);
 
 		// then
 		verify(courseCommandRepository).delete(course);

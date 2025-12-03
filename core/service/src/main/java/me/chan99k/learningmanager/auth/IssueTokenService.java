@@ -1,58 +1,68 @@
 package me.chan99k.learningmanager.auth;
 
+import static me.chan99k.learningmanager.auth.AuthProblemCode.*;
+import static me.chan99k.learningmanager.member.CredentialType.*;
+
 import java.time.Duration;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import me.chan99k.learningmanager.exception.DomainException;
+import me.chan99k.learningmanager.member.Account;
+import me.chan99k.learningmanager.member.Credential;
+import me.chan99k.learningmanager.member.Email;
 import me.chan99k.learningmanager.member.Member;
+import me.chan99k.learningmanager.member.MemberQueryRepository;
 
 @Service
 public class IssueTokenService implements IssueToken {
 
-	private static final Duration REFRESH_TOKEN_TTL = Duration.ofDays(7);
-
-	private final AccountQueryRepository accountQueryRepository;
+	private final MemberQueryRepository memberQueryRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final JwtProvider jwtProvider;
 	private final RefreshTokenRepository refreshTokenRepository;
+	private final Duration refreshTokenTtlHours;
 
-	public IssueTokenService(AccountQueryRepository accountQueryRepository, PasswordEncoder passwordEncoder,
-		JwtProvider jwtProvider, RefreshTokenRepository refreshTokenRepository) {
-		this.accountQueryRepository = accountQueryRepository;
+	public IssueTokenService(MemberQueryRepository accountQueryRepository, PasswordEncoder passwordEncoder,
+		JwtProvider jwtProvider, RefreshTokenRepository refreshTokenRepository,
+		@Value("${auth.refresh-token.ttl-hours:7}") int refreshTokenTtlHours) {
+		this.memberQueryRepository = accountQueryRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.jwtProvider = jwtProvider;
 		this.refreshTokenRepository = refreshTokenRepository;
+		this.refreshTokenTtlHours = Duration.ofHours(refreshTokenTtlHours);
 	}
 
 	@Override
 	public Response issueToken(Request request) {
-		// 1. 이메일로 계정 조회
-		Member member = accountQueryRepository.findMemberByEmail(request.email())
-			.orElseThrow(() -> new DomainException(AuthProblemCode.INVALID_CREDENTIALS));
+		// 1. 이메일로 Member 조회
+		Email email = Email.of(request.email());
+		Member member = memberQueryRepository.findByEmail(email)
+			.orElseThrow(() -> new DomainException(INVALID_CREDENTIALS));
 
-		// 2. 비밀번호 검증
-		String storedPassword = accountQueryRepository.findPasswordByEmail(request.email())
-			.orElseThrow(() -> new DomainException(AuthProblemCode.INVALID_CREDENTIALS));
+		// 2. Account에서 PASSWORD 타입 Credential 조회
+		Account account = member.findAccountByEmail(email);
+		Credential credential = account.findCredentialByType(PASSWORD);
 
-		if (!passwordEncoder.matches(request.password(), storedPassword)) {
-			throw new DomainException(AuthProblemCode.INVALID_CREDENTIALS);
+		// 3. 비밀번호 검증
+		if (!passwordEncoder.matches(request.password(), credential.getSecret())) {
+			throw new DomainException(INVALID_CREDENTIALS);
 		}
 
-		// 3. Access Token 생성
+		// 4. Access Token 발급
 		List<String> roles = List.of(member.getRole().name());
 		String accessToken = jwtProvider.createAccessToken(
 			member.getId(),
-			request.email(),
+			account.getEmail().address(),
 			roles
 		);
 
-		// 4. Refresh Token 생성 및 저장
-		RefreshToken refreshToken = RefreshToken.create(member.getId(), REFRESH_TOKEN_TTL);
+		// 5. Refresh Token 발급 및 저장
+		RefreshToken refreshToken = RefreshToken.create(member.getId(), refreshTokenTtlHours);
 		refreshTokenRepository.save(refreshToken);
 
-		// 5. 응답 반환
 		return Response.of(
 			accessToken,
 			refreshToken.getToken(),

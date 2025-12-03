@@ -13,6 +13,8 @@ import me.chan99k.learningmanager.exception.DomainException;
 
 public class Member extends AbstractEntity {
 
+	private Email primaryEmail;
+
 	private List<Account> accounts = new ArrayList<>();
 
 	private Nickname nickname;
@@ -30,6 +32,7 @@ public class Member extends AbstractEntity {
 
 	public static Member reconstitute(
 		Long id,
+		Email primaryEmail,
 		Nickname nickname,
 		SystemRole role,
 		MemberStatus status,
@@ -44,6 +47,7 @@ public class Member extends AbstractEntity {
 	) {
 		Member member = new Member();
 		member.setId(id);
+		member.primaryEmail = primaryEmail;
 		member.nickname = nickname;
 		member.role = role;
 		member.status = status;
@@ -68,9 +72,22 @@ public class Member extends AbstractEntity {
 		return member;
 	}
 
+	public void changePrimaryEmail(Email newPrimaryEmail) {
+		// 해당 이메일의 Account가 존재하는지 확인
+		findAccountByEmail(newPrimaryEmail);
+		this.primaryEmail = newPrimaryEmail;
+	}
+
+	// TODO :: 어차피 모든 계정은 이메일을 기반으로 동작하므로, id 조회가 아닌 email 로 관리하도록 리팩터링 하기
+
 	public void addAccount(String email) {
 		Account account = Account.create(this, email);
 		this.accounts.add(account);
+
+		// 첫 번째 계정이면 자동으로 대표 이메일 설정
+		if (this.primaryEmail == null) {
+			this.primaryEmail = account.getEmail();
+		}
 	}
 
 	public void activateAccount(Long accountId) {
@@ -81,6 +98,15 @@ public class Member extends AbstractEntity {
 	public void deactivateAccount(Long accountId) {
 		Account account = findAccountById(accountId);
 		account.deactivate();
+	}
+
+	public void removeAccount(Email email) {
+		if (this.primaryEmail.equals(email)) {
+			throw new DomainException(CANNOT_REMOVE_PRIMARY_ACCOUNT);
+		}
+
+		Account account = findAccountByEmail(email);
+		this.accounts.remove(account);
 	}
 
 	public Account findAccountByEmail(Email email) {
@@ -146,6 +172,10 @@ public class Member extends AbstractEntity {
 	}
 
 	/* 게터 로직 */
+
+	public Email getPrimaryEmail() {
+		return primaryEmail;
+	}
 
 	public List<Account> getAccounts() {
 		return Collections.unmodifiableList(accounts);

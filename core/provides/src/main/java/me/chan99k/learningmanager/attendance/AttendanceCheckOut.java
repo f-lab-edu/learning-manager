@@ -3,7 +3,7 @@ package me.chan99k.learningmanager.attendance;
 import java.time.Instant;
 
 public interface AttendanceCheckOut {
-	AttendanceCheckOut.Response checkOut(AttendanceCheckOut.Request request);
+	AttendanceCheckOut.Response checkOut(Long requestedBy, AttendanceCheckOut.Request request);
 
 	record Request(
 		Long sessionId

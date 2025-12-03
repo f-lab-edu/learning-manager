@@ -35,9 +35,9 @@ import jakarta.validation.constraints.NotNull;
  */
 public interface CourseMemberAddition {
 
-	void addSingleMember(Long courseId, MemberAdditionItem item);
+	void addSingleMember(Long requestedBy, Long courseId, MemberAdditionItem item);
 
-	Response addMultipleMembers(Long courseId, List<MemberAdditionItem> members);
+	Response addMultipleMembers(Long requestedBy, Long courseId, List<MemberAdditionItem> members);
 
 	record Request(@NotEmpty @Valid List<MemberAdditionItem> members) {
 	}

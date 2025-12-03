@@ -15,7 +15,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.course.Course;
 import me.chan99k.learningmanager.course.CourseQueryRepository;
 import me.chan99k.learningmanager.exception.DomainException;
@@ -42,9 +41,6 @@ class MemberWithdrawalServiceTest {
 	private CourseQueryRepository courseQueryRepository;
 
 	@Mock
-	private UserContext userContext;
-
-	@Mock
 	private Member member;
 
 	@Mock
@@ -58,14 +54,13 @@ class MemberWithdrawalServiceTest {
 	void withdrawal_Success() {
 		// given
 		Long memberId = 1L;
-		when(userContext.getCurrentMemberId()).thenReturn(memberId);
 		when(memberQueryRepository.findById(memberId)).thenReturn(Optional.of(member));
 		when(courseQueryRepository.findManagedCoursesByMemberId(memberId)).thenReturn(Collections.emptyList());
 		when(member.getAccounts()).thenReturn(List.of(account));
 		when(account.getId()).thenReturn(1L);
 
 		// when
-		memberWithdrawalService.withdrawal();
+		memberWithdrawalService.withdrawal(memberId);
 
 		// then
 		verify(member).withdraw();
@@ -74,31 +69,14 @@ class MemberWithdrawalServiceTest {
 	}
 
 	@Test
-	@DisplayName("[Failure] 인증되지 않은 사용자는 IllegalStateException이 발생한다")
-	void withdrawal_Fail_Unauthenticated() {
-		// given
-		when(userContext.getCurrentMemberId()).thenThrow(
-			new IllegalStateException("인증된 사용자의 컨텍스트를 찾을 수 없습니다"));
-
-		// when & then
-		assertThatThrownBy(() -> memberWithdrawalService.withdrawal())
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessageContaining("인증된 사용자의 컨텍스트를 찾을 수 없습니다");
-
-		verify(memberQueryRepository, never()).findById(anyLong());
-		verify(memberCommandRepository, never()).save(any());
-	}
-
-	@Test
 	@DisplayName("[Failure] 존재하지 않는 회원은 DomainException이 발생한다")
 	void withdrawal_Fail_MemberNotFound() {
 		// given
 		Long memberId = 999L;
-		when(userContext.getCurrentMemberId()).thenReturn(memberId);
 		when(memberQueryRepository.findById(memberId)).thenReturn(Optional.empty());
 
 		// when & then
-		assertThatThrownBy(() -> memberWithdrawalService.withdrawal())
+		assertThatThrownBy(() -> memberWithdrawalService.withdrawal(memberId))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.MEMBER_NOT_FOUND);
 
@@ -110,12 +88,11 @@ class MemberWithdrawalServiceTest {
 	void withdrawal_Fail_HasManagedCourses() {
 		// given
 		Long memberId = 1L;
-		when(userContext.getCurrentMemberId()).thenReturn(memberId);
 		when(memberQueryRepository.findById(memberId)).thenReturn(Optional.of(member));
 		when(courseQueryRepository.findManagedCoursesByMemberId(memberId)).thenReturn(List.of(course));
 
 		// when & then
-		assertThatThrownBy(() -> memberWithdrawalService.withdrawal())
+		assertThatThrownBy(() -> memberWithdrawalService.withdrawal(memberId))
 			.isInstanceOf(IllegalStateException.class)
 			.hasMessage("[System] 스터디장 권한을 다른 멤버에게 위임한 후 탈퇴할 수 있습니다.");
 

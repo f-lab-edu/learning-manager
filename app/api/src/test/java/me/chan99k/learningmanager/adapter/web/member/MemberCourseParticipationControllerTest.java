@@ -1,12 +1,14 @@
 package me.chan99k.learningmanager.adapter.web.member;
 
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Executor;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -17,22 +19,23 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import me.chan99k.learningmanager.advice.GlobalExceptionHandler;
-import me.chan99k.learningmanager.auth.UserContext;
+import me.chan99k.learningmanager.auth.JwtProvider;
 import me.chan99k.learningmanager.controller.member.MemberCourseParticipationController;
 import me.chan99k.learningmanager.course.CourseRole;
 import me.chan99k.learningmanager.member.CourseParticipationInfo;
 import me.chan99k.learningmanager.member.MemberCourseParticipation;
+import me.chan99k.learningmanager.security.CustomUserDetails;
 
-@WebMvcTest(controllers = MemberCourseParticipationController.class,
-	excludeAutoConfiguration = {
-		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}
-)
+@WebMvcTest(controllers = MemberCourseParticipationController.class)
 @Import(GlobalExceptionHandler.class)
 class MemberCourseParticipationControllerTest {
+
+	private static final Long MEMBER_ID = 1L;
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -40,11 +43,19 @@ class MemberCourseParticipationControllerTest {
 	@MockBean
 	private MemberCourseParticipation memberCourseParticipation;
 
-	@MockBean
-	private UserContext userContext;
-
 	@MockBean(name = "memberTaskExecutor")
 	private Executor memberTaskExecutor;
+
+	@MockBean
+	private JwtProvider jwtProvider;
+
+	private CustomUserDetails createMockUser() {
+		return new CustomUserDetails(
+			MEMBER_ID,
+			"test@example.com",
+			List.of(new SimpleGrantedAuthority("ROLE_USER"))
+		);
+	}
 
 	@BeforeEach
 	void setUp() {
@@ -78,6 +89,7 @@ class MemberCourseParticipationControllerTest {
 
 		// when & then
 		MvcResult mvcResult = mockMvc.perform(get("/members/{memberId}/courses", memberId)
+				.with(user(createMockUser()))
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(request().asyncStarted())
 			.andReturn();
@@ -113,6 +125,7 @@ class MemberCourseParticipationControllerTest {
 
 		// when & then
 		MvcResult mvcResult = mockMvc.perform(get("/members/{memberId}/courses", memberId)
+				.with(user(createMockUser()))
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(request().asyncStarted())
 			.andReturn();
@@ -131,6 +144,7 @@ class MemberCourseParticipationControllerTest {
 	void getParticipatingCourses_invalidMemberId() throws Exception {
 		// when & then
 		mockMvc.perform(get("/members/{memberId}/courses", "invalid")
+				.with(user(createMockUser()))
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(status().isInternalServerError())
 			.andExpect(content().contentType("application/problem+json;charset=UTF-8"))

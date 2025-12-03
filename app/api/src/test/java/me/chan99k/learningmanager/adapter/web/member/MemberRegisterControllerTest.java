@@ -19,10 +19,10 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import me.chan99k.learningmanager.auth.JwtProvider;
 import me.chan99k.learningmanager.controller.member.MemberRegisterController;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.member.MemberProblemCode;
-import me.chan99k.learningmanager.member.MemberRegisterService;
 import me.chan99k.learningmanager.member.MemberRegistration;
 import me.chan99k.learningmanager.member.SignUpConfirmation;
 
@@ -41,9 +41,13 @@ public class MemberRegisterControllerTest {
 	@Autowired
 	private ObjectMapper objectMapper;
 	@MockBean
-	private MemberRegisterService memberRegisterService;
+	private MemberRegistration memberRegistration;
+	@MockBean
+	private SignUpConfirmation signUpConfirmation;
 	@MockBean
 	private Executor memberTaskExecutor;
+	@MockBean
+	private JwtProvider jwtProvider;
 
 	@Nested
 	@DisplayName("회원가입 API 테스트")
@@ -55,8 +59,8 @@ public class MemberRegisterControllerTest {
 			MemberRegistration.Request request = new MemberRegistration.Request(TEST_EMAIL, TEST_PASSWORD);
 			MemberRegistration.Response response = new MemberRegistration.Response(MEMBER_ID);
 
-			// MemberRegisterService 목 시나리오 설정
-			given(memberRegisterService.register(any(MemberRegistration.Request.class)))
+			// MemberRegistration 목 시나리오 설정
+			given(memberRegistration.register(any(MemberRegistration.Request.class)))
 				.willReturn(response);
 
 			// Executor가 동기적으로 실행하도록 목 시나리오 설정
@@ -153,7 +157,7 @@ public class MemberRegisterControllerTest {
 			MemberRegistration.Request request = new MemberRegistration.Request(TEST_EMAIL, TEST_PASSWORD);
 
 			// 이미 존재하는 이메일로 인한 DomainException 시나리오 설정
-			given(memberRegisterService.register(any(MemberRegistration.Request.class)))
+			given(memberRegistration.register(any(MemberRegistration.Request.class)))
 				.willThrow(new DomainException(MemberProblemCode.EMAIL_ALREADY_EXISTS));
 
 			// Executor가 동기적으로 실행하도록 목 시나리오 설정
@@ -181,7 +185,7 @@ public class MemberRegisterControllerTest {
 			MemberRegistration.Request request = new MemberRegistration.Request(TEST_EMAIL, TEST_PASSWORD);
 
 			// 예기치 못한 서버 오류로 인한 RuntimeException 시나리오 설정
-			given(memberRegisterService.register(any(MemberRegistration.Request.class)))
+			given(memberRegistration.register(any(MemberRegistration.Request.class)))
 				.willThrow(new RuntimeException("데이터베이스 연결 오류"));
 
 			// Executor가 동기적으로 실행하도록 목 시나리오 설정
@@ -211,7 +215,7 @@ public class MemberRegisterControllerTest {
 		@Test
 		@DisplayName("[Success] 유효한 활성화 토큰으로 회원 활성화에 성공한다")
 		void activate_member_test_01() throws Exception {
-			doNothing().when(memberRegisterService)
+			doNothing().when(signUpConfirmation)
 				.activateSignUpMember(new SignUpConfirmation.Request(ACTIVATION_TOKEN));
 
 			willAnswer(invocation -> {
@@ -246,7 +250,7 @@ public class MemberRegisterControllerTest {
 			String invalidToken = "invalid-token";
 
 			doThrow(new RuntimeException("Invalid token"))
-				.when(memberRegisterService)
+				.when(signUpConfirmation)
 				.activateSignUpMember(new SignUpConfirmation.Request(invalidToken));
 
 			willAnswer(invocation -> {
@@ -267,7 +271,7 @@ public class MemberRegisterControllerTest {
 			String expiredToken = "expired-token";
 
 			doThrow(new RuntimeException("Token expired"))
-				.when(memberRegisterService)
+				.when(signUpConfirmation)
 				.activateSignUpMember(new SignUpConfirmation.Request(expiredToken));
 
 			willAnswer(invocation -> {
@@ -288,7 +292,7 @@ public class MemberRegisterControllerTest {
 			String nonExistentToken = "non-existent-token";
 
 			doThrow(new RuntimeException("Member not found"))
-				.when(memberRegisterService)
+				.when(signUpConfirmation)
 				.activateSignUpMember(new SignUpConfirmation.Request(nonExistentToken));
 
 			willAnswer(invocation -> {

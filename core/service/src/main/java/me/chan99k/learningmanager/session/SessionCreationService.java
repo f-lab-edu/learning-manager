@@ -5,7 +5,6 @@ import java.time.Clock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.course.Course;
 import me.chan99k.learningmanager.course.CourseProblemCode;
 import me.chan99k.learningmanager.course.CourseQueryRepository;
@@ -23,33 +22,25 @@ public class SessionCreationService implements SessionCreation {
 	private final CourseQueryRepository courseQueryRepository;
 	private final MemberQueryRepository memberQueryRepository;
 	private final Clock clock;
-	private final UserContext userContext;
 
 	public SessionCreationService(SessionQueryRepository sessionQueryRepository,
 		SessionCommandRepository sessionCommandRepository,
 		CourseQueryRepository courseQueryRepository,
 		MemberQueryRepository memberQueryRepository,
-		Clock clock,
-		UserContext userContext) {
+		Clock clock) {
 		this.sessionQueryRepository = sessionQueryRepository;
 		this.sessionCommandRepository = sessionCommandRepository;
 		this.courseQueryRepository = courseQueryRepository;
 		this.memberQueryRepository = memberQueryRepository;
 		this.clock = clock;
-		this.userContext = userContext;
 	}
 
 	@Override
 	public Session createSession(Request request) {
-		Long currentMemberId = getCurrentMemberId();
-		validatePermission(request, currentMemberId);
+		validatePermission(request, request.requestedBy());
 
 		Session session = createSessionByType(request);
 		return sessionCommandRepository.create(session);
-	}
-
-	private Long getCurrentMemberId() {
-		return userContext.getCurrentMemberId();
 	}
 
 	private void validatePermission(Request request, Long memberId) {

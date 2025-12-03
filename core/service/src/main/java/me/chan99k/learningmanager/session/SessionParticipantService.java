@@ -5,7 +5,6 @@ import java.time.Clock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.chan99k.learningmanager.auth.UserContext;
 import me.chan99k.learningmanager.course.CourseQueryRepository;
 import me.chan99k.learningmanager.exception.DomainException;
 
@@ -17,23 +16,20 @@ public class SessionParticipantService implements SessionParticipantManagement {
 	private final SessionCommandRepository sessionCommandRepository;
 	private final CourseQueryRepository courseQueryRepository;
 	private final Clock clock;
-	private final UserContext userContext;
 
 	public SessionParticipantService(SessionQueryRepository sessionQueryRepository,
 		SessionCommandRepository sessionCommandRepository, CourseQueryRepository courseQueryRepository,
-		Clock clock,
-		UserContext userContext) {
+		Clock clock) {
 		this.sessionQueryRepository = sessionQueryRepository;
 		this.sessionCommandRepository = sessionCommandRepository;
 		this.courseQueryRepository = courseQueryRepository;
 		this.clock = clock;
-		this.userContext = userContext;
 	}
 
 	@Override
-	public SessionParticipantResponse addParticipant(Long sessionId, AddParticipantRequest request) {
+	public SessionParticipantResponse addParticipant(Long requestedBy, Long sessionId, AddParticipantRequest request) {
 		Session session = getSessionById(sessionId);
-		validateSessionParticipantManagementPermission(session);
+		validateSessionParticipantManagementPermission(session, requestedBy);
 
 		session.addParticipant(request.memberId(), request.role());
 		Session savedSession = sessionCommandRepository.save(session);
@@ -42,12 +38,12 @@ public class SessionParticipantService implements SessionParticipantManagement {
 	}
 
 	@Override
-	public SessionParticipantResponse removeParticipant(RemoveParticipantRequest request) {
+	public SessionParticipantResponse removeParticipant(Long requestedBy, RemoveParticipantRequest request) {
 		Session session = getSessionById(request.sessionId());
-		validateSessionParticipantManagementPermission(session);
+		validateSessionParticipantManagementPermission(session, requestedBy);
 
 		// HOST 자신을 제거하는 경우 검증
-		validateHostSelfRemoval(session, request.memberId());
+		validateHostSelfRemoval(session, request.memberId(), requestedBy);
 
 		session.removeParticipant(request.memberId());
 		Session savedSession = sessionCommandRepository.save(session);
@@ -56,9 +52,9 @@ public class SessionParticipantService implements SessionParticipantManagement {
 	}
 
 	@Override
-	public SessionParticipantResponse changeParticipantRole(ChangeParticipantRoleRequest request) {
+	public SessionParticipantResponse changeParticipantRole(Long requestedBy, ChangeParticipantRoleRequest request) {
 		Session session = getSessionById(request.sessionId());
-		validateSessionParticipantManagementPermission(session);
+		validateSessionParticipantManagementPermission(session, requestedBy);
 
 		session.changeParticipantRole(request.memberId(), request.newRole(), clock);
 		Session savedSession = sessionCommandRepository.save(session);
@@ -78,21 +74,20 @@ public class SessionParticipantService implements SessionParticipantManagement {
 	 * 2. 해당 세션의 HOST 역할을 가진 참여자
 	 *
 	 * @param session 권한을 확인할 세션
+	 * @param requestedBy 요청자 ID
 	 * @throws DomainException 세션 참여자 관리 권한이 없는 경우
 	 */
-	private void validateSessionParticipantManagementPermission(Session session) {
-		Long currentMemberId = userContext.getCurrentMemberId();
-
+	private void validateSessionParticipantManagementPermission(Session session, Long requestedBy) {
 		// Course MANAGER 권한 확인 (세션이 Course에 속한 경우)
 		boolean isCourseManager = false;
 		if (session.getCourseId() != null) {
-			isCourseManager = courseQueryRepository.findManagedCourseById(session.getCourseId(), currentMemberId)
+			isCourseManager = courseQueryRepository.findManagedCourseById(session.getCourseId(), requestedBy)
 				.isPresent();
 		}
 
 		// 세션 HOST 권한 확인
 		boolean isSessionHost = session.getParticipants().stream()
-			.anyMatch(p -> p.getMemberId().equals(currentMemberId)
+			.anyMatch(p -> p.getMemberId().equals(requestedBy)
 				&& p.getRole() == SessionParticipantRole.HOST);
 
 		// 둘 중 하나 만족시 권한 허용
@@ -107,13 +102,12 @@ public class SessionParticipantService implements SessionParticipantManagement {
 	 *
 	 * @param session 세션 정보
 	 * @param memberId 제거하려는 멤버 ID
+	 * @param requestedBy 요청자 ID
 	 * @throws DomainException HOST가 혼자 남은 상태에서 자신을 제거하려고 할 때
 	 */
-	private void validateHostSelfRemoval(Session session, Long memberId) {
-		Long currentMemberId = userContext.getCurrentMemberId();
-
+	private void validateHostSelfRemoval(Session session, Long memberId, Long requestedBy) {
 		// 현재 사용자가 제거하려는 대상이 아닌 경우 검증 불필요
-		if (!currentMemberId.equals(memberId)) {
+		if (!requestedBy.equals(memberId)) {
 			return;
 		}
 
@@ -134,7 +128,7 @@ public class SessionParticipantService implements SessionParticipantManagement {
 	}
 
 	@Override
-	public SessionParticipantResponse leaveSession(LeaveSessionRequest request) {
+	public SessionParticipantResponse leaveSession(Long requestedBy, LeaveSessionRequest request) {
 		Session session = getSessionById(request.sessionId());
 
 		// 루트 세션에서는 자가 탈퇴 불가능
@@ -142,12 +136,10 @@ public class SessionParticipantService implements SessionParticipantManagement {
 			throw new DomainException(SessionProblemCode.ROOT_SESSION_SELF_LEAVE_NOT_ALLOWED);
 		}
 
-		Long currentMemberId = userContext.getCurrentMemberId();
-
 		// HOST 자신을 제거하는 경우 검증
-		validateHostSelfRemoval(session, currentMemberId);
+		validateHostSelfRemoval(session, requestedBy, requestedBy);
 
-		session.removeParticipant(currentMemberId);
+		session.removeParticipant(requestedBy);
 		Session savedSession = sessionCommandRepository.save(session);
 
 		return toResponse(savedSession);

@@ -18,5 +18,5 @@ package me.chan99k.learningmanager.course;
  * - **연관 도메인:** 없음
  */
 public interface CourseDeletion {
-	void deleteCourse(Long courseId);
+	void deleteCourse(Long requestedBy, Long courseId);
 }
