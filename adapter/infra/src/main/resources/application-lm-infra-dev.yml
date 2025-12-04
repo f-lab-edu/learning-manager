@@ -33,3 +33,5 @@ auth:
       validity-in-seconds: 600
   refresh-token:
     ttl-hours: 24
+  signup-confirm-token:
+    validity-in-seconds: 900
