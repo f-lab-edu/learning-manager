@@ -33,3 +33,5 @@ auth:
       validity-in-seconds: 300
   refresh-token:
     ttl-hours: ${AUTH_REFRESH_TOKEN_TTL_HOURS:168}  # 기본 7일 (168시간)
+  signup-confirm-token:
+    validity-in-seconds: 900

@@ -13,7 +13,7 @@ public class InMemorySignUpConfirmTokenRepository {
 	private final long validityInSeconds;
 
 	public InMemorySignUpConfirmTokenRepository(
-		@Value("${auth.signup-confirm-token.validity-in-seconds}") long validityInSeconds
+		@Value("${auth.signup-confirm-token.validity-in-seconds:1500}") long validityInSeconds
 	) {
 		this.validityInSeconds = validityInSeconds;
 	}

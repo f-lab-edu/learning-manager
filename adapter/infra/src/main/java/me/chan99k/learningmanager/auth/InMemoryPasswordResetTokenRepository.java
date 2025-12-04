@@ -16,7 +16,7 @@ public class InMemoryPasswordResetTokenRepository {
 	private final long validityInSeconds;
 
 	public InMemoryPasswordResetTokenRepository(
-		@Value("${auth.password-reset-token.validity-in-seconds:300}") long validityInSeconds
+		@Value("${auth.password-reset-token.validity-in-seconds:1500}") long validityInSeconds
 	) {
 		this.validityInSeconds = validityInSeconds;
 	}
