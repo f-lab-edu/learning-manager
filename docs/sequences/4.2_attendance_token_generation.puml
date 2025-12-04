@@ -1,38 +1,45 @@
 @startuml
 
-title 4.2 [P1] Attendance Token Generation
+title 4.2 [P1] Attendance Token (QR Code) Generation
+note "TODO: Controller/Endpoint 미구현 상태" as N1
 
-actor "User (Manager)" as User
-participant "CredentialValidator" as Validator
-participant "AttendanceController" as Controller
-participant "AttendanceService" as AppService
-participant "CourseRepository" as SessionRepo
-participant "AttendanceTokenManager" as TokenManager
+actor "User (Manager/Host)" as User
+participant "AttendanceTokenController" as Controller
+participant "SessionQueryRepository" as SessionQueryRepo
+participant "QRCodeGenerator" as QRGenerator
 
-User -> Controller: Generate Attendance Token
-activate Validator
+User -> Controller: POST /api/v1/sessions/{sessionId}/attendance-token
 activate Controller
-Validator --> User: 401 Unauthorized
-Validator --> User: 403 Forbidden
-deactivate Validator
 
-Controller -> AppService: generateAttendanceToken
-activate AppService
+note right of Controller
+  Permission Check:
+  - Is user a Course MANAGER?
+  - Or is user a Session HOST?
+end note
 
-AppService -> SessionRepo: findSessionById
-activate SessionRepo
-SessionRepo --> AppService: session
-deactivate SessionRepo
+Controller -> SessionQueryRepo: findById(sessionId)
+activate SessionQueryRepo
+alt Session Not Found
+    SessionQueryRepo --> Controller: Optional.empty()
+    deactivate SessionQueryRepo
+    Controller --> User: 404 Not Found
+    deactivate Controller
+else Session Found
+    SessionQueryRepo --> Controller: session
+    deactivate SessionQueryRepo
 
-AppService -> TokenManager: createToken
-activate TokenManager
-TokenManager --> AppService: token (e.g., QR Code data)
-deactivate TokenManager
+    Controller -> QRGenerator: generateQrCode(sessionId)
+    activate QRGenerator
+    note right of QRGenerator
+      Token Format:
+      SESSION_{sessionId}_{expiryEpochMilli}
+      (5분 유효기간)
+    end note
+    QRGenerator --> Controller: qrCodeToken
+    deactivate QRGenerator
 
-AppService --> Controller: AttendanceTokenResponse
-deactivate AppService
-
-Controller --> User: 200 OK (token)
-deactivate Controller
+    Controller --> User: 200 OK (token)
+    deactivate Controller
+end
 
 @enduml

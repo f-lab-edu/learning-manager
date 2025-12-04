@@ -1,6 +1,7 @@
 @startuml
 
 title 1.1 [P0] Member Registration - (2) 인증 이메일을 통한 회원 활성화
+note "TODO: 이메일 인증 기능 미구현 상태" as N1
 
 actor "User (Guest)" as User
 participant "MemberRegisterController" as Controller

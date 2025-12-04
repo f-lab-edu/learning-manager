@@ -1,6 +1,7 @@
 @startuml
 
 title 1.6 [P3] Authentication Method Addition : 사용자 계정 추가
+note "TODO: 계정 추가 기능 미구현 상태" as N1
 
 actor "User (Member)" as User
 participant "CredentialValidator" as Validator
