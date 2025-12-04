@@ -1,60 +1,144 @@
 @startuml
-title "LM component diagram v0.0.2"
+title "LM Component Diagram v0.0.7 (Multi-Module Architecture)"
 skinparam componentStyle rectangle
 
-package "Infrastructure" as "Infra"{
-    component "Client Server"
-    database "MySQL"
-    database "H2"
-    component "SMTP"
+skinparam {
+    shadowing false
+    packageStyle rectangle
+    componentBackgroundColor White
+    componentBorderColor #666666
+    packageBorderColor #999999
+    arrowColor #666666
 }
 
-package "Adapter" {
-  component "Web Adapter"
-  component "Persistence Adapter"
-  component "SMTP Adapter"
+' ========================================
+' Infrastructure Layer
+' ========================================
+package "Infrastructure" as Infra #E8E8E8 {
+    component "Client" as Client
+    database "MySQL" as MySQL
+    database "MongoDB" as MongoDB
+    database "H2 (Test)" as H2
+    component "SMTP Server" as SMTP
 }
 
-package "Application" as App {
-  package "port" {
-    package "provides (Inbound)" {
-      interface "UseCases"
+' ========================================
+' App Module (app/api)
+' ========================================
+package "app" #DDEEFF {
+    package "api" {
+        component "Controllers" as Controllers
+        component "Security Config" as Security
     }
-    package "requires (Outbound)" {
-      interface "Repositories"
+}
+
+' ========================================
+' Adapter Module
+' ========================================
+package "adapter" #FFE4C4 {
+    package "persistence" {
+        component "JPA Repositories" as JpaRepo
+        component "Entity Mappers" as EntityMapper
     }
-  }
-  component "Services"
+
+    package "mongo" {
+        component "Mongo Repositories" as MongoRepo
+        component "Document Mappers" as DocMapper
+    }
+
+    package "infra" {
+        component "JWT Provider" as JwtProviderImpl
+        component "Password Encoder" as PwEncoderImpl
+        component "Email Sender" as EmailSenderImpl
+    }
 }
 
-package "Domain" {
-  package "Attendance"{
-  }
-  package "Member"{
+' ========================================
+' Core Module (Hexagonal Architecture)
+' ========================================
+package "core" #E0FFE0 {
+    package "provides (Inbound Ports)" {
+        interface "UseCases" as UseCases
+    }
 
-  }
-  package "Course"{
-  }
-  package "Session"{
-  }
+    package "service" {
+        component "Application Services" as AppServices
+    }
+
+    package "requires (Outbound Ports)" {
+        interface "Repositories" as Repositories
+        interface "External Services" as ExtServices
+    }
+
+    package "domain" {
+        component "Member" as DomainMember
+        component "Course" as DomainCourse
+        component "Session" as DomainSession
+        component "Attendance" as DomainAttendance
+        component "Auth" as DomainAuth
+    }
 }
 
+' ========================================
+' Support Module
+' ========================================
+package "support" #F0E68C {
+    component "Logging" as Logging
+    component "Monitoring" as Monitoring
+}
 
-' 의존 관계
-"Client Server" --> "Web Adapter" : uses
+' ========================================
+' Dependency Flow
+' ========================================
 
-"Web Adapter" ..> UseCases : uses
-Services .up.|> UseCases : implements
+' Client -> App
+Client --> Controllers : HTTP Request
 
-Services ..> Repositories : uses
-"Persistence Adapter" .up.|> Repositories : implements
+' App -> Core (Inbound)
+Controllers ..> UseCases : uses
+Security ..> UseCases : authenticates
 
-"SMTP Adapter" .up.|> Repositories : implements
-"SMTP Adapter" --> "SMTP" : uses
+' Core Service implements Use Cases
+AppServices .up.|> UseCases : implements
 
-App --> Domain :uses
+' Core Service -> Outbound Ports
+AppServices ..> Repositories : uses
+AppServices ..> ExtServices : uses
 
-"Persistence Adapter" --> "MySQL" : uses (prod)
-"Persistence Adapter" --> "H2" : uses (test)
+' Core Service -> Domain
+AppServices --> DomainMember
+AppServices --> DomainCourse
+AppServices --> DomainSession
+AppServices --> DomainAttendance
+AppServices --> DomainAuth
+
+' Adapter implements Outbound Ports
+JpaRepo .up.|> Repositories : implements
+MongoRepo .up.|> Repositories : implements
+JwtProviderImpl .up.|> ExtServices : implements
+PwEncoderImpl .up.|> ExtServices : implements
+EmailSenderImpl .up.|> ExtServices : implements
+
+' Adapter -> Infrastructure
+JpaRepo --> MySQL : prod
+JpaRepo --> H2 : test
+MongoRepo --> MongoDB
+EmailSenderImpl --> SMTP
+
+' Support (cross-cutting)
+Controllers ..> Logging
+AppServices ..> Logging
+
+' ========================================
+' Legend
+' ========================================
+legend right
+  |= Color |= Module |
+  | <#DDEEFF> | app (Entry Point) |
+  | <#E0FFE0> | core (Business Logic) |
+  | <#FFE4C4> | adapter (External Interface) |
+  | <#F0E68C> | support (Cross-cutting) |
+  | <#E8E8E8> | infrastructure (External) |
+end legend
 
 @enduml

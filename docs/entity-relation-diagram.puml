@@ -2,7 +2,7 @@
 ' !theme vibrant
 ' uncomment the line above for a different theme
 
-title "LM Entity Relation diagram v0.0.3"
+title "LM Entity Relation diagram v0.0.7"
 skinparam linetype ortho
 
 ' skinparam commands for better layout and appearance
@@ -24,6 +24,7 @@ package "User Management" {
       * nickname: VARCHAR(20) (UK)
       * role: VARCHAR(20)
       * status: VARCHAR(20)
+      * primary_email: VARCHAR(255)
       profile_image_url: VARCHAR(255)
       self_introduction: VARCHAR(255)
       --
@@ -34,19 +35,61 @@ package "User Management" {
       * version: BIGINT
     }
 
+    note right of "member"
+        **SystemRole:**
+        ADMIN, MEMBER
+        --
+        **MemberStatus:**
+        PENDING, ACTIVE,
+        INACTIVE, BANNED,
+        WITHDRAWN
+    end note
+
     entity "account" as account {
       * id: BIGINT (PK)
       --
       * member_id: BIGINT (FK)
       * status: VARCHAR(20)
       * email: VARCHAR(255) (UK)
-      * password: VARCHAR(255)
       --
       * created_at: DATETIME(6)
       last_modified_at: DATETIME(6)
       * created_by: BIGINT
       last_modified_by: BIGINT
       * version: BIGINT
+    }
+
+    note right of "account"
+        **AccountStatus:**
+        PENDING, ACTIVE,
+        INACTIVE
+    end note
+
+    entity "credential" as credential {
+      * id: BIGINT (PK)
+      --
+      * account_id: BIGINT (FK)
+      * type: VARCHAR(20)
+      * secret: VARCHAR(255)
+      last_used_at: DATETIME(6)
+    }
+
+    note right of credential
+      **CredentialType:**
+      PASSWORD, GOOGLE,
+      KAKAO, GITHUB, NAVER
+    end note
+}
+
+package "Auth Management" {
+    entity "refresh_token" as refresh_token {
+      * id: BIGINT (PK)
+      --
+      * member_id: BIGINT (FK)
+      * token: VARCHAR(255) (UK)
+      * expires_at: DATETIME(6)
+      * created_at: DATETIME(6)
+      * revoked: BOOLEAN
     }
 }
 
@@ -91,6 +134,12 @@ package "Course Management" {
       last_modified_by: BIGINT
       * version: BIGINT
     }
+
+    note right of course_member
+        **CourseRole:**
+        MANAGER, MENTOR,
+        MENTEE
+    end note
 }
 
 package "Session Management" {
@@ -145,9 +194,12 @@ package "Attendance Management (MongoDB)" {
 }
 
 ' Define relationships with cardinality
-member ||-|| account
+member ||--o{ account
 member ||--o{ course_member
 member ||--o{ session_participant
+member ||--o{ refresh_token
+
+account ||--o{ credential
 
 course ||--o{ curriculum
 course ||--o{ course_member
@@ -156,7 +208,7 @@ course ||--o{ session
 curriculum ||--o{ session
 
 session ||--o{ session_participant
-session }o--o{ session
+session }o--|| session : "parent/children"
 
 ' MongoDB relationships (logical, not FK-based)
 session ..> attendance_note : " MongoDB reference\n (sessionId)"

@@ -1,57 +1,69 @@
 @startuml
 
-title 1.2 [P0] Member Login
+title 1.2 [P0] Member Login (Token Issue)
 
 actor "User (Guest)" as User
-participant "MemberLoginController" as Controller
-participant "MemberLoginService" as AppService
+participant "AuthController" as Controller
+participant "IssueTokenService" as AppService
 participant "MemberQueryRepository" as QueryRepo
 participant "Member" as MemberDomain
+participant "Account" as AccountDomain
 participant "PasswordEncoder" as Encoder
-participant "CredentialProvider" as CredentialProvider
+participant "JwtProvider" as JwtProvider
+participant "RefreshTokenRepository" as RefreshTokenRepo
 
-User -> Controller: POST /api/v1/members/auth/token
+User -> Controller: POST /api/v1/auth/token
 activate Controller
 
-Controller -> AppService: login(request)
+Controller -> AppService: issueToken(request)
 activate AppService
 
 AppService -> QueryRepo: findByEmail(email)
 activate QueryRepo
-alt Account Not Found
+alt Member Not Found
     QueryRepo --> AppService: Optional.empty()
     deactivate QueryRepo
-    AppService --> Controller: DomainException (ACCOUNT_NOT_FOUND)
+    AppService --> Controller: DomainException (INVALID_CREDENTIALS)
     deactivate AppService
-    Controller --> User: 404 Not Found
+    Controller --> User: 400 Bad Request
     deactivate Controller
-else Account Found
+else Member Found
     QueryRepo --> AppService: member
     deactivate QueryRepo
 
-    AppService -> MemberDomain: validateLogin(email, password, encoder)
+    AppService -> MemberDomain: findAccountByEmail(email)
     activate MemberDomain
-    MemberDomain -> Encoder: matches(password, encodedPassword)
+    MemberDomain --> AppService: account
+    deactivate MemberDomain
+
+    AppService -> AccountDomain: findCredentialByType(PASSWORD)
+    activate AccountDomain
+    AccountDomain --> AppService: credential
+    deactivate AccountDomain
+
+    AppService -> Encoder: matches(password, credential.secret)
     activate Encoder
-    Encoder --> MemberDomain: true/false
+    Encoder --> AppService: true/false
     deactivate Encoder
-    alt Invalid Credentials or Inactive Account
-        MemberDomain --> AppService: false or throws Exception
-        deactivate MemberDomain
-        AppService --> Controller: DomainException (INVALID_CREDENTIAL or MEMBER_NOT_ACTIVE)
+
+    alt Invalid Password
+        AppService --> Controller: DomainException (INVALID_CREDENTIALS)
         deactivate AppService
         Controller --> User: 400 Bad Request
         deactivate Controller
-    else Valid Credentials
-        MemberDomain --> AppService: true
-        deactivate MemberDomain
+    else Valid Password
+        AppService -> JwtProvider: createAccessToken(memberId, email, roles)
+        activate JwtProvider
+        JwtProvider --> AppService: accessToken
+        deactivate JwtProvider
 
-        AppService -> CredentialProvider: issueCredential(member)
-        activate CredentialProvider
-        CredentialProvider --> AppService: accessToken
-        deactivate CredentialProvider
+        AppService -> AppService: RefreshToken.create(memberId, ttl)
 
-        AppService --> Controller: MemberLogin.Response
+        AppService -> RefreshTokenRepo: save(refreshToken)
+        activate RefreshTokenRepo
+        deactivate RefreshTokenRepo
+
+        AppService --> Controller: IssueToken.Response(accessToken, refreshToken, expiresIn)
         deactivate AppService
 
         Controller --> User: 200 OK
