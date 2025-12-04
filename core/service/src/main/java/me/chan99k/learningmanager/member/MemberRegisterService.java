@@ -4,6 +4,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import me.chan99k.learningmanager.auth.PasswordEncoder;
+import me.chan99k.learningmanager.auth.SignUpConfirmTokenProvider;
+import me.chan99k.learningmanager.exception.DomainException;
 
 @Service
 @Transactional
@@ -13,16 +15,21 @@ public class MemberRegisterService implements MemberRegistration, AccountAdditio
 	private final MemberQueryRepository memberQueryRepository;
 	private final NicknameGenerator nicknameGenerator;
 	private final PasswordEncoder passwordEncoder;
+	private final SignUpConfirmTokenProvider signUpConfirmTokenProvider;
+	private final EmailSender emailSender;
 
 	public MemberRegisterService(
 		MemberCommandRepository memberCommandRepository,
 		MemberQueryRepository memberQueryRepository,
-		NicknameGenerator nicknameGenerator, PasswordEncoder passwordEncoder
+		NicknameGenerator nicknameGenerator, PasswordEncoder passwordEncoder,
+		SignUpConfirmTokenProvider signUpConfirmTokenProvider, EmailSender emailSender
 	) {
 		this.memberCommandRepository = memberCommandRepository;
 		this.memberQueryRepository = memberQueryRepository;
 		this.nicknameGenerator = nicknameGenerator;
 		this.passwordEncoder = passwordEncoder;
+		this.signUpConfirmTokenProvider = signUpConfirmTokenProvider;
+		this.emailSender = emailSender;
 	}
 
 	@Override
@@ -37,13 +44,26 @@ public class MemberRegisterService implements MemberRegistration, AccountAdditio
 
 		Member saved = memberCommandRepository.save(newMember);
 
-		// TODO: 인증 시스템 구현 후 이메일 인증 토큰 발송 로직 추가 필요
+		// 이메일 인증 토큰 생성 및 발송
+		String confirmToken = signUpConfirmTokenProvider.createAndStoreToken(request.email());
+		emailSender.sendSignUpConfirmEmail(request.email(), confirmToken);
+
 		return new MemberRegistration.Response(saved.getId());
 	}
 
 	@Override
 	public void activateSignUpMember(SignUpConfirmation.Request request) {
-		// TODO: 인증 시스템 구현 후 구현 필요
-		throw new UnsupportedOperationException("인증 시스템 구현 필요");
+		Email email = Email.of(signUpConfirmTokenProvider.validateAndGetEmail(request.token()));
+		Member member = memberQueryRepository.findByEmail(email)
+			.orElseThrow(() -> new DomainException(MemberProblemCode.MEMBER_NOT_FOUND));
+
+		member.activate();
+
+		Account account = member.findAccountByEmail(email);
+		account.activate();
+
+		memberCommandRepository.save(member);
+
+		signUpConfirmTokenProvider.removeToken(request.token());
 	}
 }
