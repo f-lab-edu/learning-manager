@@ -30,6 +30,6 @@ auth:
     password-reset-token:
       issuer: "lxm-dev-api"
       audience: "lxm-dev-auth"
-      validity-in-seconds: 300
+      validity-in-seconds: 600
   refresh-token:
     ttl-hours: 24

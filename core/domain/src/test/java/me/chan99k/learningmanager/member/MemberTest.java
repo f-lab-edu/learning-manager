@@ -6,11 +6,14 @@ import static org.assertj.core.api.Assertions.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import me.chan99k.learningmanager.exception.DomainException;
 
 class MemberTest {
 
@@ -213,6 +216,7 @@ class MemberTest {
 	class AccountManagementTest {
 
 		private Long accountId;
+		private Account defaultAccount;
 
 		@BeforeEach
 		@SuppressWarnings("unchecked")
@@ -220,9 +224,10 @@ class MemberTest {
 			member.addAccount("chan99k@example.com");
 
 			List<Account> accounts = (List<Account>)ReflectionTestUtils.getField(member, "accounts");
-			Account addedAccount = accounts.get(0);
+			Assertions.assertNotNull(accounts);
+			defaultAccount = accounts.get(0);
 			accountId = 1L;
-			ReflectionTestUtils.setField(addedAccount, "id", accountId);
+			ReflectionTestUtils.setField(defaultAccount, "id", accountId);
 		}
 
 		@Test
@@ -268,6 +273,27 @@ class MemberTest {
 			assertThatThrownBy(() -> member.deactivateAccount(accountId))
 				.isInstanceOf(IllegalStateException.class)
 				.hasMessage(ACCOUNT_NOT_ACTIVE.getMessage());
+		}
+
+		@Test
+		@DisplayName("[Success] 비밀번호 Credential을 변경할 수 있다")
+		void changePasswordCredential_success() {
+			Credential passwordCredential = new Credential(CredentialType.PASSWORD, "1q2w3e4r");
+			defaultAccount.addCredential(passwordCredential);
+
+			defaultAccount.changePasswordCredential("newHashedPassword");
+
+			Credential credential = defaultAccount.findCredentialByType(CredentialType.PASSWORD);
+			assertThat(credential.getSecret()).isEqualTo("newHashedPassword");
+		}
+
+		@Test
+		@DisplayName("PASSWORD Credential이 없으면 예외를 던진다")
+		void changePasswordCredential_noPassword_throwsException() {
+			assertThatThrownBy(() -> defaultAccount.changePasswordCredential("newPassword"))
+				.isInstanceOf(DomainException.class)
+				.extracting("problemCode")
+				.isEqualTo(MemberProblemCode.CREDENTIAL_NOT_FOUND);
 		}
 	}
 }

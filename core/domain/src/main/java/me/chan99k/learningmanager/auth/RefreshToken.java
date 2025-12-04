@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
+// TODO :: 편의상 도메인 계층에 두었지만, 사실 도메인은 이런 토큰의 존재조차 몰라야 하는 것이 맞다. 어댑터 혹은 별도의 인증 서버로 분리가 필요함
 public class RefreshToken {
 
 	private Long id;

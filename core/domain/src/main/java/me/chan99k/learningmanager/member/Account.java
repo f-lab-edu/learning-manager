@@ -93,7 +93,17 @@ public class Account extends AbstractEntity {
 			.anyMatch(c -> c.getType() == type);
 	}
 
+	public void changePasswordCredential(String newHashedPassword) {
+		Credential oldCredential = findCredentialByType(CredentialType.PASSWORD);
+		credentials.remove(oldCredential);
+		credentials.add(Credential.ofPassword(newHashedPassword));
+	}
+
 	/* 게터 로직 */
+
+	public Member getMember() {
+		return member;
+	}
 
 	public AccountStatus getStatus() {
 		return status;
@@ -106,4 +116,5 @@ public class Account extends AbstractEntity {
 	public List<Credential> getCredentials() {
 		return Collections.unmodifiableList(credentials);
 	}
+
 }
