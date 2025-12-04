@@ -3,11 +3,9 @@ package me.chan99k.learningmanager.email;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
 
 import me.chan99k.learningmanager.member.EmailSender;
 
-@Component
 public class ConsoleEmailSender implements EmailSender {
 
 	private static final Logger log = LoggerFactory.getLogger(ConsoleEmailSender.class);
