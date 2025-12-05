@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import jakarta.mail.MessagingException;
@@ -31,6 +32,7 @@ public class SmtpEmailSender implements EmailSender {
 	}
 
 	@Override
+	@Async("emailTaskExecutor")
 	public void sendSignUpConfirmEmail(String email, String token) {
 		String activateUrl = baseUrl + "/api/v1/members/activate?token=" + token;
 		String subject = "[Learning Manager] 회원가입 인증";
@@ -41,6 +43,7 @@ public class SmtpEmailSender implements EmailSender {
 	}
 
 	@Override
+	@Async("emailTaskExecutor")
 	public void sendPasswordResetEmail(String email, String token) {
 		String resetUrl = baseUrl + "/api/v1/members/reset-password?token=" + token;
 		String subject = "[Learning Manager] 비밀번호 재설정";

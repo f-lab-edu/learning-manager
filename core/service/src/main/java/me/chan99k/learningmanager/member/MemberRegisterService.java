@@ -1,5 +1,7 @@
 package me.chan99k.learningmanager.member;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,6 +12,8 @@ import me.chan99k.learningmanager.exception.DomainException;
 @Service
 @Transactional
 public class MemberRegisterService implements MemberRegistration, AccountAddition, SignUpConfirmation {
+
+	private static final Logger log = LoggerFactory.getLogger(MemberRegisterService.class);
 
 	private final MemberCommandRepository memberCommandRepository;
 	private final MemberQueryRepository memberQueryRepository;
@@ -45,6 +49,7 @@ public class MemberRegisterService implements MemberRegistration, AccountAdditio
 		Member saved = memberCommandRepository.save(newMember);
 
 		// 이메일 인증 토큰 생성 및 발송
+		log.info("EmailSender 클래스: {}", emailSender.getClass().getName());
 		String confirmToken = signUpConfirmTokenProvider.createAndStoreToken(request.email());
 		emailSender.sendSignUpConfirmEmail(request.email(), confirmToken);
 

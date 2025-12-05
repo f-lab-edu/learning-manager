@@ -3,15 +3,15 @@ package me.chan99k.learningmanager.member.entity;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import me.chan99k.learningmanager.common.MutableEntity;
 import me.chan99k.learningmanager.member.AccountStatus;
@@ -30,8 +30,12 @@ public class AccountEntity extends MutableEntity {
 	@Column(name = "email", nullable = false, unique = true)
 	private String email;
 
-	@OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<CredentialEntity> credentials = new ArrayList<>();
+	@ElementCollection
+	@CollectionTable(
+		name = "credential",
+		joinColumns = @JoinColumn(name = "account_id")
+	)
+	private List<CredentialEmbeddable> credentials = new ArrayList<>();
 
 	public AccountEntity() {
 	}
@@ -60,11 +64,11 @@ public class AccountEntity extends MutableEntity {
 		this.email = email;
 	}
 
-	public List<CredentialEntity> getCredentials() {
+	public List<CredentialEmbeddable> getCredentials() {
 		return credentials;
 	}
 
-	public void setCredentials(List<CredentialEntity> credentials) {
+	public void setCredentials(List<CredentialEmbeddable> credentials) {
 		this.credentials = credentials;
 	}
 }

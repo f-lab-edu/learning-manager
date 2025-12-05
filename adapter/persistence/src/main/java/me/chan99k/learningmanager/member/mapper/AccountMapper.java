@@ -9,7 +9,7 @@ import me.chan99k.learningmanager.member.Account;
 import me.chan99k.learningmanager.member.Credential;
 import me.chan99k.learningmanager.member.Email;
 import me.chan99k.learningmanager.member.entity.AccountEntity;
-import me.chan99k.learningmanager.member.entity.CredentialEntity;
+import me.chan99k.learningmanager.member.entity.CredentialEmbeddable;
 import me.chan99k.learningmanager.member.entity.MemberEntity;
 
 public final class AccountMapper {
@@ -35,10 +35,10 @@ public final class AccountMapper {
 		entity.setLastModifiedBy(domain.getLastModifiedBy());
 		entity.setVersion(domain.getVersion());
 
-		List<CredentialEntity> credentialEntities = domain.getCredentials().stream()
-			.map(credential -> toCredentialEntity(credential, entity))
+		List<CredentialEmbeddable> credentialList = domain.getCredentials().stream()
+			.map(credential -> toCredentialEmbeddable(credential, entity))
 			.collect(Collectors.toList());
-		entity.setCredentials(credentialEntities);
+		entity.setCredentials(credentialList);
 
 		return entity;
 	}
@@ -67,16 +67,15 @@ public final class AccountMapper {
 		);
 	}
 
-	private static CredentialEntity toCredentialEntity(Credential domain, AccountEntity accountEntity) {
-		return CredentialEntity.builder()
-			.account(accountEntity)
+	private static CredentialEmbeddable toCredentialEmbeddable(Credential domain, AccountEntity accountEntity) {
+		return CredentialEmbeddable.builder()
 			.type(domain.getType())
 			.secret(domain.getSecret())
 			.lastUsedAt(domain.getLastUsedAt())
 			.build();
 	}
 
-	private static Credential toCredentialDomain(CredentialEntity entity) {
+	private static Credential toCredentialDomain(CredentialEmbeddable entity) {
 		return Credential.reconstitute(
 			entity.getType(),
 			entity.getSecret(),

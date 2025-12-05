@@ -26,3 +26,7 @@ course:
   member:
     bulk:
       max-size: 100
+
+app:
+  frontend:
+    login-url: /login
