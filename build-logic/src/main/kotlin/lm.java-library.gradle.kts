@@ -1,6 +1,7 @@
 plugins {
     id("java-library")
     id("io.spring.dependency-management")
+    id("lm.java-jacoco")
 }
 
 group = "me.chan99k"
