@@ -11,6 +11,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import me.chan99k.learningmanager.filter.JwtAuthenticationFilter;
 
+/**
+ * `@EnableMethodSecurity` 옵션:
+ * - prePostEnabled = true: @PreAuthorize, @PostAuthorize 활성화
+ * - securedEnabled = true: @Secured 활성화 (레거시)
+ * - jsr250Enabled = true: @RolesAllowed 활성화 (JSR-250)
+ */
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {

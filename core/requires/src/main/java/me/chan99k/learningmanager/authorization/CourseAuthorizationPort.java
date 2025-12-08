@@ -12,9 +12,4 @@ public interface CourseAuthorizationPort {
 
 	boolean isMember(Long memberId, Long courseId);
 
-	boolean hasRoleForSession(Long memberId, Long sessionId, CourseRole role);
-
-	boolean hasAnyRoleForSession(Long memberId, Long sessionId, List<CourseRole> roles);
-
-	boolean isMemberOfSession(Long memberId, Long sessionId);
 }

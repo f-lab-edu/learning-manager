@@ -60,8 +60,10 @@ public interface JpaCourseRepository extends JpaRepository<CourseEntity, Long> {
 		"ORDER BY cm.createdAt DESC")
 	Page<CourseMemberInfo> findCourseMembersByCourseId(@Param("courseId") Long courseId, Pageable pageable);
 
+	// === 인가(Authorization) 관련 쿼리 ===
+
 	@Query("SELECT COUNT(cm) > 0 FROM CourseMemberEntity cm " +
-		"WHERE cm.course.id = :courseId AND cm.memberId = :memberId AND cm.courseRole = :role")
+		"WHERE cm.memberId = :memberId AND cm.course.id = :courseId AND cm.courseRole = :role")
 	boolean existsByMemberIdAndCourseIdAndRole(
 		@Param("memberId") Long memberId,
 		@Param("courseId") Long courseId,
@@ -69,7 +71,7 @@ public interface JpaCourseRepository extends JpaRepository<CourseEntity, Long> {
 	);
 
 	@Query("SELECT COUNT(cm) > 0 FROM CourseMemberEntity cm " +
-		"WHERE cm.course.id = :courseId AND cm.memberId = :memberId AND cm.courseRole IN :roles")
+		"WHERE cm.memberId = :memberId AND cm.course.id = :courseId AND cm.courseRole IN :roles")
 	boolean existsByMemberIdAndCourseIdAndRoleIn(
 		@Param("memberId") Long memberId,
 		@Param("courseId") Long courseId,
@@ -77,7 +79,7 @@ public interface JpaCourseRepository extends JpaRepository<CourseEntity, Long> {
 	);
 
 	@Query("SELECT COUNT(cm) > 0 FROM CourseMemberEntity cm " +
-		"WHERE cm.course.id = :courseId AND cm.memberId = :memberId")
+		"WHERE cm.memberId = :memberId AND cm.course.id = :courseId")
 	boolean existsByMemberIdAndCourseId(
 		@Param("memberId") Long memberId,
 		@Param("courseId") Long courseId
