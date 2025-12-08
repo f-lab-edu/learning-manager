@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.member.Account;
@@ -17,6 +18,7 @@ import me.chan99k.learningmanager.member.Member;
 import me.chan99k.learningmanager.member.MemberQueryRepository;
 
 @Service
+@Transactional
 public class IssueTokenService implements IssueToken {
 
 	private final MemberQueryRepository memberQueryRepository;
@@ -35,7 +37,11 @@ public class IssueTokenService implements IssueToken {
 		this.refreshTokenTtlHours = Duration.ofHours(refreshTokenTtlHours);
 	}
 
+	/**
+	 * JPA는 조회만 수행. RefreshToken은 인메모리/Redis에 저장됨.
+	 */
 	@Override
+	@Transactional(readOnly = true)
 	public Response issueToken(Request request) {
 		// 1. 이메일로 Member 조회
 		Email email = Email.of(request.email());
