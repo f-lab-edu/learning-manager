@@ -17,6 +17,7 @@ import me.chan99k.learningmanager.session.SessionQueryRepository;
 @Service
 @Transactional
 public class AttendanceTokenService implements GenerateAttendanceToken {
+	private static final ZoneId DEFAULT_ZONE = ZoneId.of("Asia/Seoul"); // TODO :: 타임존 설정파일로 빼기
 	private final SessionQueryRepository sessionQueryRepository;
 	private final QRCodeGenerator qrCodeGenerator;
 
@@ -36,10 +37,10 @@ public class AttendanceTokenService implements GenerateAttendanceToken {
 		}
 
 		Instant checkOutExpiresAt = session.getScheduledEndAt()
-			.atZone(ZoneId.of("Asia/Seoul"))
+			.atZone(DEFAULT_ZONE)
 			.toLocalDate()
 			.plusDays(1)
-			.atStartOfDay(ZoneId.of("Asia/Seoul"))
+			.atStartOfDay(DEFAULT_ZONE)
 			.toInstant();
 
 		String token = qrCodeGenerator.generateQrCode(
