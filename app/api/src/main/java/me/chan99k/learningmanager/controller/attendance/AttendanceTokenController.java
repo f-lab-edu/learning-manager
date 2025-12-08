@@ -1,6 +1,7 @@
 package me.chan99k.learningmanager.controller.attendance;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +20,7 @@ public class AttendanceTokenController {
 		this.generateAttendanceToken = generateAttendanceToken;
 	}
 
+	@PreAuthorize("@sessionSecurity.isSessionManagerOrMentor(#sessionId, #user.memberId)")
 	@PostMapping("/{sessionId}/attendance-token")
 	public ResponseEntity<GenerateAttendanceToken.Response> generateToken(
 		@AuthenticationPrincipal CustomUserDetails user,

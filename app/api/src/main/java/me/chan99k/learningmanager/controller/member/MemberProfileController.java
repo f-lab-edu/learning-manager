@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,9 +40,11 @@ public class MemberProfileController {
 		this.memberTaskExecutor = memberTaskExecutor;
 	}
 
-	@PostMapping("/profile")
+	@PreAuthorize("@memberSecurity.isOwner(#targetMemberId, #user.memberId)")
+	@PostMapping("/{memberId}/profile")
 	public ResponseEntity<MemberProfileUpdate.Response> updateProfile(
 		@AuthenticationPrincipal CustomUserDetails user,
+		@PathVariable(name = "memberId") Long targetMemberId,
 		@RequestBody MemberProfileUpdate.Request request
 	) {
 		MemberProfileUpdate.Response response = memberProfileUpdate.updateProfile(user.getMemberId(), request);
@@ -49,9 +52,11 @@ public class MemberProfileController {
 		return ResponseEntity.ok(response);
 	}
 
-	@GetMapping("/profile")
-	public CompletableFuture<ResponseEntity<MemberProfileRetrieval.Response>> getMemberProfile(
-		@AuthenticationPrincipal CustomUserDetails user
+	@PreAuthorize("@memberSecurity.isOwner(#targetMemberId, #user.memberId)")
+	@GetMapping("/{memberId}/profile")
+	public CompletableFuture<ResponseEntity<MemberProfileRetrieval.Response>> getMyProfile(
+		@AuthenticationPrincipal CustomUserDetails user,
+		@PathVariable(name = "memberId") Long targetMemberId
 	) {
 		final Long memberId = user.getMemberId();
 
@@ -71,9 +76,11 @@ public class MemberProfileController {
 		}, memberTaskExecutor);
 	}
 
-	@DeleteMapping("/withdrawal")
+	@PreAuthorize("@memberSecurity.isOwner(#targetMemberId, #user.memberId)")
+	@DeleteMapping("/{memberId}/withdrawal")
 	public ResponseEntity<Void> withdrawal(
-		@AuthenticationPrincipal CustomUserDetails user
+		@AuthenticationPrincipal CustomUserDetails user,
+		@PathVariable(name = "memberId") Long targetMemberId
 	) {
 		memberWithdrawal.withdrawal(user.getMemberId());
 		return ResponseEntity.noContent().build();

@@ -1,6 +1,7 @@
 package me.chan99k.learningmanager.controller.member;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -23,6 +24,7 @@ public class MemberAdminController {
 		this.memberStatusChangeService = memberStatusChangeService;
 	}
 
+	@PreAuthorize("hasRole('ADMIN')")
 	@PutMapping("/{memberId}/status")
 	public ResponseEntity<Void> changeStatus(
 		@AuthenticationPrincipal CustomUserDetails user,

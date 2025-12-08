@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,12 +30,14 @@ public class CourseMemberController {
 		this.courseMemberRemoval = courseMemberRemoval;
 	}
 
+	@PreAuthorize("@courseSecurity.isManager(#courseId, #user.memberId)")
 	@PostMapping("/{courseId}/members")
 	public ResponseEntity<CourseMemberAddition.Response> addMembersToCourse(
 		@AuthenticationPrincipal CustomUserDetails user,
 		@PathVariable Long courseId,
 		@Valid @RequestBody CourseMemberAddition.Request request
 	) {
+
 		Long requestedBy = user.getMemberId();
 		if (request.members().size() == 1) {    // 단일 요청: 예외 발생 시 전역 핸들러가 처리
 			CourseMemberAddition.MemberAdditionItem item = request.members().get(0);
@@ -55,6 +58,7 @@ public class CourseMemberController {
 		}
 	}
 
+	@PreAuthorize("@courseSecurity.isManager(#courseId, #user.memberId)")
 	@DeleteMapping("/{courseId}/members/{memberId}")
 	public ResponseEntity<Void> removeMemberFromCourse(
 		@AuthenticationPrincipal CustomUserDetails user,

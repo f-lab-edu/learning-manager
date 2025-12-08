@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -202,6 +203,28 @@ public class GlobalExceptionHandler {
 		problemDetail.setProperty("parameterName", e.getParameterName());
 
 		return ResponseEntity.badRequest().headers(createProblemJsonHeaders()).body(problemDetail);
+	}
+
+	/**
+	 * Spring Security @PreAuthorize 실패 시 발생하는 예외를 처리한다.
+	 *
+	 * @param e AccessDeniedException
+	 * @return 403 FORBIDDEN
+	 */
+	@ExceptionHandler(AccessDeniedException.class)
+	public ResponseEntity<ProblemDetail> handleAccessDeniedException(AccessDeniedException e) {
+		ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+			HttpStatus.FORBIDDEN,
+			"해당 리소스에 대한 접근 권한이 없습니다."
+		);
+
+		problemDetail.setType(URI.create("https://api.lm.com/errors/ACCESS_DENIED"));
+		problemDetail.setTitle("Access Denied");
+		problemDetail.setProperty("code", "ACCESS_DENIED");
+
+		return ResponseEntity.status(HttpStatus.FORBIDDEN)
+			.headers(createProblemJsonHeaders())
+			.body(problemDetail);
 	}
 
 	@ExceptionHandler(Exception.class)
