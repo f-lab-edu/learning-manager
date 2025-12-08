@@ -17,11 +17,11 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.auth.AuthProblemCode;
-import me.chan99k.learningmanager.auth.IssueToken;
-import me.chan99k.learningmanager.auth.JwtProvider;
-import me.chan99k.learningmanager.auth.RefreshAccessToken;
-import me.chan99k.learningmanager.auth.RevokeToken;
+import me.chan99k.learningmanager.authentication.AuthProblemCode;
+import me.chan99k.learningmanager.authentication.IssueToken;
+import me.chan99k.learningmanager.authentication.JwtProvider;
+import me.chan99k.learningmanager.authentication.RefreshAccessToken;
+import me.chan99k.learningmanager.authentication.RevokeToken;
 import me.chan99k.learningmanager.controller.auth.AuthController;
 import me.chan99k.learningmanager.exception.DomainException;
 

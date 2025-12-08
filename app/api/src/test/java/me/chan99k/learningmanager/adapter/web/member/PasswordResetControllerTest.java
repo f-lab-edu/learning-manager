@@ -17,7 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.auth.JwtProvider;
+import me.chan99k.learningmanager.authentication.JwtProvider;
 import me.chan99k.learningmanager.controller.member.PasswordResetController;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.member.MemberProblemCode;

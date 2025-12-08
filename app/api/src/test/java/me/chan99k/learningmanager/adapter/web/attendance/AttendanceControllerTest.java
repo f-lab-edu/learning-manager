@@ -20,7 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import me.chan99k.learningmanager.attendance.AttendanceRetrieval;
 import me.chan99k.learningmanager.attendance.AttendanceStatus;
-import me.chan99k.learningmanager.auth.JwtProvider;
+import me.chan99k.learningmanager.authentication.JwtProvider;
 import me.chan99k.learningmanager.controller.attendance.AttendanceController;
 import me.chan99k.learningmanager.security.CustomUserDetails;
 

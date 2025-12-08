@@ -1,6 +1,7 @@
 package me.chan99k.learningmanager.controller.course;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -22,6 +23,7 @@ public class CurriculumUpdateController {
 		this.curriculumInfoUpdate = curriculumInfoUpdate;
 	}
 
+	@PreAuthorize("@courseSecurity.isManager(#courseId, #user.memberId)")
 	@PutMapping("/{courseId}/curriculums/{curriculumId}")
 	public ResponseEntity<Void> updateCurriculum(
 		@AuthenticationPrincipal CustomUserDetails user,

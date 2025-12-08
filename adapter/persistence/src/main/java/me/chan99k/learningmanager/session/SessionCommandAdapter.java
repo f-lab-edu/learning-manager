@@ -7,9 +7,9 @@ import me.chan99k.learningmanager.session.mapper.SessionMapper;
 
 @Repository
 public class SessionCommandAdapter implements SessionCommandRepository {
-	private final SessionJpaRepository jpaRepository;
+	private final JpaSessionRepository jpaRepository;
 
-	public SessionCommandAdapter(SessionJpaRepository jpaRepository) {
+	public SessionCommandAdapter(JpaSessionRepository jpaRepository) {
 		this.jpaRepository = jpaRepository;
 	}
 

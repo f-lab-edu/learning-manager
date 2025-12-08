@@ -1,6 +1,7 @@
 package me.chan99k.learningmanager.controller.course;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +21,7 @@ public class CurriculumDeletionController {
 		this.curriculumDeletion = curriculumDeletion;
 	}
 
+	@PreAuthorize("@courseSecurity.isManager(#courseId, #user.memberId)")
 	@DeleteMapping("/{courseId}/curriculums/{curriculumId}")
 	public ResponseEntity<Void> deleteCurriculum(
 		@AuthenticationPrincipal CustomUserDetails user,

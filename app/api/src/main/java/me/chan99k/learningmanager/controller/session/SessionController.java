@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -60,8 +61,10 @@ public class SessionController {
 		this.sessionTaskExecutor = sessionTaskExecutor;
 	}
 
+	@PreAuthorize("@courseSecurity.isManagerOrMentor(#request.courseId(), #user.memberId)")
 	@PostMapping
 	public ResponseEntity<SessionCreation.Response> createSession(
+		@AuthenticationPrincipal CustomUserDetails user,
 		@Valid @RequestBody SessionCreation.Request request
 	) {
 		Session session = sessionCreation.createSession(request);
@@ -81,15 +84,18 @@ public class SessionController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
+	@PreAuthorize("@sessionSecurity.isSessionManagerOrMentor(#sessionId, #user.memberId)")
 	@PutMapping("/{sessionId}")
 	public ResponseEntity<Void> updateSession(
 		@AuthenticationPrincipal CustomUserDetails user,
 		@PathVariable Long sessionId,
-		@Valid @RequestBody SessionUpdate.Request request) {
+		@Valid @RequestBody SessionUpdate.Request request
+	) {
 		sessionUpdate.updateSession(user.getMemberId(), sessionId, request);
 		return ResponseEntity.noContent().build();
 	}
 
+	@PreAuthorize("@sessionSecurity.isSessionManager(#sessionId, #user.memberId)")
 	@DeleteMapping("/{sessionId}")
 	public ResponseEntity<Void> deleteSession(
 		@AuthenticationPrincipal CustomUserDetails user,

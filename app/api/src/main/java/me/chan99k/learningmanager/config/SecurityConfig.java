@@ -2,6 +2,7 @@ package me.chan99k.learningmanager.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -10,7 +11,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import me.chan99k.learningmanager.filter.JwtAuthenticationFilter;
 
+/**
+ * `@EnableMethodSecurity` 옵션:
+ * - prePostEnabled = true: @PreAuthorize, @PostAuthorize 활성화
+ * - securedEnabled = true: @Secured 활성화 (레거시)
+ * - jsr250Enabled = true: @RolesAllowed 활성화 (JSR-250)
+ */
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;

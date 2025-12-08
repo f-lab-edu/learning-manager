@@ -2,6 +2,7 @@ package me.chan99k.learningmanager.controller.course;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,6 +25,7 @@ public class CourseCurriculumAdditionController {
 
 	}
 
+	@PreAuthorize("@courseSecurity.isManager(#courseId, #user.memberId)")
 	@PostMapping("/{courseId}/curriculums")
 	public ResponseEntity<CurriculumCreation.Response> addCourseCurriculum(
 		@AuthenticationPrincipal CustomUserDetails user,
