@@ -26,6 +26,7 @@ public class AttendanceTokenService implements GenerateAttendanceToken {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public Response generate(Long requestedBy, Request request) {
 		Session session = sessionQueryRepository.findById(request.sessionId())
 			.orElseThrow(() -> new DomainException(SessionProblemCode.SESSION_NOT_FOUND));
