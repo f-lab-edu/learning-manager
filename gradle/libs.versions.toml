@@ -15,7 +15,7 @@ jjwt = "0.12.3"
 jbcrypt = "0.4"
 
 # API Documentation
-springdoc = "2.7.0"
+springdoc = "2.5.0"
 
 # Testing
 testcontainers = "1.19.0"
