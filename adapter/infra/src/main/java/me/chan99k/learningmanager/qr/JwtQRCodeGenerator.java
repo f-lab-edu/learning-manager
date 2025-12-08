@@ -16,7 +16,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import me.chan99k.learningmanager.attendance.QRCodeGenerator;
 
-@Primary
+@Primary // TODO::  @ConditionalOnProperty 또는 @Profile을 사용하여 환경별로 명시적으로 선택하도록 하기
 @Component
 public class JwtQRCodeGenerator implements QRCodeGenerator {
 
