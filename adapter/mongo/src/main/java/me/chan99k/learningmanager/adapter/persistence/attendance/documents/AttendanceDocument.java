@@ -19,7 +19,7 @@ import me.chan99k.learningmanager.attendance.AttendanceStatus;
 import me.chan99k.learningmanager.attendance.CheckedIn;
 import me.chan99k.learningmanager.attendance.CheckedOut;
 
-@Document
+@Document(collection = "attendances")
 @CompoundIndex(name = "session_member_idx",
 	def = "{'sessionId': 1, 'memberId': 1}",
 	unique = true

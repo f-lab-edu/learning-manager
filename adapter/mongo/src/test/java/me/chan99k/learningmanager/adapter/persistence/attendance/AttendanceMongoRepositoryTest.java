@@ -168,31 +168,6 @@ class AttendanceMongoRepositoryTest {
 	}
 
 	@Test
-	@DisplayName("프로젝션 쿼리로 필요한 필드만 조회 - 성공")
-	void findProjectionByMemberIdAndSessionIds_Success() {
-		AttendanceDocument attendance1 = createTestAttendanceDocument(MEMBER_ID_1, SESSION_ID_1,
-			AttendanceStatus.PRESENT);
-		AttendanceDocument attendance2 = createTestAttendanceDocument(MEMBER_ID_1, SESSION_ID_2,
-			AttendanceStatus.ABSENT);
-
-		attendanceMongoRepository.saveAll(List.of(attendance1, attendance2));
-
-		List<Long> sessionIds = List.of(SESSION_ID_1, SESSION_ID_2);
-		List<AttendanceDocument> result = attendanceMongoRepository.findProjectionByMemberIdAndSessionIds(MEMBER_ID_1,
-			sessionIds);
-
-		assertThat(result).hasSize(2);
-
-		// 프로젝션된 필드 확인
-		for (AttendanceDocument doc : result) {
-			assertThat(doc.get_id()).isNotNull();
-			assertThat(doc.getSessionId()).isNotNull();
-			assertThat(doc.getMemberId()).isNotNull();
-			assertThat(doc.getFinalStatus()).isNotNull();
-		}
-	}
-
-	@Test
 	@DisplayName("복합 유니크 인덱스 - 동일한 세션과 멤버 조합 중복 저장 방지")
 	void uniqueConstraint_SessionIdAndMemberId_DuplicateThrowsException() {
 		AttendanceDocument attendance1 = createTestAttendanceDocument(MEMBER_ID_1, SESSION_ID_1,

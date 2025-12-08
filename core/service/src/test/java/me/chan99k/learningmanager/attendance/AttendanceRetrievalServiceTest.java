@@ -1,6 +1,7 @@
-package me.chan99k.learningmanager.application.attendance;
+package me.chan99k.learningmanager.attendance;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.time.Instant;
@@ -15,10 +16,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.attendance.AttendanceQueryRepository;
-import me.chan99k.learningmanager.attendance.AttendanceRetrieval;
-import me.chan99k.learningmanager.attendance.AttendanceRetrievalService;
-import me.chan99k.learningmanager.attendance.AttendanceStatus;
 import me.chan99k.learningmanager.session.SessionQueryRepository;
 import me.chan99k.learningmanager.session.dto.SessionInfo;
 
@@ -31,25 +28,27 @@ class AttendanceRetrievalServiceTest {
 	private static final Long CURRICULUM_ID = 789L;
 	private static final Long SESSION_ID_1 = 101L;
 	private static final Long SESSION_ID_2 = 102L;
+
 	@Mock
 	private AttendanceQueryRepository attendanceQueryRepository;
 	@Mock
 	private SessionQueryRepository sessionQueryRepository;
 	@InjectMocks
 	private AttendanceRetrievalService attendanceRetrievalService;
-	private List<AttendanceQueryRepository.AttendanceProjection> mockAttendances;
+
+	private AttendanceQueryRepository.MemberAttendanceResult mockResult;
 	private Map<Long, SessionInfo> mockSessionInfoMap;
 
 	@BeforeEach
 	void setUp() {
-		// Mock 출석 데이터
-		mockAttendances = List.of(
-			new AttendanceQueryRepository.AttendanceProjection(
-				"attendance1", SESSION_ID_1, MEMBER_ID, AttendanceStatus.PRESENT
+		// Mock 출석 데이터 (Aggregation 결과)
+		mockResult = new AttendanceQueryRepository.MemberAttendanceResult(
+			MEMBER_ID,
+			List.of(
+				new AttendanceQueryRepository.AttendanceRecord("attendance1", SESSION_ID_1, AttendanceStatus.PRESENT),
+				new AttendanceQueryRepository.AttendanceRecord("attendance2", SESSION_ID_2, AttendanceStatus.ABSENT)
 			),
-			new AttendanceQueryRepository.AttendanceProjection(
-				"attendance2", SESSION_ID_2, MEMBER_ID, AttendanceStatus.ABSENT
-			)
+			new AttendanceQueryRepository.AttendanceStats(2, 1, 1, 0, 0, 50.0)
 		);
 
 		mockSessionInfoMap = Map.of(
@@ -78,8 +77,8 @@ class AttendanceRetrievalServiceTest {
 
 		when(sessionQueryRepository.findSessionIdsByMemberId(MEMBER_ID))
 			.thenReturn(sessionIds);
-		when(attendanceQueryRepository.findAttendanceProjectionByMemberIdAndSessionIds(MEMBER_ID, sessionIds))
-			.thenReturn(mockAttendances);
+		when(attendanceQueryRepository.findMemberAttendanceWithStats(MEMBER_ID, sessionIds))
+			.thenReturn(mockResult);
 		when(sessionQueryRepository.findSessionInfoMapByIds(any()))
 			.thenReturn(mockSessionInfoMap);
 
@@ -106,7 +105,7 @@ class AttendanceRetrievalServiceTest {
 
 		// Mock 호출 검증
 		verify(sessionQueryRepository).findSessionIdsByMemberId(MEMBER_ID);
-		verify(attendanceQueryRepository).findAttendanceProjectionByMemberIdAndSessionIds(MEMBER_ID, sessionIds);
+		verify(attendanceQueryRepository).findMemberAttendanceWithStats(MEMBER_ID, sessionIds);
 	}
 
 	@Test
@@ -119,9 +118,9 @@ class AttendanceRetrievalServiceTest {
 
 		when(sessionQueryRepository.findSessionIdsByCourseId(COURSE_ID))
 			.thenReturn(sessionIds);
-		when(attendanceQueryRepository.findAttendanceProjectionByMemberIdAndSessionIds(MEMBER_ID, sessionIds))
-			.thenReturn(mockAttendances);
-		when(sessionQueryRepository.findSessionInfoMapByIds(sessionIds))
+		when(attendanceQueryRepository.findMemberAttendanceWithStats(MEMBER_ID, sessionIds))
+			.thenReturn(mockResult);
+		when(sessionQueryRepository.findSessionInfoMapByIds(any()))
 			.thenReturn(mockSessionInfoMap);
 
 		// When
@@ -148,8 +147,7 @@ class AttendanceRetrievalServiceTest {
 
 		// Mock 호출 검증
 		verify(sessionQueryRepository).findSessionIdsByCourseId(COURSE_ID);
-		verify(attendanceQueryRepository).findAttendanceProjectionByMemberIdAndSessionIds(MEMBER_ID, sessionIds);
-		verify(sessionQueryRepository).findSessionInfoMapByIds(sessionIds);
+		verify(attendanceQueryRepository).findMemberAttendanceWithStats(MEMBER_ID, sessionIds);
 	}
 
 	@Test
@@ -160,16 +158,22 @@ class AttendanceRetrievalServiceTest {
 		AttendanceRetrieval.CurriculumAttendanceRequest request =
 			new AttendanceRetrieval.CurriculumAttendanceRequest(MEMBER_ID, CURRICULUM_ID);
 
-		List<AttendanceQueryRepository.AttendanceProjection> singleAttendance = List.of(mockAttendances.get(0));
+		var singleResult = new AttendanceQueryRepository.MemberAttendanceResult(
+			MEMBER_ID,
+			List.of(
+				new AttendanceQueryRepository.AttendanceRecord("attendance1", SESSION_ID_1, AttendanceStatus.PRESENT)),
+			new AttendanceQueryRepository.AttendanceStats(1, 1, 0, 0, 0, 100.0)
+		);
+
 		Map<Long, SessionInfo> singleSessionInfo = Map.of(
 			SESSION_ID_1, mockSessionInfoMap.get(SESSION_ID_1)
 		);
 
 		when(sessionQueryRepository.findSessionIdsByCurriculumId(CURRICULUM_ID))
 			.thenReturn(sessionIds);
-		when(attendanceQueryRepository.findAttendanceProjectionByMemberIdAndSessionIds(MEMBER_ID, sessionIds))
-			.thenReturn(singleAttendance);
-		when(sessionQueryRepository.findSessionInfoMapByIds(sessionIds))
+		when(attendanceQueryRepository.findMemberAttendanceWithStats(MEMBER_ID, sessionIds))
+			.thenReturn(singleResult);
+		when(sessionQueryRepository.findSessionInfoMapByIds(any()))
 			.thenReturn(singleSessionInfo);
 
 		// When
@@ -196,9 +200,9 @@ class AttendanceRetrievalServiceTest {
 
 		when(sessionQueryRepository.findSessionIdsByMonthAndFilters(year, month, COURSE_ID, CURRICULUM_ID))
 			.thenReturn(sessionIds);
-		when(attendanceQueryRepository.findAttendanceProjectionByMemberIdAndSessionIds(MEMBER_ID, sessionIds))
-			.thenReturn(mockAttendances);
-		when(sessionQueryRepository.findSessionInfoMapByIds(sessionIds))
+		when(attendanceQueryRepository.findMemberAttendanceWithStats(MEMBER_ID, sessionIds))
+			.thenReturn(mockResult);
+		when(sessionQueryRepository.findSessionInfoMapByIds(any()))
 			.thenReturn(mockSessionInfoMap);
 
 		// When
@@ -226,9 +230,9 @@ class AttendanceRetrievalServiceTest {
 
 		when(sessionQueryRepository.findSessionIdsByPeriodAndFilters(startDate, endDate, COURSE_ID, CURRICULUM_ID))
 			.thenReturn(sessionIds);
-		when(attendanceQueryRepository.findAttendanceProjectionByMemberIdAndSessionIds(MEMBER_ID, sessionIds))
-			.thenReturn(mockAttendances);
-		when(sessionQueryRepository.findSessionInfoMapByIds(sessionIds))
+		when(attendanceQueryRepository.findMemberAttendanceWithStats(MEMBER_ID, sessionIds))
+			.thenReturn(mockResult);
+		when(sessionQueryRepository.findSessionInfoMapByIds(any()))
 			.thenReturn(mockSessionInfoMap);
 
 		// When
@@ -250,17 +254,18 @@ class AttendanceRetrievalServiceTest {
 		AttendanceRetrieval.CourseAttendanceRequest request =
 			new AttendanceRetrieval.CourseAttendanceRequest(MEMBER_ID, COURSE_ID);
 
-		List<AttendanceQueryRepository.AttendanceProjection> attendances = List.of(
-			new AttendanceQueryRepository.AttendanceProjection(
-				"attendance1", SESSION_ID_1, MEMBER_ID, AttendanceStatus.PRESENT
-			)
+		var singleResult = new AttendanceQueryRepository.MemberAttendanceResult(
+			MEMBER_ID,
+			List.of(
+				new AttendanceQueryRepository.AttendanceRecord("attendance1", SESSION_ID_1, AttendanceStatus.PRESENT)),
+			new AttendanceQueryRepository.AttendanceStats(1, 1, 0, 0, 0, 100.0)
 		);
 
 		when(sessionQueryRepository.findSessionIdsByCourseId(COURSE_ID))
 			.thenReturn(sessionIds);
-		when(attendanceQueryRepository.findAttendanceProjectionByMemberIdAndSessionIds(MEMBER_ID, sessionIds))
-			.thenReturn(attendances);
-		when(sessionQueryRepository.findSessionInfoMapByIds(sessionIds))
+		when(attendanceQueryRepository.findMemberAttendanceWithStats(MEMBER_ID, sessionIds))
+			.thenReturn(singleResult);
+		when(sessionQueryRepository.findSessionInfoMapByIds(any()))
 			.thenReturn(Map.of()); // 빈 맵 반환
 
 		// When
@@ -283,10 +288,6 @@ class AttendanceRetrievalServiceTest {
 
 		when(sessionQueryRepository.findSessionIdsByCourseId(COURSE_ID))
 			.thenReturn(List.of()); // 빈 목록
-		when(attendanceQueryRepository.findAttendanceProjectionByMemberIdAndSessionIds(MEMBER_ID, List.of()))
-			.thenReturn(List.of());
-		when(sessionQueryRepository.findSessionInfoMapByIds(List.of()))
-			.thenReturn(Map.of());
 
 		// When
 		AttendanceRetrieval.Response response = attendanceRetrievalService.getMyCourseAttendanceStatus(request);
@@ -295,5 +296,8 @@ class AttendanceRetrievalServiceTest {
 		assertThat(response.sessions()).isEmpty();
 		assertThat(response.statistics().totalSessions()).isZero();
 		assertThat(response.statistics().attendanceRate()).isZero();
+
+		// 빈 목록일 때 attendanceQueryRepository는 호출되지 않음
+		verify(attendanceQueryRepository, never()).findMemberAttendanceWithStats(any(), any());
 	}
 }
