@@ -71,8 +71,6 @@ class MemberCourseParticipationControllerTest {
 	@DisplayName("멤버가 참여한 과정 목록을 성공적으로 조회한다")
 	void getParticipatingCourses_success() throws Exception {
 		// given
-		Long memberId = 1L;
-
 		CourseParticipationInfo course1 = new CourseParticipationInfo(
 			1L, "Java 기초", "Java 프로그래밍 기초 과정", CourseRole.MANAGER
 		);
@@ -84,11 +82,11 @@ class MemberCourseParticipationControllerTest {
 			Arrays.asList(course1, course2)
 		);
 
-		when(memberCourseParticipation.getParticipatingCourses(memberId))
+		when(memberCourseParticipation.getParticipatingCourses(MEMBER_ID))
 			.thenReturn(mockResponse);
 
 		// when & then
-		MvcResult mvcResult = mockMvc.perform(get("/members/{memberId}/courses", memberId)
+		MvcResult mvcResult = mockMvc.perform(get("/api/v1/members/me/courses")
 				.with(user(createMockUser()))
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(request().asyncStarted())
@@ -108,23 +106,22 @@ class MemberCourseParticipationControllerTest {
 			.andExpect(jsonPath("$.courses[1].description").value("Spring Boot 웹 개발 과정"))
 			.andExpect(jsonPath("$.courses[1].role").value("MENTEE"));
 
-		verify(memberCourseParticipation).getParticipatingCourses(memberId);
+		verify(memberCourseParticipation).getParticipatingCourses(MEMBER_ID);
 	}
 
 	@Test
 	@DisplayName("참여한 과정이 없는 경우 빈 배열을 반환한다")
 	void getParticipatingCourses_whenNoCourses() throws Exception {
 		// given
-		Long memberId = 1L;
 		MemberCourseParticipation.Response mockResponse = new MemberCourseParticipation.Response(
 			Collections.emptyList()
 		);
 
-		when(memberCourseParticipation.getParticipatingCourses(memberId))
+		when(memberCourseParticipation.getParticipatingCourses(MEMBER_ID))
 			.thenReturn(mockResponse);
 
 		// when & then
-		MvcResult mvcResult = mockMvc.perform(get("/members/{memberId}/courses", memberId)
+		MvcResult mvcResult = mockMvc.perform(get("/api/v1/members/me/courses")
 				.with(user(createMockUser()))
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(request().asyncStarted())
@@ -136,21 +133,6 @@ class MemberCourseParticipationControllerTest {
 			.andExpect(jsonPath("$.courses").isArray())
 			.andExpect(jsonPath("$.courses.length()").value(0));
 
-		verify(memberCourseParticipation).getParticipatingCourses(memberId);
-	}
-
-	@Test
-	@DisplayName("잘못된 memberId 형식에 대해 500 에러를 반환한다")
-	void getParticipatingCourses_invalidMemberId() throws Exception {
-		// when & then
-		mockMvc.perform(get("/members/{memberId}/courses", "invalid")
-				.with(user(createMockUser()))
-				.contentType(MediaType.APPLICATION_JSON))
-			.andExpect(status().isInternalServerError())
-			.andExpect(content().contentType("application/problem+json;charset=UTF-8"))
-			.andExpect(jsonPath("$.status").value(500))
-			.andExpect(jsonPath("$.detail").value("[System] 일시적인 서버 오류가 발생했습니다."));
-
-		verifyNoInteractions(memberCourseParticipation);
+		verify(memberCourseParticipation).getParticipatingCourses(MEMBER_ID);
 	}
 }
