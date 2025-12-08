@@ -18,7 +18,12 @@ public class SimpleQRCodeGenerator implements QRCodeGenerator {
 
 	public String generateQrCode(Long sessionId) {
 		Instant expiry = clock.instant().plus(5, ChronoUnit.MINUTES);
-		return String.format("SESSION_%d_%d", sessionId, expiry.toEpochMilli());
+		return generateQrCode(sessionId, expiry);
+	}
+
+	@Override
+	public String generateQrCode(Long sessionId, Instant expiresAt) {
+		return String.format("SESSION_%d_%d", sessionId, expiresAt.toEpochMilli());
 	}
 
 	public boolean validateQrCode(String qrCode, Long sessionId) {
