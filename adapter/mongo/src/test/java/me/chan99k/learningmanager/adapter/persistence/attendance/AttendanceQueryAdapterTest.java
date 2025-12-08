@@ -25,7 +25,7 @@ import me.chan99k.learningmanager.attendance.AttendanceStatus;
 
 @DataMongoTest
 @Testcontainers
-@Import({AttendanceQueryAdapter.class, TestMongoConfig.class})
+@Import({AttendanceQueryAdapter.class, CustomAttendanceMongoRepositoryImpl.class, TestMongoConfig.class})
 @DisplayName("AttendanceQueryAdapter 통합 테스트")
 class AttendanceQueryAdapterTest {
 
@@ -34,10 +34,13 @@ class AttendanceQueryAdapterTest {
 	private static final Long SESSION_ID_1 = 101L;
 	private static final Long SESSION_ID_2 = 102L;
 	private static final Long SESSION_ID_3 = 103L;
+
 	@Container
 	static MongoDBContainer mongoDBContainer = new MongoDBContainer("mongo:7.0");
+
 	@Autowired
 	private AttendanceMongoRepository attendanceMongoRepository;
+
 	@Autowired
 	private AttendanceQueryAdapter attendanceQueryAdapter;
 
@@ -78,101 +81,65 @@ class AttendanceQueryAdapterTest {
 	}
 
 	@Test
-	@DisplayName("특정 멤버의 모든 출석 기록 조회 - 성공")
-	void findByMemberId_Success() {
-		List<Attendance> result = attendanceQueryAdapter.findByMemberId(MEMBER_ID_1);
-
-		assertThat(result).hasSize(2);
-		assertThat(result)
-			.extracting(Attendance::getSessionId)
-			.containsExactlyInAnyOrder(SESSION_ID_1, SESSION_ID_2);
-		assertThat(result)
-			.extracting(Attendance::getFinalStatus)
-			.containsExactlyInAnyOrder(AttendanceStatus.PRESENT, AttendanceStatus.ABSENT);
-	}
-
-	@Test
-	@DisplayName("존재하지 않는 멤버 조회 시 빈 목록")
-	void findByMemberId_NotFound() {
-		List<Attendance> result = attendanceQueryAdapter.findByMemberId(999L);
-
-		assertThat(result).isEmpty();
-	}
-
-	@Test
-	@DisplayName("특정 멤버와 세션 ID 목록으로 출석 기록 조회 - 성공")
-	void findByMemberIdAndSessionIds_Success() {
+	@DisplayName("단일 멤버 출석 통계 조회 - 성공")
+	void findMemberAttendanceWithStats_Success() {
 		List<Long> sessionIds = List.of(SESSION_ID_1, SESSION_ID_2);
 
-		List<Attendance> result = attendanceQueryAdapter.findByMemberIdAndSessionIds(MEMBER_ID_1, sessionIds);
+		AttendanceQueryRepository.MemberAttendanceResult result =
+			attendanceQueryAdapter.findMemberAttendanceWithStats(MEMBER_ID_1, sessionIds);
 
-		assertThat(result).hasSize(2);
-		assertThat(result)
-			.extracting(Attendance::getSessionId)
-			.containsExactlyInAnyOrder(SESSION_ID_1, SESSION_ID_2);
+		assertThat(result.memberId()).isEqualTo(MEMBER_ID_1);
+		assertThat(result.attendances()).hasSize(2);
+		assertThat(result.stats().total()).isEqualTo(2);
+		assertThat(result.stats().present()).isEqualTo(1);
+		assertThat(result.stats().absent()).isEqualTo(1);
+		assertThat(result.stats().rate()).isEqualTo(50.0);
 	}
 
 	@Test
-	@DisplayName("빈 세션 ID 목록으로 조회 시 빈 결과")
-	void findByMemberIdAndSessionIds_EmptySessionIds() {
-		List<Attendance> result = attendanceQueryAdapter.findByMemberIdAndSessionIds(MEMBER_ID_1, List.of());
+	@DisplayName("단일 멤버 출석 통계 조회 - 빈 세션 목록")
+	void findMemberAttendanceWithStats_EmptySessionIds() {
+		AttendanceQueryRepository.MemberAttendanceResult result =
+			attendanceQueryAdapter.findMemberAttendanceWithStats(MEMBER_ID_1, List.of());
 
-		assertThat(result).isEmpty();
+		assertThat(result.memberId()).isEqualTo(MEMBER_ID_1);
+		assertThat(result.attendances()).isEmpty();
+		assertThat(result.stats().total()).isZero();
 	}
 
 	@Test
-	@DisplayName("일부만 매칭되는 세션 ID 목록으로 조회")
-	void findByMemberIdAndSessionIds_PartialMatch() {
-		List<Long> sessionIds = List.of(SESSION_ID_1, 999L); // SESSION_ID_1만 존재
+	@DisplayName("여러 멤버 출석 통계 조회 - 성공")
+	void findAllMembersAttendanceWithStats_Success() {
+		List<Long> sessionIds = List.of(SESSION_ID_1, SESSION_ID_2, SESSION_ID_3);
+		List<Long> memberIds = List.of(MEMBER_ID_1, MEMBER_ID_2);
 
-		List<Attendance> result = attendanceQueryAdapter.findByMemberIdAndSessionIds(MEMBER_ID_1, sessionIds);
+		List<AttendanceQueryRepository.MemberAttendanceResult> results =
+			attendanceQueryAdapter.findAllMembersAttendanceWithStats(sessionIds, memberIds);
 
-		assertThat(result).hasSize(1);
-		assertThat(result.get(0).getSessionId()).isEqualTo(SESSION_ID_1);
+		assertThat(results).hasSize(2);
+
+		var member1Result = results.stream()
+			.filter(r -> r.memberId().equals(MEMBER_ID_1))
+			.findFirst()
+			.orElseThrow();
+		assertThat(member1Result.attendances()).hasSize(2);
+		assertThat(member1Result.stats().rate()).isEqualTo(50.0);
+
+		var member2Result = results.stream()
+			.filter(r -> r.memberId().equals(MEMBER_ID_2))
+			.findFirst()
+			.orElseThrow();
+		assertThat(member2Result.attendances()).hasSize(1);
+		assertThat(member2Result.stats().rate()).isEqualTo(100.0);
 	}
 
 	@Test
-	@DisplayName("프로젝션으로 출석 기록 조회 - 성공")
-	void findAttendanceProjectionByMemberIdAndSessionIds_Success() {
-		List<Long> sessionIds = List.of(SESSION_ID_1, SESSION_ID_2);
+	@DisplayName("여러 멤버 출석 통계 조회 - 빈 목록")
+	void findAllMembersAttendanceWithStats_EmptyLists() {
+		List<AttendanceQueryRepository.MemberAttendanceResult> results =
+			attendanceQueryAdapter.findAllMembersAttendanceWithStats(List.of(), List.of());
 
-		List<AttendanceQueryRepository.AttendanceProjection> result =
-			attendanceQueryAdapter.findAttendanceProjectionByMemberIdAndSessionIds(MEMBER_ID_1, sessionIds);
-
-		assertThat(result).hasSize(2);
-
-		AttendanceQueryRepository.AttendanceProjection first = result.get(0);
-		assertThat(first.attendanceId()).isNotNull();
-		assertThat(first.sessionId()).isIn(SESSION_ID_1, SESSION_ID_2);
-		assertThat(first.memberId()).isEqualTo(MEMBER_ID_1);
-		assertThat(first.finalStatus()).isIn(AttendanceStatus.PRESENT, AttendanceStatus.ABSENT);
-	}
-
-	@Test
-	@DisplayName("프로젝션 조회 - 빈 세션 ID 목록")
-	void findAttendanceProjectionByMemberIdAndSessionIds_EmptySessionIds() {
-		List<AttendanceQueryRepository.AttendanceProjection> result =
-			attendanceQueryAdapter.findAttendanceProjectionByMemberIdAndSessionIds(MEMBER_ID_1, List.of());
-
-		assertThat(result).isEmpty();
-	}
-
-	@Test
-	@DisplayName("여러 멤버의 출석 기록이 분리되어 조회됨")
-	void findByMemberId_MultipleMembers_Separated() {
-		List<Attendance> member1Result = attendanceQueryAdapter.findByMemberId(MEMBER_ID_1);
-		List<Attendance> member2Result = attendanceQueryAdapter.findByMemberId(MEMBER_ID_2);
-
-		assertThat(member1Result).hasSize(2);
-		assertThat(member2Result).hasSize(1);
-
-		assertThat(member1Result)
-			.extracting(Attendance::getMemberId)
-			.allMatch(memberId -> memberId.equals(MEMBER_ID_1));
-
-		assertThat(member2Result)
-			.extracting(Attendance::getMemberId)
-			.allMatch(memberId -> memberId.equals(MEMBER_ID_2));
+		assertThat(results).isEmpty();
 	}
 
 	private AttendanceDocument createAttendanceDocument(Long memberId, Long sessionId, AttendanceStatus status) {
@@ -185,5 +152,3 @@ class AttendanceQueryAdapterTest {
 		return AttendanceDocument.from(attendance);
 	}
 }
-
-
