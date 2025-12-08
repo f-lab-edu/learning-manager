@@ -20,6 +20,9 @@ springdoc = "2.5.0"
 # Testing
 testcontainers = "1.19.0"
 
+# Code Coverage
+jacoco = "0.8.12"
+
 [libraries]
 # Spring Boot Starters
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }

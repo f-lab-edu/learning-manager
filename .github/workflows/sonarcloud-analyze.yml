@@ -5,24 +5,34 @@ on:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
 
-env:
-  CACHED_DEPENDENCIES_PATHS: '**/node_modules'
-
 jobs:
   CodeAnalyze:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 17
+          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build and Generate Jacoco Report
+        run: ./gradlew clean build jacocoAggregatedReport
 
       - name: Set SonarCloud Project Key
         run: |
           REPO_NAME=$(echo $GITHUB_REPOSITORY | cut -d '/' -f 2)
           ORG_NAME=$(echo $GITHUB_REPOSITORY | cut -d '/' -f 1)
           SONAR_PROJECT_KEY="${ORG_NAME}_${REPO_NAME}"
-          echo "SONAR_PROJECT_KEY=$SONAR_PROJECT_KEY" >> $GITHUB_ENV 
+          echo "SONAR_PROJECT_KEY=$SONAR_PROJECT_KEY" >> $GITHUB_ENV
 
       - name: Analyze with SonarCloud
         uses: SonarSource/sonarcloud-github-action@master
