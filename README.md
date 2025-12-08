@@ -25,14 +25,14 @@
 |  P0  | 스터디 과정 관리 | 과정 생성/수정/삭제, 멤버 관리              | 구현 완료 |
 |  P0  | 스터디 세션 관리 | 세션 생성/수정/삭제, 참여자 관리             | 구현 완료 |
 |  P0  | 출석 체크     | QR 코드 기반 입/퇴실 처리                | 구현 완료 |
-|  P1  | 이메일 인증    | 회원가입 인증 메일                      | 부분 구현 |
-|  P1  | 비밀번호 재설정  | 이메일 기반 비밀번호 재설정                 |  미구현  |
+|  P1  | 이메일 인증    | 회원가입 인증 메일                      | 구현 완료 |
+|  P1  | 비밀번호 재설정  | 이메일 기반 비밀번호 재설정                 | 구현 완료 |
 |  P2  | 알림 시스템    | 세션 시작 알림, 과정 초대 알림              |  미구현  |
 
 ### 구현률
 
 ```
-전체 기능: ████████████████████░░░░  73% (22/30)
+전체 기능: █████████████████████░░░  85% (35/41)
 ```
 
 ---
@@ -75,6 +75,7 @@
 | Build      | Gradle 8.14 (Kotlin DSL)         |
 | Container  | Docker Compose                   |
 | Monitoring | Actuator + Micrometer Prometheus |
+| API Docs   | SpringDoc OpenAPI (Swagger UI)   |
 
 ---
 
@@ -210,6 +211,34 @@ curl -X POST http://localhost:8080/api/v1/auth/token \
 
 ---
 
+## API 문서 (Swagger UI)
+
+애플리케이션 실행 후 브라우저에서 Swagger UI를 통해 API 문서를 확인하고 테스트할 수 있습니다.
+
+### 접근 경로
+
+| URL                                     | 설명                  |
+|-----------------------------------------|---------------------|
+| `http://localhost:8080/swagger-ui.html` | Swagger UI (API 문서) |
+| `http://localhost:8080/v3/api-docs`     | OpenAPI 3.0 JSON 스펙 |
+
+### API 그룹
+
+| 그룹          | 설명                         | 인증 필요 |
+|-------------|----------------------------|:-----:|
+| Public API  | 인증, 회원가입, 이메일 인증 등 공개 API  |   X   |
+| Private API | 과정 관리, 세션 관리, 출석 등 보호된 API |   O   |
+
+### 인증된 API 테스트 방법
+
+1. **Public API** 그룹에서 `/api/v1/auth/token` (로그인) API 실행
+2. 응답에서 `accessToken` 값 복사
+3. Swagger UI 상단의 **Authorize** 버튼 클릭
+4. `Bearer {accessToken}` 형식으로 입력 후 인증
+5. **Private API** 그룹의 API 테스트 가능
+
+---
+
 ## API 엔드포인트
 
 ### 인증 (Auth)
@@ -307,7 +336,3 @@ curl -X POST http://localhost:8080/api/v1/auth/token \
 ```
 
 ---
-
-## 라이선스
-
-This project is licensed under the MIT License.
