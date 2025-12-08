@@ -8,12 +8,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import me.chan99k.learningmanager.attendance.AttendanceCheckIn;
 import me.chan99k.learningmanager.attendance.AttendanceProblemCode;
 import me.chan99k.learningmanager.attendance.QRCodeGenerator;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.security.CustomUserDetails;
 
+@Tag(name = "Attendance", description = "출석 API")
 @RestController
 @RequestMapping("/api/v1/attendance")
 public class AttendanceCheckInController {
@@ -27,6 +30,7 @@ public class AttendanceCheckInController {
 		this.qrCodeGenerator = qrCodeGenerator;
 	}
 
+	@Operation(summary = "출석 체크인", description = "QR 코드 토큰을 사용하여 세션에 출석 체크인합니다.")
 	@PostMapping("/check-in/{token}")
 	public ResponseEntity<AttendanceCheckIn.Response> checkIn(
 		@AuthenticationPrincipal CustomUserDetails user,
