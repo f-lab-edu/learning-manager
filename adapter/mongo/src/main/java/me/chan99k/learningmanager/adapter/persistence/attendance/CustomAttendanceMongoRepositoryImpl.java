@@ -14,6 +14,8 @@ import org.springframework.data.mongodb.core.aggregation.ProjectionOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Repository;
 
+import me.chan99k.learningmanager.attendance.AttendanceStatus;
+
 @Repository
 public class CustomAttendanceMongoRepositoryImpl implements CustomAttendanceMongoRepository {
 
@@ -74,10 +76,10 @@ public class CustomAttendanceMongoRepositoryImpl implements CustomAttendanceMong
 				.append("finalStatus", "$finalStatus")
 			).as("attendances")
 			.count().as("total")
-			.sum(conditionalCount("PRESENT")).as("present")
-			.sum(conditionalCount("ABSENT")).as("absent")
-			.sum(conditionalCount("LATE")).as("late")
-			.sum(conditionalCount("LEFT_EARLY")).as("leftEarly");
+			.sum(conditionalCount(AttendanceStatus.PRESENT.name())).as("present")
+			.sum(conditionalCount(AttendanceStatus.ABSENT.name())).as("absent")
+			.sum(conditionalCount(AttendanceStatus.LATE.name())).as("late")
+			.sum(conditionalCount(AttendanceStatus.LEFT_EARLY.name())).as("leftEarly");
 	}
 
 	/**

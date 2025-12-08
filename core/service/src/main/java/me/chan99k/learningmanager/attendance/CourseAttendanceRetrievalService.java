@@ -1,7 +1,9 @@
 package me.chan99k.learningmanager.attendance;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -30,7 +32,7 @@ public class CourseAttendanceRetrievalService implements CourseAttendanceRetriev
 
 	@Override
 	public Response getAllMembersAttendance(Long requestedBy, AllMembersRequest request) {
-		List<Long> sessionIds = findSessionIds(request);
+		List<Long> sessionIds = findSessionIds(SessionFilter.from(request));
 		if (sessionIds.isEmpty()) {
 			return emptyResponse();
 		}
@@ -66,7 +68,7 @@ public class CourseAttendanceRetrievalService implements CourseAttendanceRetriev
 
 	@Override
 	public Response getMemberAttendance(Long requestedBy, MemberRequest request) {
-		List<Long> sessionIds = findSessionIds(request);
+		List<Long> sessionIds = findSessionIds(SessionFilter.from(request));
 		if (sessionIds.isEmpty()) {
 			return emptyResponse();
 		}
@@ -86,42 +88,25 @@ public class CourseAttendanceRetrievalService implements CourseAttendanceRetriev
 		return new Response(List.of(summary), calculateCourseStatistics(List.of(summary)));
 	}
 
-	private List<Long> findSessionIds(AllMembersRequest request) {
-		if (request.startDate() != null && request.endDate() != null) {
-			return sessionQueryRepository.findSessionIdsByPeriodAndFilters(
-				request.startDate(), request.endDate(),
-				request.courseId(), request.curriculumId()
-			);
-		}
-		if (request.year() != null && request.month() != null) {
-			return sessionQueryRepository.findSessionIdsByMonthAndFilters(
-				request.year(), request.month(),
-				request.courseId(), request.curriculumId()
-			);
-		}
-		if (request.curriculumId() != null) {
-			return sessionQueryRepository.findSessionIdsByCurriculumId(request.curriculumId());
-		}
-		return sessionQueryRepository.findSessionIdsByCourseId(request.courseId());
-	}
+	// 헬퍼 메서드
 
-	private List<Long> findSessionIds(MemberRequest request) {
-		if (request.startDate() != null && request.endDate() != null) {
+	private List<Long> findSessionIds(SessionFilter filter) {
+		if (filter.startDate() != null && filter.endDate() != null) {
 			return sessionQueryRepository.findSessionIdsByPeriodAndFilters(
-				request.startDate(), request.endDate(),
-				request.courseId(), request.curriculumId()
+				filter.startDate(), filter.endDate(),
+				filter.courseId(), filter.curriculumId()
 			);
 		}
-		if (request.year() != null && request.month() != null) {
+		if (filter.year() != null && filter.month() != null) {
 			return sessionQueryRepository.findSessionIdsByMonthAndFilters(
-				request.year(), request.month(),
-				request.courseId(), request.curriculumId()
+				filter.year(), filter.month(),
+				filter.courseId(), filter.curriculumId()
 			);
 		}
-		if (request.curriculumId() != null) {
-			return sessionQueryRepository.findSessionIdsByCurriculumId(request.curriculumId());
+		if (filter.curriculumId() != null) {
+			return sessionQueryRepository.findSessionIdsByCurriculumId(filter.curriculumId());
 		}
-		return sessionQueryRepository.findSessionIdsByCourseId(request.courseId());
+		return sessionQueryRepository.findSessionIdsByCourseId(filter.courseId());
 	}
 
 	private List<CourseMemberInfo> findCourseMembers(Long courseId) {
@@ -145,34 +130,44 @@ public class CourseAttendanceRetrievalService implements CourseAttendanceRetriev
 		Map<Long, SessionInfo> sessionInfoMap
 	) {
 		List<SessionAttendanceInfo> sessions = result.attendances().stream()
-			.map(a -> {
-				SessionInfo info = sessionInfoMap.get(a.sessionId());
-				return new SessionAttendanceInfo(
-					a.attendanceId(),
-					a.sessionId(),
-					info != null ? info.sessionTitle() : "Unknown",
-					info != null ? info.scheduledAt() : null,
-					a.finalStatus(),
-					info != null ? info.curriculumId() : null,
-					info != null ? info.curriculumTitle() : "Unknown"
-				);
-			})
+			.map(a -> toSessionAttendanceInfo(a, sessionInfoMap))
 			.toList();
-
-		MemberStatistics stats = new MemberStatistics(
-			result.stats().total(),
-			result.stats().present(),
-			result.stats().absent(),
-			result.stats().late(),
-			result.stats().leftEarly(),
-			result.stats().rate()
-		);
 
 		return new MemberAttendanceSummary(
 			result.memberId(),
 			memberNameMap.getOrDefault(result.memberId(), "Unknown"),
 			sessions,
-			stats
+			toMemberStatistics(result.stats())
+		);
+	}
+
+	private SessionAttendanceInfo toSessionAttendanceInfo(
+		AttendanceQueryRepository.AttendanceRecord record,
+		Map<Long, SessionInfo> sessionInfoMap
+	) {
+		Optional<SessionInfo> infoOpt = Optional.ofNullable(
+			sessionInfoMap.get(record.sessionId())
+		);
+
+		return new SessionAttendanceInfo(
+			record.attendanceId(),
+			record.sessionId(),
+			infoOpt.map(SessionInfo::sessionTitle).orElse("Unknown"),
+			infoOpt.map(SessionInfo::scheduledAt).orElse(null),
+			record.finalStatus(),
+			infoOpt.map(SessionInfo::curriculumId).orElse(null),
+			infoOpt.map(SessionInfo::curriculumTitle).orElse("Unknown")
+		);
+	}
+
+	private MemberStatistics toMemberStatistics(AttendanceQueryRepository.AttendanceStats stats) {
+		return new MemberStatistics(
+			stats.total(),
+			stats.present(),
+			stats.absent(),
+			stats.late(),
+			stats.leftEarly(),
+			stats.rate()
 		);
 	}
 
@@ -193,5 +188,30 @@ public class CourseAttendanceRetrievalService implements CourseAttendanceRetriev
 
 	private Response emptyResponse() {
 		return new Response(List.of(), new CourseAttendanceStatistics(0, 0, 0.0));
+	}
+
+	private record SessionFilter(
+		Long courseId,
+		Long curriculumId,
+		Integer year,
+		Integer month,
+		Instant startDate,
+		Instant endDate
+	) {
+		static SessionFilter from(AllMembersRequest request) {
+			return new SessionFilter(
+				request.courseId(), request.curriculumId(),
+				request.year(), request.month(),
+				request.startDate(), request.endDate()
+			);
+		}
+
+		static SessionFilter from(MemberRequest request) {
+			return new SessionFilter(
+				request.courseId(), request.curriculumId(),
+				request.year(), request.month(),
+				request.startDate(), request.endDate()
+			);
+		}
 	}
 }
