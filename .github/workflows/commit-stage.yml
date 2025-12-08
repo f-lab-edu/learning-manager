@@ -1,0 +1,132 @@
+name: commit-stage.yml
+on:
+  push:
+    branches:
+      - develop
+      - main
+    tags:
+      - 'v*.*.*' # 'v'로 시작하는 시맨틱 버전 태그 푸시 시 워크플로 실행
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: chan99k/learning-manager
+
+jobs:
+  build:
+    name: Checkout, Build and Code Scan
+    runs-on: ubuntu-latest # 배포 환경에 맞게 수정해주어야 함
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: SetUp Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 17
+          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build Project with Gradle
+        run: ./gradlew clean build
+
+      - name: Generate Jacoco Coverage Report
+        run: ./gradlew jacocoAggregatedReport
+
+      - name: Upload Jacoco Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: |
+            build/reports/jacoco/aggregated/
+            **/build/reports/jacoco/test/
+          retention-days: 14
+
+      - name: Generate and submit dependency graph
+        uses: gradle/actions/dependency-submission@v4
+        with:
+          build-scan-publish: true
+          build-scan-terms-of-use-url: "https://gradle.com/help/legal-terms-of-use"
+          build-scan-terms-of-use-agree: "yes"
+
+      - name: Code vulnerability scanning
+        if: github.ref_name != 'main'
+        uses: anchore/scan-action@v3
+        id: scan_code
+        with:
+          path: "${{ github.workspace }}"
+          fail-build: false # 정책에 따라 변경을 고려하여야 할 듯
+          severity-cutoff: high
+
+      - name: Upload vulnerability report
+        if: github.ref_name != 'main' && failure()
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: ${{ steps.scan_code.outputs.sarif }}
+
+  package:
+    name: Package and Publish
+    if: startsWith(github.ref, 'refs/tags/v') # 'v'로 시작하는 태그가 푸시되었을 때만 실행
+    needs: [ build ]
+    runs-on: ubuntu-latest # 배포 환경에 맞게 수정해주어야 함
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Define Image Tags from Git Tag
+        id: image_tags
+        run: |
+          RAW_TAG="${{ github.ref_name }}" 
+          VERSION=${RAW_TAG#v} 
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT 
+          echo "IMAGE_NAME_VERSIONED=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$VERSION" >> $GITHUB_OUTPUT
+          echo "IMAGE_NAME_LATEST=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_OUTPUT
+          echo "Raw tag was: $RAW_TAG, Version used: $VERSION"
+
+
+      - name: Build container image
+        run: |
+          chmod +x gradlew
+          ./gradlew bootBuildImage \
+            --imageName ${{ steps.image_tags.outputs.IMAGE_NAME_VERSIONED }}
+
+      - name: OCI image vulnerability scanning
+        uses: anchore/scan-action@v3
+        id: scan_image
+        with:
+          image: "${{ steps.image_tags.outputs.IMAGE_NAME_VERSIONED }}"
+          fail-build: true
+          severity-cutoff: high
+
+      - name: Upload vulnerability report
+        uses: github/codeql-action/upload-sarif@v2
+        if: failure()
+        with:
+          sarif_file: ${{ steps.scan_image.outputs.sarif }}
+
+      - name: Log into container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 시맨틱 버전 태그로 푸시
+      - name: Publish container image
+        run: |
+          docker push ${{ steps.image_tags.outputs.IMAGE_NAME_VERSIONED }}
+
