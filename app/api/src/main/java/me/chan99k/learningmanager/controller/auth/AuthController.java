@@ -6,11 +6,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import me.chan99k.learningmanager.authentication.IssueToken;
 import me.chan99k.learningmanager.authentication.RefreshAccessToken;
 import me.chan99k.learningmanager.authentication.RevokeToken;
 
+@Tag(name = "Authentication", description = "인증 API")
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
@@ -28,6 +31,7 @@ public class AuthController {
 		this.revokeToken = revokeToken;
 	}
 
+	@Operation(summary = "로그인", description = "이메일과 비밀번호로 로그인하여 Access Token과 Refresh Token을 발급받습니다.")
 	@PostMapping("/token")
 	public ResponseEntity<IssueToken.Response> issueToken(
 		@Valid @RequestBody IssueToken.Request request

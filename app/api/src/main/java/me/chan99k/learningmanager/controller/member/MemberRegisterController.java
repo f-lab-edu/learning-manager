@@ -11,10 +11,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import me.chan99k.learningmanager.member.MemberRegistration;
 import me.chan99k.learningmanager.member.SignUpConfirmation;
 
+@Tag(name = "Member Registration", description = "회원 가입 API")
 @RestController
 @RequestMapping("/api/v1/members")
 public class MemberRegisterController {
@@ -33,6 +36,7 @@ public class MemberRegisterController {
 		this.loginUrl = loginUrl;
 	}
 
+	@Operation(summary = "회원 가입", description = "이메일, 비밀번호, 닉네임으로 회원 가입합니다. 가입 후 이메일 인증이 필요합니다.")
 	@PostMapping("/register")
 	public ResponseEntity<MemberRegistration.Response> register(
 		@Valid @RequestBody MemberRegistration.Request request

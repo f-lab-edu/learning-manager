@@ -14,6 +14,9 @@ jjwt = "0.12.3"
 # Password
 jbcrypt = "0.4"
 
+# API Documentation
+springdoc = "2.5.0"
+
 # Testing
 testcontainers = "1.19.0"
 
@@ -61,6 +64,9 @@ jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
 
 # Password
 jbcrypt = { module = "org.mindrot:jbcrypt", version.ref = "jbcrypt" }
+
+# API Documentation
+springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
 
 # Testing
 testcontainers-junit = { module = "org.testcontainers:junit-jupiter" }

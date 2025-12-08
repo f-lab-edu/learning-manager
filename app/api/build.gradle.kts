@@ -25,6 +25,7 @@ dependencies {
     implementation(catalog.findLibrary("jjwt-api").get())
     implementation(catalog.findLibrary("spring-boot-starter-web").get())
     implementation(catalog.findLibrary("spring-dotenv").get())
+    implementation(catalog.findLibrary("springdoc-openapi-starter-webmvc-ui").get())
     runtimeOnly(catalog.findLibrary("jjwt-impl").get())
     runtimeOnly(catalog.findLibrary("jjwt-jackson").get())
 
