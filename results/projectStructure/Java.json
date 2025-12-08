@@ -1,0 +1,244 @@
+{
+  "modules": [
+    {
+      "name": "kotlin.scripts.KotlinBuildScript.app:api:build.gradle.kts",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripts.KotlinBuildScript.core:domain:build.gradle.kts",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripts.KotlinBuildScript.adapter:infra:build.gradle.kts",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripts.KotlinBuildScript.core:provides:build.gradle.kts",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripts.KotlinBuildScript.core:requires:build.gradle.kts",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripts.KotlinBuildScript.core:service:build.gradle.kts",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripts.KotlinBuildScript.support:logging:build.gradle.kts",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripts.KotlinBuildScript.support:monitoring:build.gradle.kts",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripts.KotlinSettingsScript.build-logic:settings.gradle.kts",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripts.KotlinBuildScript.build-logic:build.gradle.kts",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripts.KotlinBuildScript.build-logic:src:main:kotlin:lm.java-jacoco.gradle.kts",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripts.KotlinBuildScript.build.gradle.kts",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripts.KotlinBuildScript.build-logic:src:main:kotlin:lm.java-jpa.gradle.kts",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripts.KotlinBuildScript.build-logic:src:main:kotlin:lm.spring-boot-app.gradle.kts",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripts.KotlinBuildScript.build-logic:src:main:kotlin:lm.java-infra.gradle.kts",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripts.KotlinBuildScript.build-logic:src:main:kotlin:lm.java-library.gradle.kts",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripts.KotlinBuildScript.build-logic:src:main:kotlin:lm.java-mongodb.gradle.kts",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripts.KotlinSettingsScript.settings.gradle.kts",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripts.KotlinBuildScript.adapter:mongo:build.gradle.kts",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripts.KotlinBuildScript.adapter:persistence:build.gradle.kts",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.adapter",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.app",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.support",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.adapter.infra",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.adapter.mongo",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.adapter.persistence",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.app.api",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.core.domain",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.core.provides",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.core.requires",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.core.service",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.support.logging",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.support.monitoring",
+      "languageLevel": 17
+    },
+    {
+      "name": "build-logic",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.test",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.adapter.infra.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.adapter.infra.test",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.adapter.mongo.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.adapter.mongo.test",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.adapter.persistence.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.adapter.persistence.test",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.app.api.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.app.api.test",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.core.domain.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.core.domain.test",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.core.provides.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.core.provides.test",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.core.requires.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.core.requires.test",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.core.service.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.core.service.test",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.support.logging.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.support.logging.test",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.support.monitoring.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "learning-manager.support.monitoring.test",
+      "languageLevel": 17
+    },
+    {
+      "name": "build-logic.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "build-logic.test",
+      "languageLevel": 17
+    }
+  ]
+}
