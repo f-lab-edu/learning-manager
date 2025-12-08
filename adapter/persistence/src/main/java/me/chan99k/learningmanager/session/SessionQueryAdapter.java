@@ -24,9 +24,9 @@ import me.chan99k.learningmanager.session.mapper.SessionMapper;
 
 @Repository
 public class SessionQueryAdapter implements SessionQueryRepository {
-	private final SessionJpaRepository jpaRepository;
+	private final JpaSessionRepository jpaRepository;
 
-	public SessionQueryAdapter(SessionJpaRepository jpaRepository) {
+	public SessionQueryAdapter(JpaSessionRepository jpaRepository) {
 		this.jpaRepository = jpaRepository;
 	}
 

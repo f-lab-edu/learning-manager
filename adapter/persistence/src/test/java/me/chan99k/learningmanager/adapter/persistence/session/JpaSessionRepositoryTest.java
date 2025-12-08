@@ -17,7 +17,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import me.chan99k.learningmanager.config.TestJpaConfig;
 import me.chan99k.learningmanager.course.entity.CourseEntity;
 import me.chan99k.learningmanager.course.entity.CurriculumEntity;
-import me.chan99k.learningmanager.session.SessionJpaRepository;
+import me.chan99k.learningmanager.session.JpaSessionRepository;
 import me.chan99k.learningmanager.session.SessionLocation;
 import me.chan99k.learningmanager.session.SessionType;
 import me.chan99k.learningmanager.session.dto.SessionInfo;
@@ -26,15 +26,15 @@ import me.chan99k.learningmanager.session.entity.SessionEntity;
 @DataJpaTest
 @Testcontainers
 @Import(TestJpaConfig.class)
-@DisplayName("SessionJpaRepository 테스트")
-class SessionJpaRepositoryTest {
+@DisplayName("JpaSessionRepository 테스트")
+class JpaSessionRepositoryTest {
 
 	private static final Instant START_DATE = Instant.parse("2025-01-01T00:00:00Z");
 	private static final Instant END_DATE = Instant.parse("2025-01-31T23:59:59Z");
 	@Autowired
 	private TestEntityManager entityManager;
 	@Autowired
-	private SessionJpaRepository sessionJpaRepository;
+	private JpaSessionRepository jpaSessionRepository;
 	private CourseEntity course1;
 	private CourseEntity course2;
 	private CurriculumEntity curriculum1;
@@ -128,7 +128,7 @@ class SessionJpaRepositoryTest {
 	void findSessionInfoProjectionByIds_WithExistingSessions_Success() {
 		List<Long> sessionIds = List.of(session1.getId(), session2.getId());
 
-		List<SessionInfo> result = sessionJpaRepository.findSessionInfoProjectionByIds(sessionIds);
+		List<SessionInfo> result = jpaSessionRepository.findSessionInfoProjectionByIds(sessionIds);
 
 		assertThat(result).hasSize(2);
 
@@ -158,7 +158,7 @@ class SessionJpaRepositoryTest {
 	@Test
 	@DisplayName("SessionInfo 조회 - 존재하지 않는 세션 ID들")
 	void findSessionInfoProjectionByIds_NonExistentSessionIds_EmptyResult() {
-		List<SessionInfo> result = sessionJpaRepository.findSessionInfoProjectionByIds(
+		List<SessionInfo> result = jpaSessionRepository.findSessionInfoProjectionByIds(
 			List.of(999L, 1000L)
 		);
 
@@ -168,7 +168,7 @@ class SessionJpaRepositoryTest {
 	@Test
 	@DisplayName("기간별 세션 ID 조회 - 모든 필터 null")
 	void findIdsByPeriodAndFilters_AllFiltersNull_Success() {
-		List<Long> result = sessionJpaRepository.findIdsByPeriodAndFilters(
+		List<Long> result = jpaSessionRepository.findIdsByPeriodAndFilters(
 			START_DATE, END_DATE, null, null
 		);
 
@@ -181,7 +181,7 @@ class SessionJpaRepositoryTest {
 	@Test
 	@DisplayName("기간별 세션 ID 조회 - courseId 필터링")
 	void findIdsByPeriodAndFilters_WithCourseIdFilter_Success() {
-		List<Long> result = sessionJpaRepository.findIdsByPeriodAndFilters(
+		List<Long> result = jpaSessionRepository.findIdsByPeriodAndFilters(
 			START_DATE, END_DATE, course1.getId(), null
 		);
 
@@ -194,7 +194,7 @@ class SessionJpaRepositoryTest {
 	@Test
 	@DisplayName("기간별 세션 ID 조회 - curriculumId 필터링")
 	void findIdsByPeriodAndFilters_WithCurriculumIdFilter_Success() {
-		List<Long> result = sessionJpaRepository.findIdsByPeriodAndFilters(
+		List<Long> result = jpaSessionRepository.findIdsByPeriodAndFilters(
 			START_DATE, END_DATE, null, curriculum1.getId()
 		);
 
@@ -207,7 +207,7 @@ class SessionJpaRepositoryTest {
 	@Test
 	@DisplayName("기간별 세션 ID 조회 - courseId와 curriculumId 모두 필터링")
 	void findIdsByPeriodAndFilters_WithBothFilters_Success() {
-		List<Long> result = sessionJpaRepository.findIdsByPeriodAndFilters(
+		List<Long> result = jpaSessionRepository.findIdsByPeriodAndFilters(
 			START_DATE, END_DATE, course1.getId(), curriculum1.getId()
 		);
 
@@ -218,7 +218,7 @@ class SessionJpaRepositoryTest {
 	@Test
 	@DisplayName("기간별 세션 ID 조회 - 존재하지 않는 courseId로 필터링")
 	void findIdsByPeriodAndFilters_NonExistentCourseId_EmptyResult() {
-		List<Long> result = sessionJpaRepository.findIdsByPeriodAndFilters(
+		List<Long> result = jpaSessionRepository.findIdsByPeriodAndFilters(
 			START_DATE, END_DATE, 999L, null
 		);
 
@@ -228,7 +228,7 @@ class SessionJpaRepositoryTest {
 	@Test
 	@DisplayName("기간별 세션 ID 조회 - 존재하지 않는 curriculumId로 필터링")
 	void findIdsByPeriodAndFilters_NonExistentCurriculumId_EmptyResult() {
-		List<Long> result = sessionJpaRepository.findIdsByPeriodAndFilters(
+		List<Long> result = jpaSessionRepository.findIdsByPeriodAndFilters(
 			START_DATE, END_DATE, null, 999L
 		);
 
@@ -241,7 +241,7 @@ class SessionJpaRepositoryTest {
 		Instant futureStart = Instant.parse("2025-03-01T00:00:00Z");
 		Instant futureEnd = Instant.parse("2025-03-31T23:59:59Z");
 
-		List<Long> result = sessionJpaRepository.findIdsByPeriodAndFilters(
+		List<Long> result = jpaSessionRepository.findIdsByPeriodAndFilters(
 			futureStart, futureEnd, null, null
 		);
 
@@ -253,7 +253,7 @@ class SessionJpaRepositoryTest {
 	void findIdsByPeriodAndFilters_BoundaryTest_ExactStartDate() {
 		Instant exactDate = Instant.parse("2025-01-10T10:00:00Z");
 
-		List<Long> result = sessionJpaRepository.findIdsByPeriodAndFilters(
+		List<Long> result = jpaSessionRepository.findIdsByPeriodAndFilters(
 			exactDate, END_DATE, null, null
 		);
 
@@ -269,7 +269,7 @@ class SessionJpaRepositoryTest {
 	void findIdsByPeriodAndFilters_BoundaryTest_ExactEndDate() {
 		Instant exactDate = Instant.parse("2025-01-25T16:00:00Z");
 
-		List<Long> result = sessionJpaRepository.findIdsByPeriodAndFilters(
+		List<Long> result = jpaSessionRepository.findIdsByPeriodAndFilters(
 			START_DATE, exactDate, null, null
 		);
 
@@ -286,7 +286,7 @@ class SessionJpaRepositoryTest {
 		Instant shortStart = Instant.parse("2025-01-19T00:00:00Z");
 		Instant shortEnd = Instant.parse("2025-01-21T00:00:00Z");
 
-		List<Long> result = sessionJpaRepository.findIdsByPeriodAndFilters(
+		List<Long> result = jpaSessionRepository.findIdsByPeriodAndFilters(
 			shortStart, shortEnd, null, null
 		);
 

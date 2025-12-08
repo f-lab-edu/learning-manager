@@ -13,7 +13,7 @@ import org.springframework.data.repository.query.Param;
 import me.chan99k.learningmanager.session.dto.SessionInfo;
 import me.chan99k.learningmanager.session.entity.SessionEntity;
 
-public interface SessionJpaRepository extends JpaRepository<SessionEntity, Long> {
+public interface JpaSessionRepository extends JpaRepository<SessionEntity, Long> {
 
 	List<SessionEntity> findByCourseId(Long courseId);
 
