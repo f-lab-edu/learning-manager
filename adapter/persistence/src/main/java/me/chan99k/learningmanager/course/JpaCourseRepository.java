@@ -59,4 +59,27 @@ public interface JpaCourseRepository extends JpaRepository<CourseEntity, Long> {
 		"WHERE cm.course.id = :courseId " +
 		"ORDER BY cm.createdAt DESC")
 	Page<CourseMemberInfo> findCourseMembersByCourseId(@Param("courseId") Long courseId, Pageable pageable);
+
+	@Query("SELECT COUNT(cm) > 0 FROM CourseMemberEntity cm " +
+		"WHERE cm.course.id = :courseId AND cm.memberId = :memberId AND cm.courseRole = :role")
+	boolean existsByMemberIdAndCourseIdAndRole(
+		@Param("memberId") Long memberId,
+		@Param("courseId") Long courseId,
+		@Param("role") CourseRole role
+	);
+
+	@Query("SELECT COUNT(cm) > 0 FROM CourseMemberEntity cm " +
+		"WHERE cm.course.id = :courseId AND cm.memberId = :memberId AND cm.courseRole IN :roles")
+	boolean existsByMemberIdAndCourseIdAndRoleIn(
+		@Param("memberId") Long memberId,
+		@Param("courseId") Long courseId,
+		@Param("roles") List<CourseRole> roles
+	);
+
+	@Query("SELECT COUNT(cm) > 0 FROM CourseMemberEntity cm " +
+		"WHERE cm.course.id = :courseId AND cm.memberId = :memberId")
+	boolean existsByMemberIdAndCourseId(
+		@Param("memberId") Long memberId,
+		@Param("courseId") Long courseId
+	);
 }

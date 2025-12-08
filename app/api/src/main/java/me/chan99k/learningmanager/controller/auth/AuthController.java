@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
-import me.chan99k.learningmanager.auth.IssueToken;
-import me.chan99k.learningmanager.auth.RefreshAccessToken;
-import me.chan99k.learningmanager.auth.RevokeToken;
+import me.chan99k.learningmanager.authentication.IssueToken;
+import me.chan99k.learningmanager.authentication.RefreshAccessToken;
+import me.chan99k.learningmanager.authentication.RevokeToken;
 
 @RestController
 @RequestMapping("/api/v1/auth")

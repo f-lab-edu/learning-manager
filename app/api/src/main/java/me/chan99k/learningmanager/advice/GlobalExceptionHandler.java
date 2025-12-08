@@ -14,7 +14,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import me.chan99k.learningmanager.auth.AuthProblemCode;
+import me.chan99k.learningmanager.authentication.AuthProblemCode;
 import me.chan99k.learningmanager.course.CourseProblemCode;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.exception.ProblemCode;

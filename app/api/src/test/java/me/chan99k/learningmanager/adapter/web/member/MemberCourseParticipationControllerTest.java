@@ -24,7 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import me.chan99k.learningmanager.advice.GlobalExceptionHandler;
-import me.chan99k.learningmanager.auth.JwtProvider;
+import me.chan99k.learningmanager.authentication.JwtProvider;
 import me.chan99k.learningmanager.controller.member.MemberCourseParticipationController;
 import me.chan99k.learningmanager.course.CourseRole;
 import me.chan99k.learningmanager.member.CourseParticipationInfo;

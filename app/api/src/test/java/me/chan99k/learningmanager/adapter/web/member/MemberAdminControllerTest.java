@@ -20,7 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.auth.JwtProvider;
+import me.chan99k.learningmanager.authentication.JwtProvider;
 import me.chan99k.learningmanager.controller.member.MemberAdminController;
 import me.chan99k.learningmanager.member.MemberStatus;
 import me.chan99k.learningmanager.member.MemberStatusChange;

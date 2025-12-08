@@ -3,7 +3,7 @@ package me.chan99k.learningmanager.member;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.chan99k.learningmanager.auth.PasswordEncoder;
+import me.chan99k.learningmanager.authentication.PasswordEncoder;
 import me.chan99k.learningmanager.exception.DomainException;
 
 @Service

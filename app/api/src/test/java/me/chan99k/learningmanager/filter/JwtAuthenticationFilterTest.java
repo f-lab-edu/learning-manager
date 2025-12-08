@@ -20,7 +20,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import me.chan99k.learningmanager.auth.JwtProvider;
+import me.chan99k.learningmanager.authentication.JwtProvider;
 import me.chan99k.learningmanager.security.CustomUserDetails;
 
 @ExtendWith(MockitoExtension.class)
