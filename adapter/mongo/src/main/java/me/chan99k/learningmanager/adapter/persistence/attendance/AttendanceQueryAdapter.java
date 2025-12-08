@@ -8,9 +8,11 @@ import org.springframework.stereotype.Repository;
 import me.chan99k.learningmanager.adapter.persistence.attendance.documents.AttendanceDocument;
 import me.chan99k.learningmanager.attendance.Attendance;
 import me.chan99k.learningmanager.attendance.AttendanceQueryRepository;
+import me.chan99k.learningmanager.attendance.AttendanceStatus;
 
 @Repository
 public class AttendanceQueryAdapter implements AttendanceQueryRepository {
+
 	private final AttendanceMongoRepository repository;
 
 	public AttendanceQueryAdapter(AttendanceMongoRepository repository) {
@@ -25,46 +27,56 @@ public class AttendanceQueryAdapter implements AttendanceQueryRepository {
 	}
 
 	@Override
-	public List<Attendance> findByMemberId(Long memberId) {
-		return repository.findByMemberId(memberId)
-			.stream()
-			.map(AttendanceDocument::toDomain)
-			.toList();
+	public MemberAttendanceResult findMemberAttendanceWithStats(Long memberId, List<Long> sessionIds) {
+		if (sessionIds.isEmpty()) {
+			return emptyResult(memberId);
+		}
 
+		var result = repository.aggregateMemberAttendance(memberId, sessionIds);
+
+		return result != null ? mapToResult(result) : emptyResult(memberId);
 	}
 
 	@Override
-	public List<Attendance> findByMemberIdAndSessionIds(Long memberId, List<Long> sessionIds) {
-		if (sessionIds.isEmpty()) {
+	public List<MemberAttendanceResult> findAllMembersAttendanceWithStats(List<Long> sessionIds, List<Long> memberIds) {
+		if (sessionIds.isEmpty() || memberIds.isEmpty()) {
 			return List.of();
 		}
 
-		return repository.findByMemberIdAndSessionIdIn(memberId, sessionIds)
+		return repository.aggregateAllMembersAttendance(sessionIds, memberIds)
 			.stream()
-			.map(AttendanceDocument::toDomain)
+			.map(this::mapToResult)
 			.toList();
 	}
 
-	@Override
-	public List<AttendanceProjection> findAttendanceProjectionByMemberIdAndSessionIds(Long memberId,
-		List<Long> sessionIds) {
-		if (sessionIds.isEmpty()) {
-			return List.of();
-		}
-
-		return repository.findProjectionByMemberIdAndSessionIds(memberId, sessionIds)
-			.stream()
-			.map(this::toAttendanceProjection)
-			.toList();
-
+	private MemberAttendanceResult emptyResult(Long memberId) {
+		return new MemberAttendanceResult(
+			memberId,
+			List.of(),
+			new AttendanceStats(0, 0, 0, 0, 0, 0.0)
+		);
 	}
 
-	private AttendanceProjection toAttendanceProjection(AttendanceDocument doc) {
-		return new AttendanceProjection(
-			doc.get_id().toString(),
-			doc.getSessionId(),
-			doc.getMemberId(),
-			doc.getFinalStatus()
+	private MemberAttendanceResult mapToResult(AttendanceMongoRepository.MemberAttendanceAggregationInfo document) {
+		List<AttendanceRecord> records = document.attendances().stream()
+			.map(att -> new AttendanceRecord(
+				att.attendanceId(),
+				att.sessionId(),
+				AttendanceStatus.valueOf(att.finalStatus())
+			))
+			.toList();
+
+		return new MemberAttendanceResult(
+			document.memberId(),
+			records,
+			new AttendanceStats(
+				document.total(),
+				document.present(),
+				document.absent(),
+				document.late(),
+				document.leftEarly(),
+				document.rate()
+			)
 		);
 	}
 
