@@ -7,11 +7,11 @@
   "linter": "QDJVMC",
   "attributes": {
     "deviceId": "200820300000000-3a98-e79c-8d92-cbfe226ec9e8",
-    "jobUrl": "https://github.com/f-lab-edu/learning-manager/actions/runs/20044631790",
+    "jobUrl": "https://github.com/f-lab-edu/learning-manager/actions/runs/20044687145",
     "vcs": {
       "sarifIdea": {
         "repositoryUri": "https://github.com/f-lab-edu/learning-manager.git",
-        "revisionId": "61edd0bfd20c57ea11c499561a01ef9505c305cc",
+        "revisionId": "bb526b5b0aff620cce0e4a71967427c96478cf8f",
         "branch": "learning-manager-69_add-jacoco-to-ci-flow"
       }
     },
