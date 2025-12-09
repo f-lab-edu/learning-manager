@@ -17,8 +17,9 @@ public enum AttendanceProblemCode implements ProblemCode {
 
 	PENDING_REQUEST_EXISTS("DAL400", "[System] 이미 대기 중인 수정 요청이 있습니다."),
 	NO_PENDING_REQUEST("DAL401", "[System] 대기 중인 수정 요청이 없습니다."),
-	SAME_STATUS_REQUEST("DAL402", "[System] 현재 상태와 동일한 상태로 변경할 수 없습니다.")
-	;
+	SAME_STATUS_REQUEST("DAL402", "[System] 현재 상태와 동일한 상태로 변경할 수 없습니다."),
+	CORRECTION_REASON_REQUIRED("DAL403", "[System] 출석 상태 수정 요청에 대한 사유는 필수입니다."),
+	REJECTION_REASON_REQUIRED("DAL404", "[System] 출석 상태 수정 요청 거절에 대한 사유는 필수 입니다.");
 
 	private final String code;
 	private final String message;
