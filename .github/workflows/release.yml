@@ -114,23 +114,40 @@ jobs:
   notify:
     name: Notify Release
     needs: [ docker ]
-    if: always() && secrets.SLACK_WEBHOOK_URL != ''
+    if: always()
     runs-on: ubuntu-latest
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
+      # 릴리스 결과에 따라 메시지 설정
+      - name: Set notification message
+        id: message
+        env:
+          DOCKER_RESULT: ${{ needs.docker.result }}
+        run: |
+          if [ "$DOCKER_RESULT" == "success" ]; then
+            echo "status=Release 성공" >> $GITHUB_OUTPUT
+            echo "status_bold=*Release 성공*" >> $GITHUB_OUTPUT
+          else
+            echo "status=Release 실패" >> $GITHUB_OUTPUT
+            echo "status_bold=*Release 실패*" >> $GITHUB_OUTPUT
+          fi
+
       - name: Send Slack notification
+        if: env.SLACK_WEBHOOK_URL != ''
         uses: slackapi/slack-github-action@v2.0.0
         with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook: ${{ env.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           payload: |
             {
-              "text": "${{ needs.docker.result == 'success' && 'Release 성공' || 'Release 실패' }}",
+              "text": "${{ steps.message.outputs.status }}",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "${{ needs.docker.result == 'success' && '*Release 성공*' || '*Release 실패*' }}\n*Version:* `${{ github.ref_name }}`\n*Image:* `${{ needs.docker.outputs.image-name }}`"
+                    "text": "${{ steps.message.outputs.status_bold }}\n*Version:* `${{ github.ref_name }}`\n*Image:* `${{ needs.docker.outputs.image-name }}`"
                   }
                 },
                 {

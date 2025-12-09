@@ -39,9 +39,9 @@ on:
         description: 'Build outcome (success/failure)'
         # jobs.build.outputs.outcome 값을 외부로 노출
         value: ${{ jobs.build.outputs.outcome }}
-      build-scan-url:
+      build-scan:
         description: 'Gradle Build Scan URL'
-        value: ${{ jobs.build.outputs.build-scan-url }}
+        value: ${{ jobs.build.outputs.build-scan }}
 
 jobs:
   build:
@@ -50,7 +50,10 @@ jobs:
     # outputs: 이 job의 결과를 다른 job이나 워크플로우에서 참조 가능하게 함
     outputs:
       outcome: ${{ steps.build.outcome }}
-      build-scan-url: ${{ steps.gradle-build.outputs.build-scan-url }}
+      build-scan: ${{ steps.gradle-build.outputs.build-scan }}
+    # env: secrets를 환경변수로 변환 (if 조건에서 secrets 직접 참조 불가)
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -118,14 +121,13 @@ jobs:
           path: '**/build/test-results/'
           retention-days: 7
 
-      # Slack 알림 (빌드 실패 시 또는 Build Scan URL 공유)
+      # Slack 알림 (빌드 실패 시)
       - name: Notify Slack on failure
-        # secrets.SLACK_WEBHOOK_URL이 설정되어 있고 빌드 실패 시에만 실행
-        if: failure() && secrets.SLACK_WEBHOOK_URL != ''
+        # env.SLACK_WEBHOOK_URL 사용 (secrets는 if 조건에서 직접 참조 불가)
+        if: failure() && env.SLACK_WEBHOOK_URL != ''
         uses: slackapi/slack-github-action@v2.0.0
         with:
-          # webhook: Slack Incoming Webhook URL
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook: ${{ env.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           # payload: Slack 메시지 JSON 형식
           payload: |
@@ -144,7 +146,7 @@ jobs:
                   "fields": [
                     {
                       "type": "mrkdwn",
-                      "text": "*Build Scan:*\n${{ steps.gradle-build.outputs.build-scan-url || 'N/A' }}"
+                      "text": "*Build Scan:*\n${{ steps.gradle-build.outputs.build-scan || 'N/A' }}"
                     },
                     {
                       "type": "mrkdwn",

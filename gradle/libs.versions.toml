@@ -65,6 +65,9 @@ jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
 jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
 jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
 
+# Jackson (Spring Boot BOM에서 버전 관리)
+jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations" }
+
 # Password
 jbcrypt = { module = "org.mindrot:jbcrypt", version.ref = "jbcrypt" }
 
