@@ -21,6 +21,7 @@ import me.chan99k.learningmanager.authentication.AuthProblemCode;
 import me.chan99k.learningmanager.authentication.IssueToken;
 import me.chan99k.learningmanager.authentication.JwtProvider;
 import me.chan99k.learningmanager.authentication.RefreshAccessToken;
+import me.chan99k.learningmanager.authentication.RevokeAllTokens;
 import me.chan99k.learningmanager.authentication.RevokeToken;
 import me.chan99k.learningmanager.controller.auth.AuthController;
 import me.chan99k.learningmanager.exception.DomainException;
@@ -52,6 +53,9 @@ public class AuthControllerTest {
 
 	@MockBean
 	private RevokeToken revokeToken;
+
+	@MockBean
+	private RevokeAllTokens revokeAllTokens;
 
 	@MockBean
 	private JwtProvider jwtProvider;
