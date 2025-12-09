@@ -14,6 +14,10 @@ public enum AttendanceProblemCode implements ProblemCode {
 
 	// QR 코드 관련
 	INVALID_QR_TOKEN("DAL300", "[System] QR 코드 토큰 검증에 실패하였습니다."),
+
+	PENDING_REQUEST_EXISTS("DAL400", "[System] 이미 대기 중인 수정 요청이 있습니다."),
+	NO_PENDING_REQUEST("DAL401", "[System] 대기 중인 수정 요청이 없습니다."),
+	SAME_STATUS_REQUEST("DAL402", "[System] 현재 상태와 동일한 상태로 변경할 수 없습니다.")
 	;
 
 	private final String code;
