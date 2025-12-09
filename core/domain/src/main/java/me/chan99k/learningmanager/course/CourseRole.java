@@ -1,7 +1,8 @@
 package me.chan99k.learningmanager.course;
 
 public enum CourseRole {
-	MANAGER("과정 매니저"), MENTOR("과정 멘토"), MENTEE("과정 멘티");
+	MANAGER("과정 매니저"), MENTOR("과정 멘토"), MENTEE("과정 멘티"),
+	LEAD_MANAGER("과정 총괄 매니저");
 
 	public final String value;
 
