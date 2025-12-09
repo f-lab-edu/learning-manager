@@ -1,5 +1,5 @@
 {
-  "gradleJvm": "17",
+  "gradleJvm": "#USE_PROJECT_JDK",
   "libraries": [
     {
       "ideaName": "Gradle: org.springframework.boot:spring-boot-starter-actuator:3.3.12",

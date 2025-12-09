@@ -1,4 +1,306 @@
 {
   "version": "3",
-  "listProblem": []
+  "listProblem": [
+    {
+      "tool": "Code Inspection",
+      "category": "Java interop issues",
+      "categoryPath": [
+        {
+          "id": "Kotlin",
+          "name": "Kotlin"
+        },
+        {
+          "id": "Kotlin/Java interop issues",
+          "name": "Java interop issues"
+        }
+      ],
+      "type": "Function or property has platform type",
+      "tags": [
+        "kotlin"
+      ],
+      "severity": "Moderate",
+      "comment": "Declaration has type inferred from a platform call, which can lead to unchecked nullability issues. Specify type explicitly as nullable or non-nullable.",
+      "detailsInfo": "Reports functions and properties that have a platform type.\n\nTo prevent unexpected errors, the type should be declared explicitly.\n\n**Example:**\n\n\n      fun foo() = java.lang.String.valueOf(1)\n\nThe quick fix allows you to specify the return type:\n\n\n      fun foo(): String = java.lang.String.valueOf(1)\n\nInspection ID: HasPlatformType",
+      "sources": [
+        {
+          "type": "file",
+          "path": "support/monitoring/build.gradle.kts",
+          "language": "kotlin",
+          "line": 5,
+          "offset": 5,
+          "length": 7,
+          "code": {
+            "startLine": 3,
+            "length": 7,
+            "offset": 7,
+            "surroundingCode": "}\n\nval catalog = extensions.getByType<VersionCatalogsExtension>().named(\"libs\")\n\ndependencies {"
+          }
+        }
+      ],
+      "attributes": {
+        "module": "learning-manager.support.monitoring",
+        "inspectionName": "HasPlatformType"
+      },
+      "hash": "2841139ac81282a5b760789c189503302ddad86447cd9f95b560b318559c1583",
+      "problemType": "REGULAR"
+    },
+    {
+      "tool": "Code Inspection",
+      "category": "Java interop issues",
+      "categoryPath": [
+        {
+          "id": "Kotlin",
+          "name": "Kotlin"
+        },
+        {
+          "id": "Kotlin/Java interop issues",
+          "name": "Java interop issues"
+        }
+      ],
+      "type": "Function or property has platform type",
+      "tags": [
+        "kotlin"
+      ],
+      "severity": "Moderate",
+      "comment": "Declaration has type inferred from a platform call, which can lead to unchecked nullability issues. Specify type explicitly as nullable or non-nullable.",
+      "detailsInfo": "Reports functions and properties that have a platform type.\n\nTo prevent unexpected errors, the type should be declared explicitly.\n\n**Example:**\n\n\n      fun foo() = java.lang.String.valueOf(1)\n\nThe quick fix allows you to specify the return type:\n\n\n      fun foo(): String = java.lang.String.valueOf(1)\n\nInspection ID: HasPlatformType",
+      "sources": [
+        {
+          "type": "file",
+          "path": "support/logging/build.gradle.kts",
+          "language": "kotlin",
+          "line": 5,
+          "offset": 5,
+          "length": 7,
+          "code": {
+            "startLine": 3,
+            "length": 7,
+            "offset": 7,
+            "surroundingCode": "}\n\nval catalog = extensions.getByType<VersionCatalogsExtension>().named(\"libs\")\n\ndependencies {"
+          }
+        }
+      ],
+      "attributes": {
+        "module": "learning-manager.support.logging",
+        "inspectionName": "HasPlatformType"
+      },
+      "hash": "73c9d687e423ad483ac87a87a1708f21963fcb011b1617128b04ee5aad4a7556",
+      "problemType": "REGULAR"
+    },
+    {
+      "tool": "Code Inspection",
+      "category": "Java interop issues",
+      "categoryPath": [
+        {
+          "id": "Kotlin",
+          "name": "Kotlin"
+        },
+        {
+          "id": "Kotlin/Java interop issues",
+          "name": "Java interop issues"
+        }
+      ],
+      "type": "Function or property has platform type",
+      "tags": [
+        "kotlin"
+      ],
+      "severity": "Moderate",
+      "comment": "Declaration has type inferred from a platform call, which can lead to unchecked nullability issues. Specify type explicitly as nullable or non-nullable.",
+      "detailsInfo": "Reports functions and properties that have a platform type.\n\nTo prevent unexpected errors, the type should be declared explicitly.\n\n**Example:**\n\n\n      fun foo() = java.lang.String.valueOf(1)\n\nThe quick fix allows you to specify the return type:\n\n\n      fun foo(): String = java.lang.String.valueOf(1)\n\nInspection ID: HasPlatformType",
+      "sources": [
+        {
+          "type": "file",
+          "path": "app/api/build.gradle.kts",
+          "language": "kotlin",
+          "line": 5,
+          "offset": 5,
+          "length": 7,
+          "code": {
+            "startLine": 3,
+            "length": 7,
+            "offset": 7,
+            "surroundingCode": "}\n\nval catalog = extensions.getByType<VersionCatalogsExtension>().named(\"libs\")\n\ntasks.named<org.springframework.boot.gradle.tasks.run.BootRun>(\"bootRun\") {"
+          }
+        }
+      ],
+      "attributes": {
+        "module": "learning-manager.app.api",
+        "inspectionName": "HasPlatformType"
+      },
+      "hash": "748f0b10c780943e74f23b902b40d05d62e3d4e16afe9e2e598d3c2247b7db2e",
+      "problemType": "REGULAR"
+    },
+    {
+      "tool": "Code Inspection",
+      "category": "Java interop issues",
+      "categoryPath": [
+        {
+          "id": "Kotlin",
+          "name": "Kotlin"
+        },
+        {
+          "id": "Kotlin/Java interop issues",
+          "name": "Java interop issues"
+        }
+      ],
+      "type": "Function or property has platform type",
+      "tags": [
+        "kotlin"
+      ],
+      "severity": "Moderate",
+      "comment": "Declaration has type inferred from a platform call, which can lead to unchecked nullability issues. Specify type explicitly as nullable or non-nullable.",
+      "detailsInfo": "Reports functions and properties that have a platform type.\n\nTo prevent unexpected errors, the type should be declared explicitly.\n\n**Example:**\n\n\n      fun foo() = java.lang.String.valueOf(1)\n\nThe quick fix allows you to specify the return type:\n\n\n      fun foo(): String = java.lang.String.valueOf(1)\n\nInspection ID: HasPlatformType",
+      "sources": [
+        {
+          "type": "file",
+          "path": "core/provides/build.gradle.kts",
+          "language": "kotlin",
+          "line": 5,
+          "offset": 5,
+          "length": 7,
+          "code": {
+            "startLine": 3,
+            "length": 7,
+            "offset": 7,
+            "surroundingCode": "}\n\nval catalog = extensions.getByType<VersionCatalogsExtension>().named(\"libs\")\n\ndependencies {"
+          }
+        }
+      ],
+      "attributes": {
+        "module": "learning-manager.core.provides",
+        "inspectionName": "HasPlatformType"
+      },
+      "hash": "935a3ab8e1984feb2ee713a4fa76a07314fe6a3b2b424327777e220f7d663b58",
+      "problemType": "REGULAR"
+    },
+    {
+      "tool": "Code Inspection",
+      "category": "Java interop issues",
+      "categoryPath": [
+        {
+          "id": "Kotlin",
+          "name": "Kotlin"
+        },
+        {
+          "id": "Kotlin/Java interop issues",
+          "name": "Java interop issues"
+        }
+      ],
+      "type": "Function or property has platform type",
+      "tags": [
+        "kotlin"
+      ],
+      "severity": "Moderate",
+      "comment": "Declaration has type inferred from a platform call, which can lead to unchecked nullability issues. Specify type explicitly as nullable or non-nullable.",
+      "detailsInfo": "Reports functions and properties that have a platform type.\n\nTo prevent unexpected errors, the type should be declared explicitly.\n\n**Example:**\n\n\n      fun foo() = java.lang.String.valueOf(1)\n\nThe quick fix allows you to specify the return type:\n\n\n      fun foo(): String = java.lang.String.valueOf(1)\n\nInspection ID: HasPlatformType",
+      "sources": [
+        {
+          "type": "file",
+          "path": "core/domain/build.gradle.kts",
+          "language": "kotlin",
+          "line": 5,
+          "offset": 5,
+          "length": 7,
+          "code": {
+            "startLine": 3,
+            "length": 7,
+            "offset": 7,
+            "surroundingCode": "}\n\nval catalog = extensions.getByType<VersionCatalogsExtension>().named(\"libs\")\n\ndependencies {"
+          }
+        }
+      ],
+      "attributes": {
+        "module": "learning-manager.core.domain",
+        "inspectionName": "HasPlatformType"
+      },
+      "hash": "da28533c6e6cfe4a35a4a73d525854b07b570d27a4c7b79c3aaa2aac07d0ee23",
+      "problemType": "REGULAR"
+    },
+    {
+      "tool": "Code Inspection",
+      "category": "Java interop issues",
+      "categoryPath": [
+        {
+          "id": "Kotlin",
+          "name": "Kotlin"
+        },
+        {
+          "id": "Kotlin/Java interop issues",
+          "name": "Java interop issues"
+        }
+      ],
+      "type": "Function or property has platform type",
+      "tags": [
+        "kotlin"
+      ],
+      "severity": "Moderate",
+      "comment": "Declaration has type inferred from a platform call, which can lead to unchecked nullability issues. Specify type explicitly as nullable or non-nullable.",
+      "detailsInfo": "Reports functions and properties that have a platform type.\n\nTo prevent unexpected errors, the type should be declared explicitly.\n\n**Example:**\n\n\n      fun foo() = java.lang.String.valueOf(1)\n\nThe quick fix allows you to specify the return type:\n\n\n      fun foo(): String = java.lang.String.valueOf(1)\n\nInspection ID: HasPlatformType",
+      "sources": [
+        {
+          "type": "file",
+          "path": "core/service/build.gradle.kts",
+          "language": "kotlin",
+          "line": 5,
+          "offset": 5,
+          "length": 7,
+          "code": {
+            "startLine": 3,
+            "length": 7,
+            "offset": 7,
+            "surroundingCode": "}\n\nval catalog = extensions.getByType<VersionCatalogsExtension>().named(\"libs\")\n\ndependencies {"
+          }
+        }
+      ],
+      "attributes": {
+        "module": "learning-manager.core.service",
+        "inspectionName": "HasPlatformType"
+      },
+      "hash": "e5fabc04b425a92c73f81a9577e6167f0bccab4a87d805c6574e96c3ed66120e",
+      "problemType": "REGULAR"
+    },
+    {
+      "tool": "Code Inspection",
+      "category": "Java interop issues",
+      "categoryPath": [
+        {
+          "id": "Kotlin",
+          "name": "Kotlin"
+        },
+        {
+          "id": "Kotlin/Java interop issues",
+          "name": "Java interop issues"
+        }
+      ],
+      "type": "Function or property has platform type",
+      "tags": [
+        "kotlin"
+      ],
+      "severity": "Moderate",
+      "comment": "Declaration has type inferred from a platform call, which can lead to unchecked nullability issues. Specify type explicitly as nullable or non-nullable.",
+      "detailsInfo": "Reports functions and properties that have a platform type.\n\nTo prevent unexpected errors, the type should be declared explicitly.\n\n**Example:**\n\n\n      fun foo() = java.lang.String.valueOf(1)\n\nThe quick fix allows you to specify the return type:\n\n\n      fun foo(): String = java.lang.String.valueOf(1)\n\nInspection ID: HasPlatformType",
+      "sources": [
+        {
+          "type": "file",
+          "path": "adapter/infra/build.gradle.kts",
+          "language": "kotlin",
+          "line": 5,
+          "offset": 5,
+          "length": 7,
+          "code": {
+            "startLine": 3,
+            "length": 7,
+            "offset": 7,
+            "surroundingCode": "}\n\nval catalog = extensions.getByType<VersionCatalogsExtension>().named(\"libs\")\n\ndependencies {"
+          }
+        }
+      ],
+      "attributes": {
+        "module": "learning-manager.adapter.infra",
+        "inspectionName": "HasPlatformType"
+      },
+      "hash": "f3502cad9c533c93f675fc6acb13c4f46ea55c5e28ab4d8db9914c48e70c6b52",
+      "problemType": "REGULAR"
+    }
+  ]
 }

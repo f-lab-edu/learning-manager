@@ -1609,12 +1609,6 @@
       ]
     },
     {
-      "name": "gradle-api-8.14.jar",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/caches/8.14/generated-gradle-jars/gradle-api-8.14.jar!/"
-      ]
-    },
-    {
       "name": "gradle-base-services-8.14.jar",
       "roots": [
         "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/gradle-base-services-8.14.jar!/"
@@ -1642,114 +1636,6 @@
       "name": "gradle-core-kotlin-extensions-8.14.jar",
       "roots": [
         "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/gradle-core-kotlin-extensions-8.14.jar!/"
-      ]
-    },
-    {
-      "name": "gradle-installation-beacon-8.14.jar",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/gradle-installation-beacon-8.14.jar!/"
-      ]
-    },
-    {
-      "name": "gradle-kotlin-dsl-8.14.jar",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/gradle-kotlin-dsl-8.14.jar!/"
-      ]
-    },
-    {
-      "name": "gradle-kotlin-dsl-extensions-8.14.jar",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/gradle-kotlin-dsl-extensions-8.14.jar!/"
-      ]
-    },
-    {
-      "name": "gradle-kotlin-dsl-shared-runtime-8.14.jar",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/gradle-kotlin-dsl-shared-runtime-8.14.jar!/"
-      ]
-    },
-    {
-      "name": "gradle-kotlin-dsl-tooling-models-8.14.jar",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/gradle-kotlin-dsl-tooling-models-8.14.jar!/"
-      ]
-    },
-    {
-      "name": "groovy-3.0.24.jar",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/groovy-3.0.24.jar!/"
-      ]
-    },
-    {
-      "name": "groovy-ant-3.0.24.jar",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/groovy-ant-3.0.24.jar!/"
-      ]
-    },
-    {
-      "name": "groovy-astbuilder-3.0.24.jar",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/groovy-astbuilder-3.0.24.jar!/"
-      ]
-    },
-    {
-      "name": "groovy-console-3.0.24.jar",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/groovy-console-3.0.24.jar!/"
-      ]
-    },
-    {
-      "name": "groovy-datetime-3.0.24.jar",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/groovy-datetime-3.0.24.jar!/"
-      ]
-    },
-    {
-      "name": "groovy-dateutil-3.0.24.jar",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/groovy-dateutil-3.0.24.jar!/"
-      ]
-    },
-    {
-      "name": "groovy-groovydoc-3.0.24.jar",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/groovy-groovydoc-3.0.24.jar!/"
-      ]
-    },
-    {
-      "name": "groovy-json-3.0.24.jar",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/groovy-json-3.0.24.jar!/"
-      ]
-    },
-    {
-      "name": "groovy-nio-3.0.24.jar",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/groovy-nio-3.0.24.jar!/"
-      ]
-    },
-    {
-      "name": "groovy-sql-3.0.24.jar",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/groovy-sql-3.0.24.jar!/"
-      ]
-    },
-    {
-      "name": "groovy-templates-3.0.24.jar",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/groovy-templates-3.0.24.jar!/"
-      ]
-    },
-    {
-      "name": "groovy-test-3.0.24.jar",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/groovy-test-3.0.24.jar!/"
-      ]
-    },
-    {
-      "name": "groovy-xml-3.0.24.jar",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/groovy-xml-3.0.24.jar!/"
       ]
     },
     {
@@ -1795,12 +1681,6 @@
       ]
     },
     {
-      "name": "javaparser-core-3.17.0.jar",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/javaparser-core-3.17.0.jar!/"
-      ]
-    },
-    {
       "name": "jna-5.13.0.jar",
       "roots": [
         "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/net.java.dev.jna/jna/5.13.0/1200e7ebeedbe0d10062093f32925a912020e747/jna-5.13.0.jar!/"
@@ -1839,8 +1719,7 @@
     {
       "name": "kotlin-stdlib dependencies",
       "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.0.21/618b539767b4899b4660a83006e052b63f1db551/kotlin-stdlib-2.0.21.jar!/",
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/kotlin-stdlib-2.0.21.jar!/"
+        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.0.21/618b539767b4899b4660a83006e052b63f1db551/kotlin-stdlib-2.0.21.jar!/"
       ]
     },
     {
@@ -1886,12 +1765,6 @@
       ]
     },
     {
-      "name": "wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/kotlin-reflect-2.0.21.jar!/",
-      "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/kotlin-reflect-2.0.21.jar!/"
-      ]
-    },
-    {
       "name": "kotlin-dsl/accessors/1a795bbada928f935016a29e154fa572/classes",
       "roots": [
         "file://$PROJECT_DIR$/../cache/gradle/caches/8.14/kotlin-dsl/accessors/1a795bbada928f935016a29e154fa572/classes"
@@ -1904,7 +1777,7 @@
       ]
     },
     {
-      "name": "caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-reflect/2.0.21/669e1d35e4ca1797f9ddb2830dd6c36c0ca531e4/kotlin-reflect-2.0.21.jar!/",
+      "name": "kotlin-reflect-2.0.21.jar",
       "roots": [
         "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-reflect/2.0.21/669e1d35e4ca1797f9ddb2830dd6c36c0ca531e4/kotlin-reflect-2.0.21.jar!/"
       ]
