@@ -61,7 +61,7 @@ jobs:
 
       - name: Upload vulnerability report
         if: github.ref_name != 'main' && failure()
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ${{ steps.scan_code.outputs.sarif }}
 
@@ -113,7 +113,7 @@ jobs:
           severity-cutoff: high
 
       - name: Upload vulnerability report
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: failure()
         with:
           sarif_file: ${{ steps.scan_image.outputs.sarif }}
