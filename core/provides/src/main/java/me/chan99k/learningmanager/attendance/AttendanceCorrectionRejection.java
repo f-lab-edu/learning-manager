@@ -11,10 +11,13 @@ public interface AttendanceCorrectionRejection {
 	Response reject(Long rejectedBy, Request request);
 
 	record Request(
-		String attendanceId,       // 대상 출석 ID
+		String attendanceId,
 		String rejectionReason     // 거절 사유 (필수)
 	) {
 		public Request {
+			if (ObjectUtils.isEmpty(attendanceId)) {
+				throw new DomainException(AttendanceProblemCode.ATTENDANCE_ID_REQUIRED);
+			}
 			if (ObjectUtils.isEmpty(rejectionReason)) {
 				throw new DomainException(AttendanceProblemCode.REJECTION_REASON_REQUIRED);
 			}

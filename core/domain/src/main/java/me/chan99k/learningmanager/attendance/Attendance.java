@@ -172,7 +172,7 @@ public class Attendance {
 		}
 	}
 
-	private CorrectionRequested getPendingRequest() {
+	public CorrectionRequested getPendingRequest() {
 		for (int i = events.size() - 1; i >= 0; i--) {
 			AttendanceEvent event = events.get(i);
 

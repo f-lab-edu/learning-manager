@@ -15,6 +15,9 @@ public interface AttendanceCorrectionRequest {
 		String reason              // 사유 (필수)
 	) {
 		public Request {
+			if (ObjectUtils.isEmpty(attendanceId)) {
+				throw new DomainException(AttendanceProblemCode.ATTENDANCE_ID_REQUIRED);
+			}
 			if (ObjectUtils.isEmpty(reason)) {
 				throw new DomainException(AttendanceProblemCode.CORRECTION_REASON_REQUIRED);
 			}
