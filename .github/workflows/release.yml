@@ -17,7 +17,7 @@ jobs:
     name: Build & Test
     uses: ./.github/workflows/_build.yml
     with:
-      java-version: '17'
+      java-version: '21'
       run-tests: true
       generate-coverage: false
       publish-build-scan: true
@@ -46,7 +46,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
           cache: gradle
 
       - name: Setup Gradle
