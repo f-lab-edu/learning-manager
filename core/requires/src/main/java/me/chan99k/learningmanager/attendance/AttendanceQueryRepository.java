@@ -5,6 +5,8 @@ import java.util.Optional;
 
 public interface AttendanceQueryRepository {
 
+	Optional<Attendance> findById(String attendanceId);
+
 	/**
 	 * 단순 조회
 	 */
@@ -30,7 +32,8 @@ public interface AttendanceQueryRepository {
 		Long memberId,
 		List<AttendanceRecord> attendances,
 		AttendanceStats stats
-	) {}
+	) {
+	}
 
 	record AttendanceRecord(
 		String attendanceId,
@@ -42,5 +45,6 @@ public interface AttendanceQueryRepository {
 	record AttendanceStats(
 		int total, int present, int absent,
 		int late, int leftEarly, double rate
-	) {}
+	) {
+	}
 }

@@ -3,6 +3,7 @@ package me.chan99k.learningmanager.adapter.persistence.attendance;
 import java.util.List;
 import java.util.Optional;
 
+import org.bson.types.ObjectId;
 import org.springframework.stereotype.Repository;
 
 import me.chan99k.learningmanager.adapter.persistence.attendance.documents.AttendanceDocument;
@@ -17,6 +18,20 @@ public class AttendanceQueryAdapter implements AttendanceQueryRepository {
 
 	public AttendanceQueryAdapter(AttendanceMongoRepository repository) {
 		this.repository = repository;
+	}
+
+	@Override
+	public Optional<Attendance> findById(String attendanceId) {
+		ObjectId objectId;
+		try {
+			objectId = new ObjectId(attendanceId);
+		} catch (IllegalArgumentException e) {
+			return Optional.empty();  // 서비스 레이어에서 처리
+		}
+
+		return repository
+			.findById(objectId)
+			.map(AttendanceDocument::toDomain);
 	}
 
 	@Override

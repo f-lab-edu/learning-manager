@@ -16,8 +16,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import me.chan99k.learningmanager.attendance.Attendance;
 import me.chan99k.learningmanager.attendance.AttendanceEvent;
 import me.chan99k.learningmanager.attendance.AttendanceStatus;
-import me.chan99k.learningmanager.attendance.CheckedIn;
-import me.chan99k.learningmanager.attendance.CheckedOut;
 
 @Document(collection = "attendances")
 @CompoundIndex(name = "session_member_idx",
@@ -119,26 +117,6 @@ public class AttendanceDocument {
 
 	public Long getCreatedBy() {
 		return createdBy;
-	}
-
-	public record AttendanceEventDocument(
-		String type,
-		Instant timestamp
-	) {
-		public static AttendanceEventDocument from(AttendanceEvent event) {
-			String type = event instanceof CheckedIn ? "CheckedIn" : "CheckedOut";
-
-			return new AttendanceEventDocument(type, event.timestamp());
-		}
-
-		public AttendanceEvent toDomain() {
-			return switch (this.type) {
-				case "CheckedIn" -> new CheckedIn(this.timestamp);
-				case "CheckedOut" -> new CheckedOut(this.timestamp);
-				default -> throw new IllegalArgumentException("[System] 유효하지 않은 출석 이벤트 타입입니다: " + this.type);
-			};
-		}
-
 	}
 
 }

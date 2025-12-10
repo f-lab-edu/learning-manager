@@ -14,7 +14,7 @@ jobs:
     name: Build & Test
     uses: ./.github/workflows/_build.yml
     with:
-      java-version: '17'
+      java-version: '21'
       run-tests: true
       generate-coverage: true
       publish-build-scan: true

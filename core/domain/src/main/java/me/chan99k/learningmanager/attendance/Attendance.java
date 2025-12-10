@@ -58,6 +58,44 @@ public class Attendance {
 		recalculateStatus();
 	}
 
+	public void requestCorrection(
+		AttendanceStatus requestedStatus,
+		String reason,
+		Long requestedBy,
+		Clock clock
+	) {
+		validateNoPendingRequest();  // 이미 대기 중인 요청이 있으면 예외
+		validateStatusChange(requestedStatus);  // 같은 상태로 변경 요청 방지
+
+		AttendanceEvent event = AttendanceEvent.correctionRequested(
+			clock, this.finalStatus, requestedStatus, reason, requestedBy
+		);
+		events.add(event);// 출석 상태 요청만 기록하고 finalStatus는 변경하지 않음 (승인 전까지)
+	}
+
+	public void approveCorrection(Long approvedBy, Clock clock) {
+		CorrectionRequested pendingRequest = getPendingRequest();  // 없으면 예외
+
+		AttendanceEvent event = AttendanceEvent.statusCorrected(
+			clock,
+			pendingRequest.currentStatus(),
+			pendingRequest.requestedStatus(),
+			pendingRequest.reason(),
+			approvedBy
+		);
+		events.add(event);
+		this.finalStatus = pendingRequest.requestedStatus();  // 상태 변경!
+	}
+
+	public void rejectCorrection(String rejectionReason, Long rejectedBy, Clock clock) {
+		validateHasPendingRequest();  // 대기 중인 요청이 없으면 예외
+
+		AttendanceEvent event = AttendanceEvent.correctionRejected(
+			clock, rejectionReason, rejectedBy
+		);
+		events.add(event);
+	}
+
 	private void recalculateStatus() {
 		boolean hasCheckIn = events.stream().anyMatch(event -> event instanceof CheckedIn);
 
@@ -102,11 +140,65 @@ public class Attendance {
 		return AttendanceState.NOT_CHECKED_IN;
 	}
 
-	public String getId() {
-		return id;
+	/**
+	 * events를 역순으로 탐색하여 대기 중인 출석 상태 수정 요청이 있는지 확인
+	 */
+	private boolean hasPendingRequest() {
+		for (int i = events.size() - 1; i >= 0; i--) {
+			AttendanceEvent event = events.get(i);
+
+			if (event instanceof CorrectionRequested) {
+				return true;  // 요청이 있고, 아직 처리 안됨
+			}
+
+			if (event instanceof StatusCorrected || event instanceof CorrectionRejected) {
+				return false;  // 이미 처리된 요청
+			}
+		}
+
+		return false;  // 요청 자체가 없음
+
+	}
+
+	private void validateNoPendingRequest() {
+		if (hasPendingRequest()) {
+			throw new IllegalStateException(PENDING_REQUEST_EXISTS.getMessage());
+		}
+	}
+
+	private void validateHasPendingRequest() {
+		if (!hasPendingRequest()) {
+			throw new IllegalStateException(NO_PENDING_REQUEST.getMessage());
+		}
+	}
+
+	public CorrectionRequested getPendingRequest() {
+		for (int i = events.size() - 1; i >= 0; i--) {
+			AttendanceEvent event = events.get(i);
+
+			if (event instanceof CorrectionRequested requested) {
+				return requested;
+			}
+
+			if (event instanceof StatusCorrected || event instanceof CorrectionRejected) {
+				break;  // 이미 처리됨, 더 볼 필요 없음
+			}
+		}
+
+		throw new IllegalStateException(NO_PENDING_REQUEST.getMessage());
+	}
+
+	private void validateStatusChange(AttendanceStatus requestedStatus) {
+		if (this.finalStatus == requestedStatus) {
+			throw new IllegalStateException(SAME_STATUS_REQUEST.getMessage());
+		}
 	}
 
 	/* 접근 & 수정자 로직 */
+
+	public String getId() {
+		return id;
+	}
 
 	public void setId(String id) {
 		if (this.id != null) {
