@@ -22,8 +22,15 @@ public class AttendanceQueryAdapter implements AttendanceQueryRepository {
 
 	@Override
 	public Optional<Attendance> findById(String attendanceId) {
+		ObjectId objectId;
+		try {
+			objectId = new ObjectId(attendanceId);
+		} catch (IllegalArgumentException e) {
+			return Optional.empty();  // 서비스 레이어에서 처리
+		}
+
 		return repository
-			.findById(new ObjectId(attendanceId))
+			.findById(objectId)
 			.map(AttendanceDocument::toDomain);
 	}
 

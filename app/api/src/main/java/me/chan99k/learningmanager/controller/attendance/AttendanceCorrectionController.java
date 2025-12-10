@@ -39,7 +39,7 @@ public class AttendanceCorrectionController {
 		this.correctionRejection = correctionRejection;
 	}
 
-	@PreAuthorize("@attendanceSecurity.canApproveCorrection(#attendanceId, #user.memberId)")
+	@PreAuthorize("@attendanceSecurity.canRequestCorrection(#attendanceId, #user.memberId)")
 	@Operation(summary = "출석 수정 요청", description = "출석 상태 수정을 요청합니다.")
 	@PostMapping
 	public ResponseEntity<AttendanceCorrectionRequest.Response> requestCorrection(

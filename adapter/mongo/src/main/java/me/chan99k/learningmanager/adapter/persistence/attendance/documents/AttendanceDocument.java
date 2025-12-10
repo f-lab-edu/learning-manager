@@ -119,6 +119,4 @@ public class AttendanceDocument {
 		return createdBy;
 	}
 
-
-
 }

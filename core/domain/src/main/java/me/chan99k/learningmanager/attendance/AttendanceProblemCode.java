@@ -22,7 +22,8 @@ public enum AttendanceProblemCode implements ProblemCode {
 	CORRECTION_REASON_REQUIRED("DAL403", "[System] 출석 상태 수정 요청에 대한 사유는 필수입니다."),
 	REJECTION_REASON_REQUIRED("DAL404", "[System] 출석 상태 수정 요청 거절에 대한 사유는 필수 입니다."),
 
-	ATTENDANCE_NOT_FOUND("DAL500", "[System] 해당 출석 기록을 찾을 수 없습니다");
+	ATTENDANCE_NOT_FOUND("DAL500", "[System] 해당 출석 기록을 찾을 수 없습니다"),
+	;
 
 	private final String code;
 	private final String message;
