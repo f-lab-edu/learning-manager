@@ -66,11 +66,54 @@ class AttendanceCorrectionApprovalServiceTest {
 			.hasFieldOrPropertyWithValue("problemCode", AttendanceProblemCode.ATTENDANCE_NOT_FOUND);
 	}
 
+	@Test
+	@DisplayName("[Failure] 대기 중인 수정 요청이 없으면 예외가 발생한다")
+	void approve_fail_if_no_pending_request() {
+		Attendance attendance = createAttendanceWithoutPendingRequest();
+		when(attendanceQueryRepository.findById(ATTENDANCE_ID)).thenReturn(Optional.of(attendance));
+
+		AttendanceCorrectionApproval.Request request = new AttendanceCorrectionApproval.Request(ATTENDANCE_ID);
+
+		assertThatThrownBy(() -> service.approve(APPROVER_ID, request))
+			.isInstanceOf(IllegalStateException.class)
+			.hasMessageContaining("대기 중인 수정 요청이 없습니다");
+
+		verify(attendanceCommandRepository, never()).save(any());
+	}
+
+	@Test
+	@DisplayName("[Failure] 이미 처리된 요청을 다시 승인하면 예외가 발생한다")
+	void approve_fail_if_already_processed() {
+		Attendance attendance = createAttendanceWithAlreadyApprovedRequest();
+		when(attendanceQueryRepository.findById(ATTENDANCE_ID)).thenReturn(Optional.of(attendance));
+
+		AttendanceCorrectionApproval.Request request = new AttendanceCorrectionApproval.Request(ATTENDANCE_ID);
+
+		assertThatThrownBy(() -> service.approve(APPROVER_ID, request))
+			.isInstanceOf(IllegalStateException.class)
+			.hasMessageContaining("대기 중인 수정 요청이 없습니다");
+
+		verify(attendanceCommandRepository, never()).save(any());
+	}
+
 	private Attendance createAttendanceWithPendingRequest() {
 		Attendance attendance = Attendance.create(SESSION_ID, MEMBER_ID);
 		attendance.setId(ATTENDANCE_ID);
 		attendance.checkIn(Clock.systemUTC());
 		attendance.requestCorrection(AttendanceStatus.LATE, "지각 처리", 200L, Clock.systemUTC());
+		return attendance;
+	}
+
+	private Attendance createAttendanceWithoutPendingRequest() {
+		Attendance attendance = Attendance.create(SESSION_ID, MEMBER_ID);
+		attendance.setId(ATTENDANCE_ID);
+		attendance.checkIn(Clock.systemUTC());
+		return attendance;
+	}
+
+	private Attendance createAttendanceWithAlreadyApprovedRequest() {
+		Attendance attendance = createAttendanceWithPendingRequest();
+		attendance.approveCorrection(APPROVER_ID, Clock.systemUTC());
 		return attendance;
 	}
 }

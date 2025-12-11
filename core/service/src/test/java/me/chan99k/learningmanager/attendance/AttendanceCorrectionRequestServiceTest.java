@@ -70,10 +70,51 @@ class AttendanceCorrectionRequestServiceTest {
 			.hasFieldOrPropertyWithValue("problemCode", AttendanceProblemCode.ATTENDANCE_NOT_FOUND);
 	}
 
+	@Test
+	@DisplayName("[Failure] 이미 대기 중인 수정 요청이 있으면 예외가 발생한다")
+	void request_fail_if_pending_request_exists() {
+		Attendance attendance = createAttendanceWithPendingRequest();
+		when(attendanceQueryRepository.findById(ATTENDANCE_ID)).thenReturn(Optional.of(attendance));
+
+		AttendanceCorrectionRequest.Request request = new AttendanceCorrectionRequest.Request(
+			ATTENDANCE_ID, AttendanceStatus.ABSENT, "결석 처리 요청"
+		);
+
+		assertThatThrownBy(() -> service.request(REQUESTER_ID, request))
+			.isInstanceOf(IllegalStateException.class)
+			.hasMessageContaining("대기 중인 수정 요청");
+
+		verify(attendanceCommandRepository, never()).save(any());
+	}
+
+	@Test
+	@DisplayName("[Failure] 현재 상태와 동일한 상태로 변경 요청하면 예외가 발생한다")
+	void request_fail_if_same_status() {
+		Attendance attendance = createAttendanceWithCheckIn();
+		when(attendanceQueryRepository.findById(ATTENDANCE_ID)).thenReturn(Optional.of(attendance));
+
+		// 현재 상태가 PRESENT인데 PRESENT로 변경 요청
+		AttendanceCorrectionRequest.Request request = new AttendanceCorrectionRequest.Request(
+			ATTENDANCE_ID, AttendanceStatus.PRESENT, "변경 없음"
+		);
+
+		assertThatThrownBy(() -> service.request(REQUESTER_ID, request))
+			.isInstanceOf(IllegalStateException.class)
+			.hasMessageContaining("동일한 상태");
+
+		verify(attendanceCommandRepository, never()).save(any());
+	}
+
 	private Attendance createAttendanceWithCheckIn() {
 		Attendance attendance = Attendance.create(SESSION_ID, MEMBER_ID);
 		attendance.setId(ATTENDANCE_ID);
 		attendance.checkIn(Clock.systemUTC());
+		return attendance;
+	}
+
+	private Attendance createAttendanceWithPendingRequest() {
+		Attendance attendance = createAttendanceWithCheckIn();
+		attendance.requestCorrection(AttendanceStatus.LATE, "지각 처리", REQUESTER_ID, Clock.systemUTC());
 		return attendance;
 	}
 }

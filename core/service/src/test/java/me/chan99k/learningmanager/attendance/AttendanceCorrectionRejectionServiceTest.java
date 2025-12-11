@@ -69,11 +69,58 @@ class AttendanceCorrectionRejectionServiceTest {
 			.hasFieldOrPropertyWithValue("problemCode", AttendanceProblemCode.ATTENDANCE_NOT_FOUND);
 	}
 
+	@Test
+	@DisplayName("[Failure] 대기 중인 수정 요청이 없으면 예외가 발생한다")
+	void reject_fail_if_no_pending_request() {
+		Attendance attendance = createAttendanceWithoutPendingRequest();
+		when(attendanceQueryRepository.findById(ATTENDANCE_ID)).thenReturn(Optional.of(attendance));
+
+		AttendanceCorrectionRejection.Request request = new AttendanceCorrectionRejection.Request(
+			ATTENDANCE_ID, "거절 사유"
+		);
+
+		assertThatThrownBy(() -> service.reject(REJECTER_ID, request))
+			.isInstanceOf(IllegalStateException.class)
+			.hasMessageContaining("대기 중인 수정 요청이 없습니다");
+
+		verify(attendanceCommandRepository, never()).save(any());
+	}
+
+	@Test
+	@DisplayName("[Failure] 이미 거절된 요청을 다시 거절하면 예외가 발생한다")
+	void reject_fail_if_already_rejected() {
+		Attendance attendance = createAttendanceWithAlreadyRejectedRequest();
+		when(attendanceQueryRepository.findById(ATTENDANCE_ID)).thenReturn(Optional.of(attendance));
+
+		AttendanceCorrectionRejection.Request request = new AttendanceCorrectionRejection.Request(
+			ATTENDANCE_ID, "다시 거절"
+		);
+
+		assertThatThrownBy(() -> service.reject(REJECTER_ID, request))
+			.isInstanceOf(IllegalStateException.class)
+			.hasMessageContaining("대기 중인 수정 요청이 없습니다");
+
+		verify(attendanceCommandRepository, never()).save(any());
+	}
+
 	private Attendance createAttendanceWithPendingRequest() {
 		Attendance attendance = Attendance.create(SESSION_ID, MEMBER_ID);
 		attendance.setId(ATTENDANCE_ID);
 		attendance.checkIn(Clock.systemUTC());
 		attendance.requestCorrection(AttendanceStatus.LATE, "지각 처리", 200L, Clock.systemUTC());
+		return attendance;
+	}
+
+	private Attendance createAttendanceWithoutPendingRequest() {
+		Attendance attendance = Attendance.create(SESSION_ID, MEMBER_ID);
+		attendance.setId(ATTENDANCE_ID);
+		attendance.checkIn(Clock.systemUTC());
+		return attendance;
+	}
+
+	private Attendance createAttendanceWithAlreadyRejectedRequest() {
+		Attendance attendance = createAttendanceWithPendingRequest();
+		attendance.rejectCorrection("이전 거절 사유", REJECTER_ID, Clock.systemUTC());
 		return attendance;
 	}
 }
