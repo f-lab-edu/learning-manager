@@ -15,7 +15,6 @@ import jakarta.persistence.Table;
 import me.chan99k.learningmanager.common.MutableEntity;
 import me.chan99k.learningmanager.member.Email;
 import me.chan99k.learningmanager.member.MemberStatus;
-import me.chan99k.learningmanager.member.SystemRole;
 
 @Entity
 @Table(name = "member")
@@ -30,9 +29,6 @@ public class MemberEntity extends MutableEntity {
 
 	@Column(name = "nickname", nullable = false, unique = true, length = 20)
 	private String nickname;
-
-	@Enumerated(EnumType.STRING)
-	private SystemRole role;
 
 	@Enumerated(EnumType.STRING)
 	private MemberStatus status;
@@ -71,14 +67,6 @@ public class MemberEntity extends MutableEntity {
 
 	public void setNickname(String nickname) {
 		this.nickname = nickname;
-	}
-
-	public SystemRole getRole() {
-		return role;
-	}
-
-	public void setRole(SystemRole role) {
-		this.role = role;
 	}
 
 	public MemberStatus getStatus() {
