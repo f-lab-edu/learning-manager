@@ -14,13 +14,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
 import me.chan99k.learningmanager.course.Course;
 import me.chan99k.learningmanager.course.CourseProblemCode;
 import me.chan99k.learningmanager.course.CourseQueryRepository;
 import me.chan99k.learningmanager.exception.DomainException;
-import me.chan99k.learningmanager.member.Member;
 import me.chan99k.learningmanager.member.MemberProblemCode;
-import me.chan99k.learningmanager.member.MemberQueryRepository;
 import me.chan99k.learningmanager.member.SystemRole;
 import me.chan99k.learningmanager.session.Session;
 import me.chan99k.learningmanager.session.SessionCommandRepository;
@@ -44,16 +43,13 @@ class SessionDeletionServiceTest {
 	private CourseQueryRepository courseQueryRepository;
 
 	@Mock
-	private MemberQueryRepository memberQueryRepository;
+	private SystemAuthorizationPort systemAuthorizationPort;
 
 	@Mock
 	private Session session;
 
 	@Mock
 	private Course course;
-
-	@Mock
-	private Member member;
 
 	@Test
 	@DisplayName("[Success] 과정 관리자가 과정 세션 삭제에 성공한다")
@@ -64,7 +60,6 @@ class SessionDeletionServiceTest {
 		long managerId = 100L;
 
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(member));
 		when(session.getCourseId()).thenReturn(courseId);
 		when(session.getChildren()).thenReturn(Collections.emptyList());
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
@@ -83,11 +78,10 @@ class SessionDeletionServiceTest {
 		long adminId = 100L;
 
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(memberQueryRepository.findById(adminId)).thenReturn(Optional.of(member));
 		when(session.getCourseId()).thenReturn(null);
 		when(session.getCurriculumId()).thenReturn(null);
 		when(session.getChildren()).thenReturn(Collections.emptyList());
-		when(member.getRole()).thenReturn(SystemRole.ADMIN);
+		when(systemAuthorizationPort.hasRole(adminId, SystemRole.ADMIN)).thenReturn(true);
 
 		// when
 		sessionDeletionService.deleteSession(adminId, sessionId);
@@ -121,7 +115,6 @@ class SessionDeletionServiceTest {
 
 		// given
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(memberQueryRepository.findById(nonManagerId)).thenReturn(Optional.of(member));
 		when(session.getCourseId()).thenReturn(courseId);
 		when(courseQueryRepository.findManagedCourseById(courseId, nonManagerId)).thenReturn(Optional.empty());
 
@@ -141,10 +134,9 @@ class SessionDeletionServiceTest {
 
 		// given
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(memberQueryRepository.findById(userId)).thenReturn(Optional.of(member));
 		when(session.getCourseId()).thenReturn(null);
 		when(session.getCurriculumId()).thenReturn(null);
-		when(member.getRole()).thenReturn(SystemRole.MEMBER);
+		when(systemAuthorizationPort.hasRole(userId, SystemRole.ADMIN)).thenReturn(false);
 
 		// when & then
 		assertThatThrownBy(() -> sessionDeletionService.deleteSession(userId, sessionId))
@@ -164,7 +156,6 @@ class SessionDeletionServiceTest {
 
 		// given
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(member));
 		when(session.getCourseId()).thenReturn(courseId);
 		when(session.getChildren()).thenReturn(List.of(childSession));
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
@@ -178,24 +169,6 @@ class SessionDeletionServiceTest {
 	}
 
 	@Test
-	@DisplayName("[Failure] 존재하지 않는 사용자면 DomainException이 발생한다")
-	void deleteSession_Fail_MemberNotFound() {
-		long sessionId = 1L;
-		long invalidMemberId = 999L;
-
-		// given
-		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(memberQueryRepository.findById(invalidMemberId)).thenReturn(Optional.empty());
-
-		// when & then
-		assertThatThrownBy(() -> sessionDeletionService.deleteSession(invalidMemberId, sessionId))
-			.isInstanceOf(DomainException.class)
-			.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.MEMBER_NOT_FOUND);
-
-		verify(sessionCommandRepository, never()).delete(any());
-	}
-
-	@Test
 	@DisplayName("[Behavior] sessionCommandRepository.delete()가 호출되는지 확인한다")
 	void deleteSession_VerifyRepositoryDelete() {
 		long sessionId = 1L;
@@ -204,7 +177,6 @@ class SessionDeletionServiceTest {
 
 		// given
 		when(sessionQueryRepository.findById(sessionId)).thenReturn(Optional.of(session));
-		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(member));
 		when(session.getCourseId()).thenReturn(courseId);
 		when(session.getChildren()).thenReturn(Collections.emptyList());
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));

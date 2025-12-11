@@ -5,32 +5,34 @@ import java.time.Clock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
 import me.chan99k.learningmanager.course.CourseProblemCode;
 import me.chan99k.learningmanager.course.CourseQueryRepository;
 import me.chan99k.learningmanager.exception.DomainException;
-import me.chan99k.learningmanager.member.Member;
 import me.chan99k.learningmanager.member.MemberProblemCode;
-import me.chan99k.learningmanager.member.MemberQueryRepository;
 import me.chan99k.learningmanager.member.SystemRole;
 
 @Service
 @Transactional
 public class SessionUpdateService implements SessionUpdate {
+
 	private final SessionQueryRepository sessionQueryRepository;
 	private final SessionCommandRepository sessionCommandRepository;
 	private final CourseQueryRepository courseQueryRepository;
-	private final MemberQueryRepository memberQueryRepository;
+	private final SystemAuthorizationPort systemAuthorizationPort;
 	private final Clock clock;
 
-	public SessionUpdateService(SessionQueryRepository sessionQueryRepository,
+	public SessionUpdateService(
+		SessionQueryRepository sessionQueryRepository,
 		SessionCommandRepository sessionCommandRepository,
 		CourseQueryRepository courseQueryRepository,
-		MemberQueryRepository memberQueryRepository,
-		Clock clock) {
+		SystemAuthorizationPort systemAuthorizationPort,
+		Clock clock
+	) {
 		this.sessionQueryRepository = sessionQueryRepository;
 		this.sessionCommandRepository = sessionCommandRepository;
 		this.courseQueryRepository = courseQueryRepository;
-		this.memberQueryRepository = memberQueryRepository;
+		this.systemAuthorizationPort = systemAuthorizationPort;
 		this.clock = clock;
 	}
 
@@ -51,12 +53,9 @@ public class SessionUpdateService implements SessionUpdate {
 	}
 
 	private void validateUpdatePermission(Session session, Long memberId) {
-		Member member = memberQueryRepository.findById(memberId)
-			.orElseThrow(() -> new DomainException(MemberProblemCode.MEMBER_NOT_FOUND));
-
 		// 단독 세션은 시스템 관리자가 수정 가능
 		if (isStandaloneSession(session)) {
-			if (!member.getRole().equals(SystemRole.ADMIN)) {
+			if (!systemAuthorizationPort.hasRole(memberId, SystemRole.ADMIN)) {
 				throw new DomainException(MemberProblemCode.ADMIN_ONLY_ACTION);
 			}
 			return;

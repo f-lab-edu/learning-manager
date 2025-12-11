@@ -3,30 +3,28 @@ package me.chan99k.learningmanager.course;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
 import me.chan99k.learningmanager.exception.DomainException;
-import me.chan99k.learningmanager.member.Member;
-import me.chan99k.learningmanager.member.MemberProblemCode;
-import me.chan99k.learningmanager.member.MemberQueryRepository;
 import me.chan99k.learningmanager.member.SystemRole;
 
 @Service
 @Transactional
 public class CourseCreationService implements CourseCreation {
-	private final CourseCommandRepository commandRepository;
-	private final MemberQueryRepository memberQueryRepository;
 
-	public CourseCreationService(CourseCommandRepository commandRepository,
-		MemberQueryRepository memberQueryRepository) {
+	private final CourseCommandRepository commandRepository;
+	private final SystemAuthorizationPort systemAuthorizationPort;
+
+	public CourseCreationService(
+		CourseCommandRepository commandRepository,
+		SystemAuthorizationPort systemAuthorizationPort
+	) {
 		this.commandRepository = commandRepository;
-		this.memberQueryRepository = memberQueryRepository;
+		this.systemAuthorizationPort = systemAuthorizationPort;
 	}
 
 	@Override
 	public Response createCourse(Long requestedBy, Request request) {
-		Member member = memberQueryRepository.findById(requestedBy)
-			.orElseThrow(() -> new DomainException(MemberProblemCode.MEMBER_NOT_FOUND));
-
-		if (!member.getRole().equals(SystemRole.ADMIN)) { // 인가 - 권한 확인
+		if (!systemAuthorizationPort.hasRole(requestedBy, SystemRole.ADMIN)) {
 			throw new DomainException(CourseProblemCode.ADMIN_ONLY_COURSE_CREATION);
 		}
 
@@ -37,4 +35,5 @@ public class CourseCreationService implements CourseCreation {
 
 		return new CourseCreation.Response(savedCourse.getId());
 	}
+
 }

@@ -19,14 +19,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
 import me.chan99k.learningmanager.course.Course;
 import me.chan99k.learningmanager.course.CourseProblemCode;
 import me.chan99k.learningmanager.course.CourseQueryRepository;
 import me.chan99k.learningmanager.course.Curriculum;
 import me.chan99k.learningmanager.exception.DomainException;
-import me.chan99k.learningmanager.member.Member;
 import me.chan99k.learningmanager.member.MemberProblemCode;
-import me.chan99k.learningmanager.member.MemberQueryRepository;
 import me.chan99k.learningmanager.member.SystemRole;
 import me.chan99k.learningmanager.session.Session;
 import me.chan99k.learningmanager.session.SessionCommandRepository;
@@ -53,7 +52,7 @@ class SessionCreationServiceTest {
 	private CourseQueryRepository courseQueryRepository;
 
 	@Mock
-	private MemberQueryRepository memberQueryRepository;
+	private SystemAuthorizationPort systemAuthorizationPort;
 
 	@InjectMocks
 	private SessionCreationService sessionCreationService;
@@ -67,9 +66,7 @@ class SessionCreationServiceTest {
 		lenient().when(clock.getZone()).thenReturn(ZoneId.of("Asia/Seoul"));
 
 		Long adminId = 1L;
-		Member admin = mock(Member.class);
-		when(admin.getRole()).thenReturn(SystemRole.ADMIN);
-		when(memberQueryRepository.findById(adminId)).thenReturn(Optional.of(admin));
+		when(systemAuthorizationPort.hasRole(adminId, SystemRole.ADMIN)).thenReturn(true);
 
 		Instant startTime = fixedTime.plusSeconds(86400); // +1 day
 		Instant endTime = fixedTime.plusSeconds(86400 + 7200); // +1 day +2 hours
@@ -99,9 +96,7 @@ class SessionCreationServiceTest {
 	void createStandaloneSession_AuthorizationFail() {
 		// given
 		Long userId = 1L;
-		Member user = mock(Member.class);
-		when(user.getRole()).thenReturn(SystemRole.MEMBER);
-		when(memberQueryRepository.findById(userId)).thenReturn(Optional.of(user));
+		when(systemAuthorizationPort.hasRole(userId, SystemRole.ADMIN)).thenReturn(false);
 
 		SessionCreation.Request request = new SessionCreation.Request(
 			userId,
@@ -128,10 +123,8 @@ class SessionCreationServiceTest {
 
 		Long managerId = 1L;
 		Long courseId = 1L;
-		Member manager = mock(Member.class);
 		Course course = mock(Course.class);
 
-		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(manager));
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 
 		Instant startTime = fixedTime.plusSeconds(86400); // +1 day
@@ -164,9 +157,7 @@ class SessionCreationServiceTest {
 		// given
 		Long userId = 1L;
 		Long courseId = 1L;
-		Member user = mock(Member.class);
 
-		when(memberQueryRepository.findById(userId)).thenReturn(Optional.of(user));
 		when(courseQueryRepository.findManagedCourseById(courseId, userId)).thenReturn(Optional.empty());
 
 		SessionCreation.Request request = new SessionCreation.Request(
@@ -195,13 +186,11 @@ class SessionCreationServiceTest {
 		Long managerId = 1L;
 		Long courseId = 1L;
 		Long curriculumId = 1L;
-		Member manager = mock(Member.class);
 		Course course = mock(Course.class);
 		Curriculum curriculum = mock(Curriculum.class);
 
 		when(curriculum.getId()).thenReturn(curriculumId);
 		when(course.getCurriculumList()).thenReturn(List.of(curriculum));
-		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(manager));
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 
 		Instant startTime = fixedTime.plusSeconds(86400); // +1 day
@@ -235,11 +224,9 @@ class SessionCreationServiceTest {
 		Long managerId = 1L;
 		Long courseId = 1L;
 		Long invalidCurriculumId = 999L;
-		Member manager = mock(Member.class);
 		Course course = mock(Course.class);
 
 		when(course.getCurriculumList()).thenReturn(List.of());
-		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(manager));
 		when(courseQueryRepository.findManagedCourseById(courseId, managerId)).thenReturn(Optional.of(course));
 
 		SessionCreation.Request request = new SessionCreation.Request(
@@ -265,11 +252,9 @@ class SessionCreationServiceTest {
 		// given
 		Long managerId = 1L;
 		Long parentSessionId = 1L;
-		Member manager = mock(Member.class);
 		Session parentSession = mock(Session.class);
 		Session childSession = mock(Session.class);
 
-		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(manager));
 		when(sessionQueryRepository.findById(parentSessionId)).thenReturn(Optional.of(parentSession));
 		when(parentSession.createChildSession(anyString(), any(Instant.class), any(Instant.class),
 			any(SessionType.class), any(SessionLocation.class), anyString(), any(Clock.class))).thenReturn(
@@ -303,9 +288,7 @@ class SessionCreationServiceTest {
 	void createChildSession_ParentNotFound() {
 		Long managerId = 1L;
 		Long invalidParentSessionId = 999L;
-		Member manager = mock(Member.class);
 
-		when(memberQueryRepository.findById(managerId)).thenReturn(Optional.of(manager));
 		when(sessionQueryRepository.findById(invalidParentSessionId)).thenReturn(Optional.empty());
 
 		SessionCreation.Request request = new SessionCreation.Request(
@@ -323,26 +306,5 @@ class SessionCreationServiceTest {
 		assertThatThrownBy(() -> sessionCreationService.createSession(request))
 			.isInstanceOf(DomainException.class)
 			.hasFieldOrPropertyWithValue("problemCode", SessionProblemCode.SESSION_NOT_FOUND);
-	}
-
-	@Test
-	@DisplayName("[Failure] 존재하지 않는 사용자의 세션 생성 시 도메인 예외 발생")
-	void createSession_MemberNotFound() {
-		Long invalidMemberId = 999L;
-		when(memberQueryRepository.findById(invalidMemberId)).thenReturn(Optional.empty());
-
-		SessionCreation.Request request = new SessionCreation.Request(
-			invalidMemberId,
-			null, null, null,
-			"테스트 세션",
-			LocalDateTime.now().plusDays(1).toInstant(ZoneOffset.UTC),
-			LocalDateTime.now().plusDays(1).plusHours(2).toInstant(ZoneOffset.UTC),
-			SessionType.ONLINE, SessionLocation.ZOOM, "Zoom 링크"
-		);
-
-		// when & then
-		assertThatThrownBy(() -> sessionCreationService.createSession(request))
-			.isInstanceOf(DomainException.class)
-			.hasFieldOrPropertyWithValue("problemCode", MemberProblemCode.MEMBER_NOT_FOUND);
 	}
 }
