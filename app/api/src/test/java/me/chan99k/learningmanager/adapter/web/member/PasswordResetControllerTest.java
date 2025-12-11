@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import me.chan99k.learningmanager.authentication.JwtProvider;
+import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
 import me.chan99k.learningmanager.controller.member.PasswordResetController;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.member.MemberProblemCode;
@@ -53,6 +54,9 @@ class PasswordResetControllerTest {
 
 	@MockBean
 	private JwtProvider jwtProvider;
+
+	@MockBean
+	private SystemAuthorizationPort systemAuthorizationPort;
 
 	@Nested
 	@DisplayName("비밀번호 재설정 요청 API 테스트 (POST /api/v1/auth/password/reset-request)")

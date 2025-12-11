@@ -26,6 +26,7 @@ import me.chan99k.learningmanager.authentication.JwtProvider;
 import me.chan99k.learningmanager.authentication.RefreshAccessToken;
 import me.chan99k.learningmanager.authentication.RevokeAllTokens;
 import me.chan99k.learningmanager.authentication.RevokeToken;
+import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
 import me.chan99k.learningmanager.controller.auth.AuthController;
 import me.chan99k.learningmanager.exception.DomainException;
 
@@ -62,6 +63,9 @@ public class AuthControllerTest {
 
 	@MockBean
 	private JwtProvider jwtProvider;
+
+	@MockBean
+	private SystemAuthorizationPort systemAuthorizationPort;
 
 	@Nested
 	@DisplayName("토큰 발급 API 테스트 (POST /api/v1/auth/token)")

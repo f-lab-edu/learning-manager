@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import me.chan99k.learningmanager.authentication.JwtProvider;
+import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
 import me.chan99k.learningmanager.controller.member.MemberAdminController;
 import me.chan99k.learningmanager.member.MemberStatus;
 import me.chan99k.learningmanager.member.MemberStatusChange;
@@ -42,6 +43,9 @@ class MemberAdminControllerTest {
 
 	@MockBean
 	private JwtProvider jwtProvider;
+
+	@MockBean
+	private SystemAuthorizationPort systemAuthorizationPort;
 
 	private CustomUserDetails createMockAdmin() {
 		return new CustomUserDetails(

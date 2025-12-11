@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import me.chan99k.learningmanager.authentication.JwtProvider;
+import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
 import me.chan99k.learningmanager.controller.member.MemberRegisterController;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.member.MemberProblemCode;
@@ -48,6 +49,8 @@ public class MemberRegisterControllerTest {
 	private Executor memberTaskExecutor;
 	@MockBean
 	private JwtProvider jwtProvider;
+	@MockBean
+	private SystemAuthorizationPort systemAuthorizationPort;
 
 	@Nested
 	@DisplayName("회원가입 API 테스트")
