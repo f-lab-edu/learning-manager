@@ -3,7 +3,6 @@ package me.chan99k.learningmanager.authentication;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.Base64;
-import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +15,6 @@ class JwtProviderAdapterTest {
 
 	private static final Long MEMBER_ID = 1L;
 	private static final String EMAIL = "test@example.com";
-	private static final List<String> ROLES = List.of("MEMBER");
 	private static final long EXPIRATION_SECONDS = 3600L;
 	private static final String ISSUER = "test-issuer";
 
@@ -42,7 +40,7 @@ class JwtProviderAdapterTest {
 		@Test
 		@DisplayName("유효한 JWT 문자열을 생성한다")
 		void creates_valid_jwt_string() {
-			String token = jwtProvider.createAccessToken(MEMBER_ID, EMAIL, ROLES);
+			String token = jwtProvider.createAccessToken(MEMBER_ID, EMAIL);
 
 			assertThat(token).isNotNull();
 			assertThat(token.split("\\.")).hasSize(3);
@@ -51,7 +49,7 @@ class JwtProviderAdapterTest {
 		@Test
 		@DisplayName("생성된 토큰에 memberId 클레임을 포함한다")
 		void token_contains_member_id_claim() {
-			String token = jwtProvider.createAccessToken(MEMBER_ID, EMAIL, ROLES);
+			String token = jwtProvider.createAccessToken(MEMBER_ID, EMAIL);
 
 			JwtProvider.Claims claims = jwtProvider.validateAndGetClaims(token);
 			assertThat(claims.memberId()).isEqualTo(MEMBER_ID);
@@ -60,19 +58,10 @@ class JwtProviderAdapterTest {
 		@Test
 		@DisplayName("생성된 토큰에 email 클레임을 포함한다")
 		void token_contains_email_claim() {
-			String token = jwtProvider.createAccessToken(MEMBER_ID, EMAIL, ROLES);
+			String token = jwtProvider.createAccessToken(MEMBER_ID, EMAIL);
 
 			JwtProvider.Claims claims = jwtProvider.validateAndGetClaims(token);
 			assertThat(claims.email()).isEqualTo(EMAIL);
-		}
-
-		@Test
-		@DisplayName("생성된 토큰에 roles 클레임을 포함한다")
-		void token_contains_roles_claim() {
-			String token = jwtProvider.createAccessToken(MEMBER_ID, EMAIL, ROLES);
-
-			JwtProvider.Claims claims = jwtProvider.validateAndGetClaims(token);
-			assertThat(claims.roles()).containsExactlyElementsOf(ROLES);
 		}
 	}
 
@@ -83,13 +72,12 @@ class JwtProviderAdapterTest {
 		@Test
 		@DisplayName("유효한 토큰에서 클레임을 추출한다")
 		void extracts_claims_from_valid_token() {
-			String token = jwtProvider.createAccessToken(MEMBER_ID, EMAIL, ROLES);
+			String token = jwtProvider.createAccessToken(MEMBER_ID, EMAIL);
 
 			JwtProvider.Claims claims = jwtProvider.validateAndGetClaims(token);
 
 			assertThat(claims.memberId()).isEqualTo(MEMBER_ID);
 			assertThat(claims.email()).isEqualTo(EMAIL);
-			assertThat(claims.roles()).isEqualTo(ROLES);
 			assertThat(claims.expiresAt()).isNotNull();
 		}
 
@@ -97,7 +85,7 @@ class JwtProviderAdapterTest {
 		@DisplayName("만료된 토큰은 EXPIRED_TOKEN 예외를 던진다")
 		void throws_expired_token_exception() {
 			JwtProviderAdapter shortLivedProvider = new JwtProviderAdapter(SECRET, 0L, ISSUER);
-			String expiredToken = shortLivedProvider.createAccessToken(MEMBER_ID, EMAIL, ROLES);
+			String expiredToken = shortLivedProvider.createAccessToken(MEMBER_ID, EMAIL);
 
 			assertThatThrownBy(() -> jwtProvider.validateAndGetClaims(expiredToken))
 				.isInstanceOf(DomainException.class)
@@ -122,7 +110,7 @@ class JwtProviderAdapterTest {
 			JwtProviderAdapter differentProvider = new JwtProviderAdapter(
 				DIFFERENT_SECRET, EXPIRATION_SECONDS, ISSUER
 			);
-			String tokenWithDifferentSignature = differentProvider.createAccessToken(MEMBER_ID, EMAIL, ROLES);
+			String tokenWithDifferentSignature = differentProvider.createAccessToken(MEMBER_ID, EMAIL);
 
 			assertThatThrownBy(() -> jwtProvider.validateAndGetClaims(tokenWithDifferentSignature))
 				.isInstanceOf(DomainException.class)
@@ -138,7 +126,7 @@ class JwtProviderAdapterTest {
 		@Test
 		@DisplayName("유효한 토큰은 true를 반환한다")
 		void returns_true_for_valid_token() {
-			String token = jwtProvider.createAccessToken(MEMBER_ID, EMAIL, ROLES);
+			String token = jwtProvider.createAccessToken(MEMBER_ID, EMAIL);
 
 			boolean result = jwtProvider.isValid(token);
 
@@ -149,7 +137,7 @@ class JwtProviderAdapterTest {
 		@DisplayName("만료된 토큰은 false를 반환한다")
 		void returns_false_for_expired_token() {
 			JwtProviderAdapter shortLivedProvider = new JwtProviderAdapter(SECRET, 0L, ISSUER);
-			String expiredToken = shortLivedProvider.createAccessToken(MEMBER_ID, EMAIL, ROLES);
+			String expiredToken = shortLivedProvider.createAccessToken(MEMBER_ID, EMAIL);
 
 			boolean result = jwtProvider.isValid(expiredToken);
 
@@ -170,7 +158,7 @@ class JwtProviderAdapterTest {
 			JwtProviderAdapter differentProvider = new JwtProviderAdapter(
 				DIFFERENT_SECRET, EXPIRATION_SECONDS, ISSUER
 			);
-			String tokenWithDifferentSignature = differentProvider.createAccessToken(MEMBER_ID, EMAIL, ROLES);
+			String tokenWithDifferentSignature = differentProvider.createAccessToken(MEMBER_ID, EMAIL);
 
 			boolean result = jwtProvider.isValid(tokenWithDifferentSignature);
 

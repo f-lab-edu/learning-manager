@@ -2,7 +2,6 @@ package me.chan99k.learningmanager.authentication;
 
 import java.time.Instant;
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
 import javax.crypto.SecretKey;
@@ -19,6 +18,7 @@ import me.chan99k.learningmanager.exception.DomainException;
 
 @Component
 public class JwtProviderAdapter implements JwtProvider {
+
 	private final SecretKey secretKey;
 	private final long accessTokenExpirationSeconds;
 	private final String issuer;
@@ -34,7 +34,7 @@ public class JwtProviderAdapter implements JwtProvider {
 	}
 
 	@Override
-	public String createAccessToken(Long memberId, String email, List<String> roles) {
+	public String createAccessToken(Long memberId, String email) {
 		Instant now = Instant.now();
 		Instant expiration = now.plusSeconds(accessTokenExpirationSeconds);
 
@@ -47,7 +47,6 @@ public class JwtProviderAdapter implements JwtProvider {
 			.id(UUID.randomUUID().toString())
 			.claim("member_id", memberId)
 			.claim("email", email)
-			.claim("roles", roles)
 			.signWith(secretKey)
 			.compact();
 	}
@@ -63,11 +62,9 @@ public class JwtProviderAdapter implements JwtProvider {
 
 			Long memberId = claims.get("member_id", Long.class);
 			String email = claims.get("email", String.class);
-			@SuppressWarnings("unchecked")
-			List<String> roles = claims.get("roles", List.class);
 			Instant expiresAt = claims.getExpiration().toInstant();
 
-			return new Claims(memberId, email, roles, expiresAt);
+			return new Claims(memberId, email, expiresAt);
 
 		} catch (ExpiredJwtException e) {
 			throw new DomainException(AuthProblemCode.EXPIRED_TOKEN);

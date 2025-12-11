@@ -4,7 +4,6 @@ import static me.chan99k.learningmanager.authentication.AuthProblemCode.*;
 import static me.chan99k.learningmanager.member.CredentialType.*;
 
 import java.time.Duration;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -43,29 +42,27 @@ public class IssueTokenService implements IssueToken {
 	@Override
 	@Transactional(readOnly = true)
 	public Response issueToken(Request request) {
-		// 1. 이메일로 Member 조회
+		// 이메일로 Member 조회
 		Email email = Email.of(request.email());
 		Member member = memberQueryRepository.findByEmail(email)
 			.orElseThrow(() -> new DomainException(INVALID_CREDENTIALS));
 
-		// 2. Account에서 PASSWORD 타입 Credential 조회
+		// Account에서 PASSWORD 타입 Credential 조회
 		Account account = member.findAccountByEmail(email);
 		Credential credential = account.findCredentialByType(PASSWORD);
 
-		// 3. 비밀번호 검증
+		// 비밀번호 검증
 		if (!passwordEncoder.matches(request.password(), credential.getSecret())) {
 			throw new DomainException(INVALID_CREDENTIALS);
 		}
 
-		// 4. Access Token 발급
-		List<String> roles = List.of(member.getRole().name());
+		// Access Token 발급
 		String accessToken = jwtProvider.createAccessToken(
 			member.getId(),
-			account.getEmail().address(),
-			roles
+			account.getEmail().address()
 		);
 
-		// 5. Refresh Token 발급 및 저장
+		// Refresh Token 발급 및 저장
 		RefreshToken refreshToken = RefreshToken.create(member.getId(), refreshTokenTtlHours);
 		refreshTokenRepository.save(refreshToken);
 

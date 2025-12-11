@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
 
 import java.time.Instant;
-import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +21,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import me.chan99k.learningmanager.authentication.JwtProvider;
+import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
+import me.chan99k.learningmanager.member.SystemRole;
 import me.chan99k.learningmanager.security.CustomUserDetails;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,12 +30,15 @@ class JwtAuthenticationFilterTest {
 
 	private static final Long MEMBER_ID = 1L;
 	private static final String EMAIL = "test@example.com";
-	private static final List<String> ROLES = List.of("MEMBER");
+	private static final Set<SystemRole> ROLES = Set.of(SystemRole.MEMBER);
 	private static final String VALID_TOKEN = "valid-jwt-token";
 	private static final String INVALID_TOKEN = "invalid-jwt-token";
 
 	@Mock
 	JwtProvider jwtProvider;
+
+	@Mock
+	SystemAuthorizationPort systemAuthorizationPort;
 
 	JwtAuthenticationFilter jwtAuthenticationFilter;
 
@@ -43,7 +48,7 @@ class JwtAuthenticationFilterTest {
 
 	@BeforeEach
 	void setUp() {
-		jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtProvider);
+		jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtProvider, systemAuthorizationPort);
 		request = new MockHttpServletRequest();
 		response = new MockHttpServletResponse();
 		filterChain = new MockFilterChain();
@@ -58,7 +63,6 @@ class JwtAuthenticationFilterTest {
 		return new JwtProvider.Claims(
 			MEMBER_ID,
 			EMAIL,
-			ROLES,
 			Instant.now().plusSeconds(3600)
 		);
 	}
@@ -73,6 +77,7 @@ class JwtAuthenticationFilterTest {
 			request.addHeader("Authorization", "Bearer " + VALID_TOKEN);
 			given(jwtProvider.isValid(VALID_TOKEN)).willReturn(true);
 			given(jwtProvider.validateAndGetClaims(VALID_TOKEN)).willReturn(createValidClaims());
+			given(systemAuthorizationPort.getRoles(MEMBER_ID)).willReturn(ROLES);
 
 			jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
@@ -87,6 +92,7 @@ class JwtAuthenticationFilterTest {
 			request.addHeader("Authorization", "Bearer " + VALID_TOKEN);
 			given(jwtProvider.isValid(VALID_TOKEN)).willReturn(true);
 			given(jwtProvider.validateAndGetClaims(VALID_TOKEN)).willReturn(createValidClaims());
+			given(systemAuthorizationPort.getRoles(MEMBER_ID)).willReturn(ROLES);
 
 			jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
@@ -106,6 +112,7 @@ class JwtAuthenticationFilterTest {
 			request.addHeader("Authorization", "Bearer " + VALID_TOKEN);
 			given(jwtProvider.isValid(VALID_TOKEN)).willReturn(true);
 			given(jwtProvider.validateAndGetClaims(VALID_TOKEN)).willReturn(createValidClaims());
+			given(systemAuthorizationPort.getRoles(MEMBER_ID)).willReturn(ROLES);
 
 			jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 

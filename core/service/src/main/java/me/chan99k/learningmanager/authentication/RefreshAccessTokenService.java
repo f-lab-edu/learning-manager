@@ -3,7 +3,6 @@ package me.chan99k.learningmanager.authentication;
 import static me.chan99k.learningmanager.authentication.AuthProblemCode.*;
 
 import java.time.Duration;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -33,11 +32,11 @@ public class RefreshAccessTokenService implements RefreshAccessToken {
 
 	@Override
 	public Response refresh(Request request) {
-		// 1. Refresh Token 조회
+		// Refresh Token 조회
 		RefreshToken refreshToken = refreshTokenRepository.findByToken(request.refreshToken())
 			.orElseThrow(() -> new DomainException(TOKEN_NOT_FOUND));
 
-		// 2. 토큰 상태 검증
+		// 토큰 상태 검증
 		if (refreshToken.isRevoked()) {
 			throw new DomainException(REVOKED_TOKEN);
 		}
@@ -45,23 +44,21 @@ public class RefreshAccessTokenService implements RefreshAccessToken {
 			throw new DomainException(EXPIRED_TOKEN);
 		}
 
-		// 3. Member 조회
+		// Member 조회
 		Member member = memberQueryRepository.findById(refreshToken.getMemberId())
 			.orElseThrow(() -> new DomainException(INVALID_TOKEN));
 
-		// 4. 기존 Refresh Token 폐기 (Rotation)
+		// 기존 Refresh Token 폐기 (Rotation)
 		refreshTokenRepository.revokeByToken(request.refreshToken());
 
-		// 5. 새 Access Token 발급
+		// 새 Access Token 발급 (Minimal JWT: 역할은 런타임에 조회)
 		String email = member.getPrimaryEmail().address();
-		List<String> roles = List.of(member.getRole().name());
 		String newAccessToken = jwtProvider.createAccessToken(
 			member.getId(),
-			email,
-			roles
+			email
 		);
 
-		// 6. 새 Refresh Token 발급
+		// 새 Refresh Token 발급
 		RefreshToken newRefreshToken = RefreshToken.create(member.getId(), refreshTokenTtl);
 		refreshTokenRepository.save(newRefreshToken);
 
