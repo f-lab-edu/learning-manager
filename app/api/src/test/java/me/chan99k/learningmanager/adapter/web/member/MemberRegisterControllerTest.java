@@ -27,6 +27,7 @@ import me.chan99k.learningmanager.member.MemberProblemCode;
 import me.chan99k.learningmanager.member.MemberRegistration;
 import me.chan99k.learningmanager.member.SignUpConfirmation;
 
+// NOTE :: 단위 테스트로 변경
 @WebMvcTest(value = MemberRegisterController.class,
 	excludeAutoConfiguration = {
 		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}

@@ -26,6 +26,7 @@ import me.chan99k.learningmanager.member.PasswordResetConfirmation;
 import me.chan99k.learningmanager.member.PasswordResetRequest;
 import me.chan99k.learningmanager.member.PasswordResetVerification;
 
+// NOTE :: 단위 테스트로 변경
 @WebMvcTest(value = PasswordResetController.class,
 	excludeAutoConfiguration = {
 		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}

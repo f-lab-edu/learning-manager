@@ -27,6 +27,7 @@ import me.chan99k.learningmanager.member.MemberStatus;
 import me.chan99k.learningmanager.member.MemberStatusChange;
 import me.chan99k.learningmanager.security.CustomUserDetails;
 
+// NOTE :: 단위 테스트로 변경
 @WebMvcTest(controllers = MemberAdminController.class)
 class MemberAdminControllerTest {
 

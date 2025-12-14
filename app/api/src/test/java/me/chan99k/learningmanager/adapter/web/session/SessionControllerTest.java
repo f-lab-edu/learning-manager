@@ -46,6 +46,7 @@ import me.chan99k.learningmanager.session.SessionQueryRepository;
 import me.chan99k.learningmanager.session.SessionType;
 import me.chan99k.learningmanager.session.SessionUpdate;
 
+// NOTE :: 단위 테스트로 변경
 @WebMvcTest(controllers = SessionController.class)
 @Import(GlobalExceptionHandler.class)
 class SessionControllerTest {

@@ -4,7 +4,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import me.chan99k.learningmanager.member.JpaMemberSystemRoleRepository;
 import me.chan99k.learningmanager.member.SystemRole;
@@ -43,7 +42,6 @@ public class JpaSystemAuthorizationAdapter implements SystemAuthorizationPort {
 	}
 
 	@Override
-	@Transactional
 	public void grantRole(Long memberId, SystemRole role) {
 		if (!hasRole(memberId, role)) {
 			roleRepository.save(new MemberSystemRoleEntity(memberId, role));
@@ -51,7 +49,6 @@ public class JpaSystemAuthorizationAdapter implements SystemAuthorizationPort {
 	}
 
 	@Override
-	@Transactional
 	public void revokeRole(Long memberId, SystemRole role) {
 		roleRepository.deleteByMemberIdAndSystemRole(memberId, role);
 	}
