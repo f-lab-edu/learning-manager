@@ -19,8 +19,6 @@ public class Member extends AbstractEntity {
 
 	private Nickname nickname;
 
-	private SystemRole role;
-
 	private MemberStatus status;
 
 	private String profileImageUrl;
@@ -34,7 +32,6 @@ public class Member extends AbstractEntity {
 		Long id,
 		Email primaryEmail,
 		Nickname nickname,
-		SystemRole role,
 		MemberStatus status,
 		String profileImageUrl,
 		String selfIntroduction,
@@ -49,7 +46,6 @@ public class Member extends AbstractEntity {
 		member.setId(id);
 		member.primaryEmail = primaryEmail;
 		member.nickname = nickname;
-		member.role = role;
 		member.status = status;
 		member.profileImageUrl = profileImageUrl;
 		member.selfIntroduction = selfIntroduction;
@@ -65,7 +61,6 @@ public class Member extends AbstractEntity {
 	/* 도메인 로직 */
 	public static Member registerDefault(NicknameGenerator nicknameGenerator) {
 		Member member = new Member();
-		member.role = SystemRole.MEMBER;
 		member.status = MemberStatus.PENDING;
 		member.nickname = Nickname.generateNickname(nicknameGenerator);
 
@@ -134,16 +129,6 @@ public class Member extends AbstractEntity {
 		this.selfIntroduction = selfIntroduction;
 	}
 
-	public void promoteToAdmin() {
-		state(this.role == SystemRole.MEMBER, MEMBER_NOT_GENERAL.getMessage());
-		this.role = SystemRole.ADMIN;
-	}
-
-	public void demoteToMember() {
-		state(this.role == SystemRole.ADMIN, MEMBER_NOT_ADMIN.getMessage());
-		this.role = SystemRole.MEMBER;
-	}
-
 	public void deactivate() {
 		state(this.status != MemberStatus.INACTIVE, MEMBER_ALREADY_INACTIVE.getMessage());
 		this.status = MemberStatus.INACTIVE;
@@ -183,10 +168,6 @@ public class Member extends AbstractEntity {
 
 	public Nickname getNickname() {
 		return nickname;
-	}
-
-	public SystemRole getRole() {
-		return role;
 	}
 
 	public MemberStatus getStatus() {

@@ -1,23 +1,24 @@
 package me.chan99k.learningmanager.authentication;
 
 import java.time.Instant;
-import java.util.List;
 
 public interface JwtProvider {
 
-	String createAccessToken(Long memberId, String email, List<String> roles);
+	/**
+	 * Access Token 생성 - 신원 정보만 포함, 역할은 런타임에 조회
+	 */
+	String createAccessToken(Long memberId, String email);
 
 	/**
 	 * 토큰을 검증하고 클레임을 추출
 	 *
 	 * @param token JWT 문자열
 	 * @return 클레임 정보
-	 * @throws me.chan99k.learningmanager.exception.DomainException 토큰이 유효하지 않은 경우
 	 */
 	Claims validateAndGetClaims(String token);
 
 	/**
-	 * 토큰 유효성만 검사 (예외 발생 X)
+	 * 토큰 유효성만 검사 - 예외 발생 X
 	 */
 	boolean isValid(String token);
 
@@ -26,8 +27,8 @@ public interface JwtProvider {
 	record Claims(
 		Long memberId,
 		String email,
-		List<String> roles,
 		Instant expiresAt
 	) {
 	}
+
 }

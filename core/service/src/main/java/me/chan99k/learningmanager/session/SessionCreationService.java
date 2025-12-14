@@ -5,33 +5,35 @@ import java.time.Clock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
 import me.chan99k.learningmanager.course.Course;
 import me.chan99k.learningmanager.course.CourseProblemCode;
 import me.chan99k.learningmanager.course.CourseQueryRepository;
 import me.chan99k.learningmanager.exception.DomainException;
-import me.chan99k.learningmanager.member.Member;
 import me.chan99k.learningmanager.member.MemberProblemCode;
-import me.chan99k.learningmanager.member.MemberQueryRepository;
 import me.chan99k.learningmanager.member.SystemRole;
 
 @Service
 @Transactional
 public class SessionCreationService implements SessionCreation {
+
 	private final SessionQueryRepository sessionQueryRepository;
 	private final SessionCommandRepository sessionCommandRepository;
 	private final CourseQueryRepository courseQueryRepository;
-	private final MemberQueryRepository memberQueryRepository;
+	private final SystemAuthorizationPort systemAuthorizationPort;
 	private final Clock clock;
 
-	public SessionCreationService(SessionQueryRepository sessionQueryRepository,
+	public SessionCreationService(
+		SessionQueryRepository sessionQueryRepository,
 		SessionCommandRepository sessionCommandRepository,
 		CourseQueryRepository courseQueryRepository,
-		MemberQueryRepository memberQueryRepository,
-		Clock clock) {
+		SystemAuthorizationPort systemAuthorizationPort,
+		Clock clock
+	) {
 		this.sessionQueryRepository = sessionQueryRepository;
 		this.sessionCommandRepository = sessionCommandRepository;
 		this.courseQueryRepository = courseQueryRepository;
-		this.memberQueryRepository = memberQueryRepository;
+		this.systemAuthorizationPort = systemAuthorizationPort;
 		this.clock = clock;
 	}
 
@@ -44,12 +46,9 @@ public class SessionCreationService implements SessionCreation {
 	}
 
 	private void validatePermission(Request request, Long memberId) {
-		Member member = memberQueryRepository.findById(memberId)
-			.orElseThrow(() -> new DomainException(MemberProblemCode.MEMBER_NOT_FOUND));
-
 		// 단독 세션은 시스템 관리자만 생성 가능
 		if (isStandaloneSession(request)) {
-			if (!member.getRole().equals(SystemRole.ADMIN)) {
+			if (!systemAuthorizationPort.hasRole(memberId, SystemRole.ADMIN)) {
 				throw new DomainException(MemberProblemCode.ADMIN_ONLY_ACTION);
 			}
 			return;

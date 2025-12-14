@@ -25,7 +25,6 @@ import me.chan99k.learningmanager.member.Member;
 import me.chan99k.learningmanager.member.MemberQueryRepository;
 import me.chan99k.learningmanager.member.MemberStatus;
 import me.chan99k.learningmanager.member.Nickname;
-import me.chan99k.learningmanager.member.SystemRole;
 
 @ExtendWith(MockitoExtension.class)
 class IssueTokenServiceTest {
@@ -78,7 +77,6 @@ class IssueTokenServiceTest {
 			MEMBER_ID,
 			Email.of(TEST_EMAIL),
 			Nickname.of("TestUser"),
-			SystemRole.MEMBER,
 			MemberStatus.ACTIVE,
 			null,
 			null,
@@ -103,7 +101,7 @@ class IssueTokenServiceTest {
 				.willReturn(Optional.of(member));
 			given(passwordEncoder.matches(TEST_PASSWORD, HASHED_PASSWORD))
 				.willReturn(true);
-			given(jwtProvider.createAccessToken(eq(MEMBER_ID), eq(TEST_EMAIL), anyList()))
+			given(jwtProvider.createAccessToken(eq(MEMBER_ID), eq(TEST_EMAIL)))
 				.willReturn(ACCESS_TOKEN);
 			given(jwtProvider.getAccessTokenExpirationSeconds())
 				.willReturn(ACCESS_TOKEN_EXPIRATION_SECONDS);
@@ -154,7 +152,7 @@ class IssueTokenServiceTest {
 				.willReturn(Optional.of(member));
 			given(passwordEncoder.matches(TEST_PASSWORD, HASHED_PASSWORD))
 				.willReturn(true);
-			given(jwtProvider.createAccessToken(eq(MEMBER_ID), eq(TEST_EMAIL), anyList()))
+			given(jwtProvider.createAccessToken(eq(MEMBER_ID), eq(TEST_EMAIL)))
 				.willReturn(ACCESS_TOKEN);
 			given(jwtProvider.getAccessTokenExpirationSeconds())
 				.willReturn(ACCESS_TOKEN_EXPIRATION_SECONDS);
@@ -178,7 +176,7 @@ class IssueTokenServiceTest {
 				.willReturn(Optional.of(member));
 			given(passwordEncoder.matches(TEST_PASSWORD, HASHED_PASSWORD))
 				.willReturn(true);
-			given(jwtProvider.createAccessToken(eq(MEMBER_ID), eq(TEST_EMAIL), anyList()))
+			given(jwtProvider.createAccessToken(eq(MEMBER_ID), eq(TEST_EMAIL)))
 				.willReturn(ACCESS_TOKEN);
 			given(jwtProvider.getAccessTokenExpirationSeconds())
 				.willReturn(ACCESS_TOKEN_EXPIRATION_SECONDS);
@@ -197,7 +195,7 @@ class IssueTokenServiceTest {
 				.willReturn(Optional.of(member));
 			given(passwordEncoder.matches(TEST_PASSWORD, HASHED_PASSWORD))
 				.willReturn(true);
-			given(jwtProvider.createAccessToken(eq(MEMBER_ID), eq(TEST_EMAIL), anyList()))
+			given(jwtProvider.createAccessToken(eq(MEMBER_ID), eq(TEST_EMAIL)))
 				.willReturn(ACCESS_TOKEN);
 			given(jwtProvider.getAccessTokenExpirationSeconds())
 				.willReturn(ACCESS_TOKEN_EXPIRATION_SECONDS);

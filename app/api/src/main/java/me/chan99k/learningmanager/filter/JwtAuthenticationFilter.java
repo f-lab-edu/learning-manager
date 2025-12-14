@@ -1,6 +1,7 @@
 package me.chan99k.learningmanager.filter;
 
 import java.io.IOException;
+import java.util.Set;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -14,6 +15,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import me.chan99k.learningmanager.authentication.JwtProvider;
+import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
+import me.chan99k.learningmanager.member.SystemRole;
 import me.chan99k.learningmanager.security.CustomUserDetails;
 
 @Component
@@ -23,9 +26,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	private static final String BEARER_PREFIX = "Bearer ";
 
 	private final JwtProvider jwtProvider;
+	private final SystemAuthorizationPort systemAuthorizationPort;
 
-	public JwtAuthenticationFilter(JwtProvider jwtProvider) {
+	public JwtAuthenticationFilter(
+		JwtProvider jwtProvider,
+		SystemAuthorizationPort systemAuthorizationPort
+	) {
 		this.jwtProvider = jwtProvider;
+		this.systemAuthorizationPort = systemAuthorizationPort;
 	}
 
 	@Override
@@ -39,8 +47,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		if (token != null && jwtProvider.isValid(token)) {
 			JwtProvider.Claims claims = jwtProvider.validateAndGetClaims(token);
 
-			var authorities = claims.roles().stream()
-				.map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+			Set<SystemRole> roles = systemAuthorizationPort.getRoles(claims.memberId());
+
+			var authorities = roles.stream()
+				.map(role -> new SimpleGrantedAuthority("ROLE_" + role.name()))
 				.toList();
 
 			CustomUserDetails userDetails = new CustomUserDetails(
@@ -68,4 +78,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		}
 		return null;
 	}
+
 }

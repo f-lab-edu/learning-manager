@@ -13,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.member.Member;
 import me.chan99k.learningmanager.member.MemberCommandRepository;
@@ -36,7 +37,7 @@ class MemberStatusChangeServiceTest {
 	private MemberCommandRepository memberCommandRepository;
 
 	@Mock
-	private Member adminMember;
+	private SystemAuthorizationPort systemAuthorizationPort;
 
 	@Mock
 	private Member targetMember;
@@ -47,9 +48,8 @@ class MemberStatusChangeServiceTest {
 		// given
 		Long adminId = 1L;
 		Long targetMemberId = 2L;
-		when(memberQueryRepository.findById(adminId)).thenReturn(Optional.of(adminMember));
+		when(systemAuthorizationPort.hasRole(adminId, SystemRole.ADMIN)).thenReturn(true);
 		when(memberQueryRepository.findById(targetMemberId)).thenReturn(Optional.of(targetMember));
-		when(adminMember.getRole()).thenReturn(SystemRole.ADMIN);
 
 		MemberStatusChange.Request request = new MemberStatusChange.Request(targetMemberId, MemberStatus.BANNED);
 
@@ -67,9 +67,8 @@ class MemberStatusChangeServiceTest {
 		// given
 		Long adminId = 1L;
 		Long targetMemberId = 2L;
-		when(memberQueryRepository.findById(adminId)).thenReturn(Optional.of(adminMember));
+		when(systemAuthorizationPort.hasRole(adminId, SystemRole.ADMIN)).thenReturn(true);
 		when(memberQueryRepository.findById(targetMemberId)).thenReturn(Optional.of(targetMember));
-		when(adminMember.getRole()).thenReturn(SystemRole.ADMIN);
 
 		MemberStatusChange.Request request = new MemberStatusChange.Request(targetMemberId, MemberStatus.ACTIVE);
 
@@ -86,8 +85,7 @@ class MemberStatusChangeServiceTest {
 	void changeStatus_Fail_NotAdmin() {
 		// given
 		Long memberId = 1L;
-		when(memberQueryRepository.findById(memberId)).thenReturn(Optional.of(adminMember));
-		when(adminMember.getRole()).thenReturn(SystemRole.MEMBER);
+		when(systemAuthorizationPort.hasRole(memberId, SystemRole.ADMIN)).thenReturn(false);
 
 		MemberStatusChange.Request request = new MemberStatusChange.Request(2L, MemberStatus.BANNED);
 
@@ -105,9 +103,8 @@ class MemberStatusChangeServiceTest {
 		// given
 		Long adminId = 1L;
 		Long targetMemberId = 999L;
-		when(memberQueryRepository.findById(adminId)).thenReturn(Optional.of(adminMember));
+		when(systemAuthorizationPort.hasRole(adminId, SystemRole.ADMIN)).thenReturn(true);
 		when(memberQueryRepository.findById(targetMemberId)).thenReturn(Optional.empty());
-		when(adminMember.getRole()).thenReturn(SystemRole.ADMIN);
 
 		MemberStatusChange.Request request = new MemberStatusChange.Request(targetMemberId, MemberStatus.BANNED);
 

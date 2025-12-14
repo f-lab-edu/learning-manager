@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import me.chan99k.learningmanager.authentication.JwtProvider;
+import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.member.MemberProblemCode;
 import me.chan99k.learningmanager.member.PasswordChange;
@@ -44,6 +45,9 @@ class PasswordChangeControllerTest {
 
 	@MockBean
 	private JwtProvider jwtProvider;
+
+	@MockBean
+	private SystemAuthorizationPort systemAuthorizationPort;
 
 	@Test
 	@DisplayName("[Success] 비밀번호 변경 성공")

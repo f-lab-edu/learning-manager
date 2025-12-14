@@ -3,6 +3,7 @@ package me.chan99k.learningmanager.member;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
 import me.chan99k.learningmanager.exception.DomainException;
 
 @Service
@@ -11,20 +12,21 @@ public class MemberStatusChangeService implements MemberStatusChange {
 
 	private final MemberQueryRepository memberQueryRepository;
 	private final MemberCommandRepository memberCommandRepository;
+	private final SystemAuthorizationPort systemAuthorizationPort;
 
 	public MemberStatusChangeService(
 		MemberQueryRepository memberQueryRepository,
-		MemberCommandRepository memberCommandRepository) {
+		MemberCommandRepository memberCommandRepository,
+		SystemAuthorizationPort systemAuthorizationPort
+	) {
 		this.memberQueryRepository = memberQueryRepository;
 		this.memberCommandRepository = memberCommandRepository;
+		this.systemAuthorizationPort = systemAuthorizationPort;
 	}
 
 	@Override
 	public void changeStatus(Long requestedBy, Request request) {
-		Member currentMember = memberQueryRepository.findById(requestedBy)
-			.orElseThrow(() -> new DomainException(MemberProblemCode.MEMBER_NOT_FOUND));
-
-		if (currentMember.getRole() != SystemRole.ADMIN) {
+		if (!systemAuthorizationPort.hasRole(requestedBy, SystemRole.ADMIN)) {
 			throw new DomainException(MemberProblemCode.ADMIN_ONLY_ACTION);
 		}
 
@@ -42,4 +44,5 @@ public class MemberStatusChangeService implements MemberStatusChange {
 
 		memberCommandRepository.save(targetMember);
 	}
+
 }

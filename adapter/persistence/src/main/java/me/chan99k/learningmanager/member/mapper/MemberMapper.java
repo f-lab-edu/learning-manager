@@ -22,7 +22,6 @@ public final class MemberMapper {
 		entity.setId(domain.getId());
 		entity.setPrimaryEmail(domain.getPrimaryEmail());
 		entity.setNickname(domain.getNickname().value());
-		entity.setRole(domain.getRole());
 		entity.setStatus(domain.getStatus());
 		entity.setProfileImageUrl(domain.getProfileImageUrl());
 		entity.setSelfIntroduction(domain.getSelfIntroduction());
@@ -53,7 +52,6 @@ public final class MemberMapper {
 			entity.getId(),
 			entity.getPrimaryEmail(),
 			Nickname.of(entity.getNickname()),
-			entity.getRole(),
 			entity.getStatus(),
 			entity.getProfileImageUrl(),
 			entity.getSelfIntroduction(),

@@ -25,6 +25,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import me.chan99k.learningmanager.advice.GlobalExceptionHandler;
 import me.chan99k.learningmanager.authentication.JwtProvider;
+import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
 import me.chan99k.learningmanager.controller.member.MemberCourseParticipationController;
 import me.chan99k.learningmanager.course.CourseRole;
 import me.chan99k.learningmanager.member.CourseParticipationInfo;
@@ -48,6 +49,9 @@ class MemberCourseParticipationControllerTest {
 
 	@MockBean
 	private JwtProvider jwtProvider;
+
+	@MockBean
+	private SystemAuthorizationPort systemAuthorizationPort;
 
 	private CustomUserDetails createMockUser() {
 		return new CustomUserDetails(

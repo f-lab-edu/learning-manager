@@ -2,6 +2,7 @@ package me.chan99k.learningmanager.authorization;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
@@ -9,25 +10,27 @@ import me.chan99k.learningmanager.attendance.Attendance;
 import me.chan99k.learningmanager.attendance.AttendanceQueryRepository;
 import me.chan99k.learningmanager.attendance.CorrectionRequested;
 import me.chan99k.learningmanager.course.CourseRole;
-import me.chan99k.learningmanager.member.Member;
-import me.chan99k.learningmanager.member.MemberQueryRepository;
 import me.chan99k.learningmanager.member.SystemRole;
 import me.chan99k.learningmanager.session.Session;
 import me.chan99k.learningmanager.session.SessionQueryRepository;
 
 @Service("attendanceSecurity")
 public class AttendanceSecurity {
+
 	private final AttendanceQueryRepository attendanceQueryRepository;
 	private final SessionQueryRepository sessionQueryRepository;
-	private final MemberQueryRepository memberQueryRepository;
+	private final SystemAuthorizationPort systemAuthorizationPort;
 	private final CourseAuthorizationPort courseAuthorizationPort;
 
-	public AttendanceSecurity(AttendanceQueryRepository attendanceQueryRepository,
-		SessionQueryRepository sessionQueryRepository, MemberQueryRepository memberQueryRepository,
-		CourseAuthorizationPort courseAuthorizationPort) {
+	public AttendanceSecurity(
+		AttendanceQueryRepository attendanceQueryRepository,
+		SessionQueryRepository sessionQueryRepository,
+		SystemAuthorizationPort systemAuthorizationPort,
+		CourseAuthorizationPort courseAuthorizationPort
+	) {
 		this.attendanceQueryRepository = attendanceQueryRepository;
 		this.sessionQueryRepository = sessionQueryRepository;
-		this.memberQueryRepository = memberQueryRepository;
+		this.systemAuthorizationPort = systemAuthorizationPort;
 		this.courseAuthorizationPort = courseAuthorizationPort;
 	}
 
@@ -38,14 +41,7 @@ public class AttendanceSecurity {
 		}
 
 		// SystemRole 우선 확인
-		Optional<Member> foundMember = memberQueryRepository.findById(memberId);
-		if (foundMember.isEmpty()) {
-			return false;
-		}
-
-		var member = foundMember.get();
-		var systemRole = member.getRole();
-		if (systemRole == SystemRole.ADMIN || systemRole == SystemRole.REGISTRAR) {
+		if (systemAuthorizationPort.hasAnyRole(memberId, Set.of(SystemRole.ADMIN, SystemRole.REGISTRAR))) {
 			return true;
 		}
 
@@ -82,14 +78,8 @@ public class AttendanceSecurity {
 			return false; // 대기중인 수정 요청 없음
 		}
 
-		Optional<Member> foundMember = memberQueryRepository.findById(memberId);
-		if (foundMember.isEmpty()) {
-			return false;
-		}
-
-		var requestedApprover = foundMember.get();
-		var systemRole = requestedApprover.getRole();
-		if (systemRole == SystemRole.ADMIN || systemRole == SystemRole.REGISTRAR) {
+		// SystemRole 우선 확인
+		if (systemAuthorizationPort.hasAnyRole(memberId, Set.of(SystemRole.ADMIN, SystemRole.REGISTRAR))) {
 			return true;
 		}
 

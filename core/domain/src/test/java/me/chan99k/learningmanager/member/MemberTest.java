@@ -23,7 +23,6 @@ class MemberTest {
 		Member testMember = new Member();
 
 		ReflectionTestUtils.setField(testMember, "nickname", new Nickname("testuser"));
-		ReflectionTestUtils.setField(testMember, "role", SystemRole.MEMBER);
 		ReflectionTestUtils.setField(testMember, "status", MemberStatus.ACTIVE);
 		ReflectionTestUtils.setField(testMember, "accounts", new ArrayList<Account>());
 		return testMember;
@@ -70,7 +69,6 @@ class MemberTest {
 
 			assertThat(defaultMember).isNotNull();
 			assertThat(defaultMember.getNickname().value()).isEqualTo("defaultUser");
-			assertThat(defaultMember.getRole()).isEqualTo(SystemRole.MEMBER);
 			assertThat(defaultMember.getStatus()).isEqualTo(MemberStatus.PENDING);
 		}
 	}
@@ -171,43 +169,6 @@ class MemberTest {
 			assertThatThrownBy(member::unban)
 				.isInstanceOf(IllegalStateException.class)
 				.hasMessage(MEMBER_NOT_BANNED.getMessage());
-		}
-	}
-
-	@Nested
-	@DisplayName("회원 권한 테스트")
-	class RoleTest {
-		@Test
-		@DisplayName("[Success] 관리자 승급에 성공한다.")
-		void success_to_promote_admin() {
-			member.promoteToAdmin();
-			assertThat(member.getRole()).isEqualTo(SystemRole.ADMIN);
-		}
-
-		@Test
-		@DisplayName("[Failure] 이미 관리자인 경우, 관리자 승급에 실패한다.")
-		void fail_to_promote_admin() {
-			member.promoteToAdmin();
-			assertThat(member.getRole()).isEqualTo(SystemRole.ADMIN);
-			assertThatThrownBy(() -> member.promoteToAdmin()).isInstanceOf(IllegalStateException.class)
-				.hasMessage(MEMBER_NOT_GENERAL.getMessage());
-		}
-
-		@Test
-		@DisplayName("[Success] 회원등급 강등에 성공한다.")
-		void success_to_demote_member() {
-			member.promoteToAdmin();
-			assertThat(member.getRole()).isEqualTo(SystemRole.ADMIN);
-
-			member.demoteToMember();
-			assertThat(member.getRole()).isEqualTo(SystemRole.MEMBER);
-		}
-
-		@Test
-		@DisplayName("[Failure] 더 강등할 등급이 없는 경우, 회원 등급 강등에 실패한다..")
-		void fail_to_demote_member() {
-			assertThatThrownBy(() -> member.demoteToMember()).isInstanceOf(IllegalStateException.class)
-				.hasMessage(MEMBER_NOT_ADMIN.getMessage());
 		}
 	}
 
