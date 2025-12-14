@@ -32,5 +32,4 @@ public class JpaConfig {
 	public JPAQueryFactory jpaQueryFactory(EntityManager entityManager) {
 		return new JPAQueryFactory(entityManager);
 	}
-
 }
