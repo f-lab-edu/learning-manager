@@ -3,8 +3,6 @@ package me.chan99k.learningmanager.course;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 import me.chan99k.learningmanager.course.entity.CourseEntity;
 import me.chan99k.learningmanager.member.CourseParticipationInfo;
 
-public interface JpaCourseRepository extends JpaRepository<CourseEntity, Long> {
+public interface JpaCourseRepository extends JpaRepository<CourseEntity, Long>, CustomCourseRepository {
 	Optional<CourseEntity> findByTitle(String title);
 
 	@Query("SELECT c FROM CourseEntity c JOIN c.courseMemberList cm " +
@@ -50,15 +48,6 @@ public interface JpaCourseRepository extends JpaRepository<CourseEntity, Long> {
 		GROUP BY c.id, c.title, c.description, c.createdAt
 		""")
 	Optional<CourseDetailInfo> findCourseBasicDetailsById(Long courseId);
-
-	@Query("SELECT new me.chan99k.learningmanager.course.CourseMemberInfo(" +
-		"cm.memberId, m.nickname, a.email, cm.courseRole, cm.createdAt) " +
-		"FROM CourseMemberEntity cm " +
-		"JOIN MemberEntity m ON cm.memberId = m.id " +
-		"JOIN AccountEntity a ON a.member.id = m.id " +
-		"WHERE cm.course.id = :courseId " +
-		"ORDER BY cm.createdAt DESC")
-	Page<CourseMemberInfo> findCourseMembersByCourseId(@Param("courseId") Long courseId, Pageable pageable);
 
 	// === 인가(Authorization) 관련 쿼리 ===
 
