@@ -21,7 +21,7 @@ public class RevokeSystemRoleService implements RevokeSystemRole {
 	}
 
 	@Override
-	public void revoke(Long revokedBy, Request request) {
+	public void revoke(Request request) {
 		var member = memberQueryRepository.findById(request.memberId()).orElseThrow(() -> new DomainException(
 			MemberProblemCode.MEMBER_NOT_FOUND));
 

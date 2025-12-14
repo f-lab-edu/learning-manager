@@ -24,7 +24,7 @@ public class GrantSystemRoleService implements GrantSystemRole {
 	}
 
 	@Override
-	public void grant(Long grantedBy, Request request) {
+	public void grant(Request request) {
 		Member member = memberQueryRepository.findById(request.memberId())
 			.orElseThrow(() -> new DomainException(MemberProblemCode.MEMBER_NOT_FOUND));
 		systemAuthorizationPort.grantRole(member.getId(), request.role());

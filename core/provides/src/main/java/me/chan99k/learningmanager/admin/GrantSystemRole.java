@@ -4,7 +4,7 @@ import me.chan99k.learningmanager.member.SystemRole;
 
 public interface GrantSystemRole {
 
-	void grant(Long grantedBy, Request request);
+	void grant(Request request);
 
 	record Request(
 		Long memberId,
