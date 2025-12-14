@@ -25,6 +25,7 @@ import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
 import me.chan99k.learningmanager.controller.attendance.AttendanceController;
 import me.chan99k.learningmanager.security.CustomUserDetails;
 
+// NOTE :: 단위 테스트로 변경
 @WebMvcTest(controllers = AttendanceController.class)
 @DisplayName("AttendanceController 테스트")
 class AttendanceControllerTest {

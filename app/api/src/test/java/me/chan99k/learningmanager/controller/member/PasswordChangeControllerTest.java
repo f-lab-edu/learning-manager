@@ -28,6 +28,7 @@ import me.chan99k.learningmanager.member.MemberProblemCode;
 import me.chan99k.learningmanager.member.PasswordChange;
 import me.chan99k.learningmanager.security.CustomUserDetails;
 
+// NOTE :: 단위 테스트로 변경
 @WebMvcTest(controllers = PasswordChangeController.class)
 @DisplayName("PasswordChangeController 테스트")
 class PasswordChangeControllerTest {

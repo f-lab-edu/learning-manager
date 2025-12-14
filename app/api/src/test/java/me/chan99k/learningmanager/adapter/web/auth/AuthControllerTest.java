@@ -30,6 +30,7 @@ import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
 import me.chan99k.learningmanager.controller.auth.AuthController;
 import me.chan99k.learningmanager.exception.DomainException;
 
+// NOTE :: 단위 테스트로 변경
 @WebMvcTest(value = AuthController.class,
 	excludeAutoConfiguration = {
 		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}

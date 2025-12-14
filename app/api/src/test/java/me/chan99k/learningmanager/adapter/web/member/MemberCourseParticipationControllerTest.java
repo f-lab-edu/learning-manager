@@ -32,6 +32,7 @@ import me.chan99k.learningmanager.member.CourseParticipationInfo;
 import me.chan99k.learningmanager.member.MemberCourseParticipation;
 import me.chan99k.learningmanager.security.CustomUserDetails;
 
+// NOTE :: 단위 테스트로 변경
 @WebMvcTest(controllers = MemberCourseParticipationController.class)
 @Import(GlobalExceptionHandler.class)
 class MemberCourseParticipationControllerTest {
