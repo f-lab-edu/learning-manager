@@ -23,6 +23,9 @@ testcontainers = "1.19.0"
 # Code Coverage
 jacoco = "0.8.12"
 
+# QueryDSL
+querydsl = "5.1.0"
+
 [libraries]
 # Spring Boot Starters
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
@@ -89,6 +92,10 @@ angus-mail = { module = "org.eclipse.angus:angus-mail" }
 
 # Dotenv
 spring-dotenv = { module = "me.paulschwarz:spring-dotenv", version = "4.0.0" }
+
+# QueryDSL
+querydsl-jpa = { module = "com.querydsl:querydsl-jpa", version.ref = "querydsl" }
+querydsl-apt = { module = "com.querydsl:querydsl-apt", version.ref = "querydsl" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }

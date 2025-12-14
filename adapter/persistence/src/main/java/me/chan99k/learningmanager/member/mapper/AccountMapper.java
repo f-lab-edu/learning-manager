@@ -57,7 +57,7 @@ public final class AccountMapper {
 		return Account.reconstitute(
 			entity.getId(),
 			entity.getStatus(),
-			Email.of(entity.getEmail()),
+			Email.of(entity.getEmail().address()),
 			credentials,
 			entity.getCreatedAt(),
 			entity.getCreatedBy(),

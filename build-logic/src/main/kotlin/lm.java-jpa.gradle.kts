@@ -12,6 +12,12 @@ dependencies {
     "runtimeOnly"(catalog.findLibrary("mysql-connector").get())
     "runtimeOnly"(catalog.findLibrary("h2").get())
 
+    // QueryDSL
+    "implementation"(variantOf(catalog.findLibrary("querydsl-jpa").get()) { classifier("jakarta") })
+    "annotationProcessor"(variantOf(catalog.findLibrary("querydsl-apt").get()) { classifier("jakarta") })
+    "annotationProcessor"("jakarta.annotation:jakarta.annotation-api")
+    "annotationProcessor"("jakarta.persistence:jakarta.persistence-api")
+
     "testImplementation"(catalog.findLibrary("testcontainers-mysql").get())
     "testImplementation"(catalog.findLibrary("testcontainers-junit").get())
 }

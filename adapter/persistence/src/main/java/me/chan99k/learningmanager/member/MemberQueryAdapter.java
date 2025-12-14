@@ -46,8 +46,8 @@ public class MemberQueryAdapter implements MemberQueryRepository {
 		for (MemberEntity entity : entities) {
 			Member member = MemberMapper.toDomain(entity);
 			entity.getAccounts().stream()
-				.filter(acc -> emailStrings.contains(acc.getEmail()))
-				.forEach(acc -> result.add(new MemberEmailPair(member, acc.getEmail())));
+				.filter(acc -> emailStrings.contains(acc.getEmail().address()))
+				.forEach(acc -> result.add(new MemberEmailPair(member, acc.getEmail().address())));
 		}
 		return result;
 	}

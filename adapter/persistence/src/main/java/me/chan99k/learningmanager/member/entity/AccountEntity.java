@@ -5,6 +5,7 @@ import java.util.List;
 
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -15,6 +16,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import me.chan99k.learningmanager.common.MutableEntity;
 import me.chan99k.learningmanager.member.AccountStatus;
+import me.chan99k.learningmanager.member.Email;
+import me.chan99k.learningmanager.member.mapper.EmailConverter;
 
 @Entity
 @Table(name = "account")
@@ -27,8 +30,9 @@ public class AccountEntity extends MutableEntity {
 	@Enumerated(EnumType.STRING)
 	private AccountStatus status;
 
+	@Convert(converter = EmailConverter.class)
 	@Column(name = "email", nullable = false, unique = true)
-	private String email;
+	private Email email;
 
 	@ElementCollection
 	@CollectionTable(
@@ -56,12 +60,12 @@ public class AccountEntity extends MutableEntity {
 		this.status = status;
 	}
 
-	public String getEmail() {
+	public Email getEmail() {
 		return email;
 	}
 
 	public void setEmail(String email) {
-		this.email = email;
+		this.email = Email.of(email);
 	}
 
 	public List<CredentialEmbeddable> getCredentials() {
