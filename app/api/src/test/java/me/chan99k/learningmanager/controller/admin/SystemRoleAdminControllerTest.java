@@ -61,7 +61,7 @@ class SystemRoleAdminControllerTest {
 	class GrantRoleTest {
 
 		@Test
-		@DisplayName("[Success] 역할 부여 성공 - 200 OK")
+		@DisplayName("[Success] 역할 부여 성공 - 201 CREATED")
 		void grant_role_success() throws Exception {
 			Long memberId = 1L;
 			String requestJson = "{\"role\": \"OPERATOR\"}";
@@ -72,7 +72,7 @@ class SystemRoleAdminControllerTest {
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestJson))
 				.andDo(print())
-				.andExpect(status().isOk());
+				.andExpect(status().isCreated());
 
 			then(grantSystemRole).should().grant(argThat(req ->
 				req.memberId().equals(memberId) && req.role() == SystemRole.OPERATOR
