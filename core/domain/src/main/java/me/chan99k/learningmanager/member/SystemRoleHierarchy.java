@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  * Level 0: MEMBER (기본 사용자)
  * </pre>
  *
- * <p> 상위 역할은 자기 자신과 더 낮은 레벨의 모든 역할을 암시함.</p>
+ * <p>상위 역할은 자기 자신과 더 낮은 레벨의 모든 역할 권한을 포함함.</p>
  */
 public class SystemRoleHierarchy {
 
@@ -36,13 +36,19 @@ public class SystemRoleHierarchy {
 		return role.level > otherRole.level;
 	}
 
-	public Set<SystemRole> getImpliedRoles(SystemRole role) {
+	public Set<SystemRole> getIncludedRoles(SystemRole role) {
 		return Arrays.stream(SystemRole.values())
 			.filter(r -> r.level <= role.level)
 			.collect(Collectors.toCollection(() -> EnumSet.noneOf(SystemRole.class)));
 	}
 
-	public Set<SystemRole> getImpliedRoles(Set<SystemRole> roles) {
+	/**
+	 * 여러 역할이 포함하는 모든 하위 역할 반환.
+	 *
+	 * @param roles 역할 집합
+	 * @return 포함되는 역할 집합
+	 */
+	public Set<SystemRole> getIncludedRoles(Set<SystemRole> roles) {
 		int maxLevel = roles.stream()
 			.mapToInt(r -> r.level)
 			.max()
