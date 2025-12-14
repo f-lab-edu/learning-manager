@@ -40,7 +40,17 @@ public class OpenApiConfig {
 			.group("2. Private API")
 			.displayName("Private API")
 			.pathsToMatch("/api/v1/**")
-			.pathsToExclude("/api/v1/auth/**", "/api/v1/members/register", "/api/v1/members/activate")
+			.pathsToExclude("/api/v1/auth/**", "/api/v1/members/register", "/api/v1/members/activate",
+				"/api/v1/admin/**")
+			.build();
+	}
+
+	@Bean
+	public GroupedOpenApi adminApi() {
+		return GroupedOpenApi.builder()
+			.group("3. Admin API")
+			.displayName("Admin API (ADMIN/SUPERVISOR)")
+			.pathsToMatch("/api/v1/admin/**")
 			.build();
 	}
 
