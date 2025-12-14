@@ -12,7 +12,7 @@ import me.chan99k.learningmanager.member.MemberQueryRepository;
 import me.chan99k.learningmanager.member.SystemRole;
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
 public class RetrieveSystemRoleService implements RetrieveSystemRole {
 	private final SystemAuthorizationPort authorizationPort;
 	private final MemberQueryRepository memberQueryRepository;
