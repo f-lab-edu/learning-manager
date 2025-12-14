@@ -22,6 +22,7 @@ public class RevokeSystemRoleService implements RevokeSystemRole {
 
 	@Override
 	public void revoke(Request request) {
+		// NOTE :: ADMIN 이 스스로의 ADMIN 권한을 회수해버릴 수 있음 -> 막을 것인지 둘 것인지 고민중
 		var member = memberQueryRepository.findById(request.memberId()).orElseThrow(() -> new DomainException(
 			MemberProblemCode.MEMBER_NOT_FOUND));
 

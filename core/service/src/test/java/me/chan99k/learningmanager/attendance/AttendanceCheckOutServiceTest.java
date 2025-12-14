@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.application.attendance;
+package me.chan99k.learningmanager.attendance;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -15,12 +15,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.attendance.Attendance;
-import me.chan99k.learningmanager.attendance.AttendanceCheckOut;
-import me.chan99k.learningmanager.attendance.AttendanceCheckOutService;
-import me.chan99k.learningmanager.attendance.AttendanceCommandRepository;
-import me.chan99k.learningmanager.attendance.AttendanceQueryRepository;
-import me.chan99k.learningmanager.attendance.AttendanceStatus;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.session.Session;
 import me.chan99k.learningmanager.session.SessionParticipant;
