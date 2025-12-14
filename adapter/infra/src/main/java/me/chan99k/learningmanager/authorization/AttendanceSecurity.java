@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import me.chan99k.learningmanager.attendance.Attendance;
 import me.chan99k.learningmanager.attendance.AttendanceQueryRepository;
@@ -15,6 +16,7 @@ import me.chan99k.learningmanager.session.Session;
 import me.chan99k.learningmanager.session.SessionQueryRepository;
 
 @Service("attendanceSecurity")
+@Transactional(readOnly = true)
 public class AttendanceSecurity {
 
 	private final AttendanceQueryRepository attendanceQueryRepository;
