@@ -5,17 +5,13 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import me.chan99k.learningmanager.course.CourseRole;
-import me.chan99k.learningmanager.session.SessionQueryRepository;
 
 @Service("courseSecurity")
 public class CourseSecurityService {
 	private final CourseAuthorizationPort authorizationPort;
-	private final SessionQueryRepository sessionQueryRepository;
 
-	public CourseSecurityService(CourseAuthorizationPort authorizationPort,
-		SessionQueryRepository sessionQueryRepository) {
+	public CourseSecurityService(CourseAuthorizationPort authorizationPort) {
 		this.authorizationPort = authorizationPort;
-		this.sessionQueryRepository = sessionQueryRepository;
 	}
 
 	public boolean isManager(Long courseId, Long memberId) {
