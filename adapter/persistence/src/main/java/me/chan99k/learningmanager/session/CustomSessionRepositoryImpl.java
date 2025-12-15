@@ -13,7 +13,6 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
-import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
@@ -24,7 +23,6 @@ import me.chan99k.learningmanager.course.CourseRole;
 import me.chan99k.learningmanager.session.dto.SessionInfo;
 import me.chan99k.learningmanager.session.entity.SessionEntity;
 
-@Repository
 public class CustomSessionRepositoryImpl implements CustomSessionRepository {
 
 	private final JPAQueryFactory queryFactory;

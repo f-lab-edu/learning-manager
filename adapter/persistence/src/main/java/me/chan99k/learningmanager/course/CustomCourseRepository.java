@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.repository.query.Param;
 
 import me.chan99k.learningmanager.course.entity.CourseEntity;
 import me.chan99k.learningmanager.member.CourseParticipationInfo;
@@ -28,20 +27,9 @@ public interface CustomCourseRepository {
 
 	// === 인가(Authorization) 관련 쿼리 ===
 
-	boolean existsByMemberIdAndCourseIdAndRole(
-		@Param("memberId") Long memberId,
-		@Param("courseId") Long courseId,
-		@Param("role") CourseRole role
-	);
+	boolean existsByMemberIdAndCourseIdAndRole(Long memberId, Long courseId, CourseRole role);
 
-	boolean existsByMemberIdAndCourseIdAndRoleIn(
-		@Param("memberId") Long memberId,
-		@Param("courseId") Long courseId,
-		@Param("roles") List<CourseRole> roles
-	);
+	boolean existsByMemberIdAndCourseIdAndRoleIn(Long memberId, Long courseId, List<CourseRole> roles);
 
-	boolean existsByMemberIdAndCourseId(
-		@Param("memberId") Long memberId,
-		@Param("courseId") Long courseId
-	);
+	boolean existsByMemberIdAndCourseId(Long memberId, Long courseId);
 }

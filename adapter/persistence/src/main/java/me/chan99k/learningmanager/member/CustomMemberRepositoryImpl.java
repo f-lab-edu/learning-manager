@@ -8,14 +8,12 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.data.domain.Limit;
-import org.springframework.stereotype.Repository;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import me.chan99k.learningmanager.member.entity.MemberEntity;
 import me.chan99k.learningmanager.member.mapper.MemberMapper;
 
-@Repository
 public class CustomMemberRepositoryImpl implements CustomMemberRepository {
 	private final JPAQueryFactory queryFactory;
 
