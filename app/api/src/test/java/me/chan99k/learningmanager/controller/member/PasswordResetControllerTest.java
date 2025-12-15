@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.adapter.web.member;
+package me.chan99k.learningmanager.controller.member;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import me.chan99k.learningmanager.authentication.JwtProvider;
 import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
-import me.chan99k.learningmanager.controller.member.PasswordResetController;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.member.MemberProblemCode;
 import me.chan99k.learningmanager.member.PasswordResetConfirmation;

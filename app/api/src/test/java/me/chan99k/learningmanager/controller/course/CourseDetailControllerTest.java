@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.adapter.web.course;
+package me.chan99k.learningmanager.controller.course;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -18,7 +18,6 @@ import org.springframework.http.ResponseEntity;
 
 import me.chan99k.learningmanager.common.PageRequest;
 import me.chan99k.learningmanager.common.PageResult;
-import me.chan99k.learningmanager.controller.course.CourseDetailController;
 import me.chan99k.learningmanager.course.CourseDetailInfo;
 import me.chan99k.learningmanager.course.CourseDetailRetrieval;
 import me.chan99k.learningmanager.course.CourseMemberInfo;

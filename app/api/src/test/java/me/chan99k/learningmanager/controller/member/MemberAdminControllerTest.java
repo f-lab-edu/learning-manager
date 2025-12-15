@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.adapter.web.member;
+package me.chan99k.learningmanager.controller.member;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import me.chan99k.learningmanager.authentication.JwtProvider;
 import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
-import me.chan99k.learningmanager.controller.member.MemberAdminController;
 import me.chan99k.learningmanager.member.MemberStatus;
 import me.chan99k.learningmanager.member.MemberStatusChange;
 import me.chan99k.learningmanager.security.CustomUserDetails;

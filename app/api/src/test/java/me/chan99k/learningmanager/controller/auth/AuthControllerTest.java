@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.adapter.web.auth;
+package me.chan99k.learningmanager.controller.auth;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
@@ -19,7 +19,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.adapter.web.attendance.MockCustomUserDetailsArgumentResolver;
 import me.chan99k.learningmanager.authentication.AuthProblemCode;
 import me.chan99k.learningmanager.authentication.IssueToken;
 import me.chan99k.learningmanager.authentication.JwtProvider;
@@ -27,7 +26,7 @@ import me.chan99k.learningmanager.authentication.RefreshAccessToken;
 import me.chan99k.learningmanager.authentication.RevokeAllTokens;
 import me.chan99k.learningmanager.authentication.RevokeToken;
 import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
-import me.chan99k.learningmanager.controller.auth.AuthController;
+import me.chan99k.learningmanager.controller.attendance.MockCustomUserDetailsArgumentResolver;
 import me.chan99k.learningmanager.exception.DomainException;
 
 // NOTE :: 단위 테스트로 변경

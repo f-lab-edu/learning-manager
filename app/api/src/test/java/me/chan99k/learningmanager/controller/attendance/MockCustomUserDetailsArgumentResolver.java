@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.adapter.web.attendance;
+package me.chan99k.learningmanager.controller.attendance;
 
 import static org.mockito.Mockito.*;
 

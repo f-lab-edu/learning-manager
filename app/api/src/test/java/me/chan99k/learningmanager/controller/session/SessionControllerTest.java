@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.adapter.web.session;
+package me.chan99k.learningmanager.controller.session;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
@@ -31,7 +31,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import me.chan99k.learningmanager.advice.GlobalExceptionHandler;
 import me.chan99k.learningmanager.authentication.JwtProvider;
 import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
-import me.chan99k.learningmanager.controller.session.SessionController;
 import me.chan99k.learningmanager.course.CourseProblemCode;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.member.MemberProblemCode;

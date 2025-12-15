@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.adapter.web.member;
+package me.chan99k.learningmanager.controller.member;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
@@ -26,7 +26,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import me.chan99k.learningmanager.advice.GlobalExceptionHandler;
 import me.chan99k.learningmanager.authentication.JwtProvider;
 import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
-import me.chan99k.learningmanager.controller.member.MemberCourseParticipationController;
 import me.chan99k.learningmanager.course.CourseRole;
 import me.chan99k.learningmanager.member.CourseParticipationInfo;
 import me.chan99k.learningmanager.member.MemberCourseParticipation;
