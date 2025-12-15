@@ -27,6 +27,7 @@ public class GlobalExceptionHandler {
 
 	/**
 	 * DomainException 을 가로챈다.
+	 *
 	 * @param e DomainException
 	 * @return HTTP 상태 코드는 ProblemCode에 따라 결정됨
 	 */
@@ -36,7 +37,7 @@ public class GlobalExceptionHandler {
 
 		// 인증 관련 예외 - 401 UNAUTHORIZED
 		if (isAuthenticationError(problemCode)) {
-			return createErrorResponse(HttpStatus.UNAUTHORIZED, "Domain Error", e);
+			return createErrorResponse(HttpStatus.UNAUTHORIZED, "Authentication Error", e);
 		}
 
 		// 토큰 없음 예외 - 404 NOT_FOUND
@@ -124,6 +125,7 @@ public class GlobalExceptionHandler {
 
 	/**
 	 * 어디에서든 IllegalArgumentException이 발생하면 이 메서드가 가로챈다.
+	 *
 	 * @param e IllegalArgumentException
 	 * @return 400, ResponseEntity
 	 */
@@ -186,6 +188,7 @@ public class GlobalExceptionHandler {
 
 	/**
 	 * 필수 요청 파라미터가 누락된 경우를 처리한다.
+	 *
 	 * @param e MissingServletRequestParameterException
 	 * @return 400, ResponseEntity
 	 */
@@ -219,7 +222,7 @@ public class GlobalExceptionHandler {
 		);
 
 		problemDetail.setType(URI.create("https://api.lm.com/errors/ACCESS_DENIED"));
-		problemDetail.setTitle("Access Denied");
+		problemDetail.setTitle("Access Revoked");
 		problemDetail.setProperty("code", "ACCESS_DENIED");
 
 		return ResponseEntity.status(HttpStatus.FORBIDDEN)
