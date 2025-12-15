@@ -3,12 +3,14 @@ package me.chan99k.learningmanager.controller.admin;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,6 +24,7 @@ import me.chan99k.learningmanager.admin.RetrieveSystemRole;
 import me.chan99k.learningmanager.admin.RevokeSystemRole;
 import me.chan99k.learningmanager.controller.admin.requests.GrantRoleRequest;
 import me.chan99k.learningmanager.member.SystemRole;
+import me.chan99k.learningmanager.security.CustomUserDetails;
 
 @Tag(name = "System Role Admin", description = "시스템 역할 관리 API (ADMIN, SUPERVISOR 전용)")
 @RestController
@@ -44,6 +47,7 @@ public class SystemRoleAdminController {
 		summary = "시스템 역할 부여",
 		description = "특정 회원에게 시스템 역할을 부여합니다. SUPERVISOR는 ADMIN 역할을 부여할 수 없습니다."
 	)
+	// TODO :: API 문서 만든다고 너무 정신 없는데 xml 설정으로 못 빼내는지 확인해보기
 	@ApiResponses({
 		@ApiResponse(responseCode = "201", description = "역할 부여 성공"),
 		@ApiResponse(responseCode = "400", description = "잘못된 요청 (회원 없음, 권한 에스컬레이션 시도 등)"),
@@ -51,10 +55,17 @@ public class SystemRoleAdminController {
 	})
 	@PostMapping("/{memberId}/roles")
 	public ResponseEntity<Void> grantRole(
-		@Parameter(description = "역할을 부여할 회원 ID", required = true) @PathVariable Long memberId,
+		@AuthenticationPrincipal CustomUserDetails user,
+		@PathVariable Long memberId,
 		@Valid @RequestBody GrantRoleRequest request
 	) {
-		grantSystemRole.grant(new GrantSystemRole.Request(memberId, request.role()));
+		grantSystemRole.grant(
+			new GrantSystemRole.Request(
+				memberId,
+				request.role(),
+				user.getMemberId(),
+				request.reason()
+			));
 
 		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
@@ -70,10 +81,17 @@ public class SystemRoleAdminController {
 	})
 	@DeleteMapping("/{memberId}/roles/{role}")
 	public ResponseEntity<Void> revokeRole(
-		@Parameter(description = "역할을 회수할 회원 ID", required = true) @PathVariable Long memberId,
-		@Parameter(description = "회수할 역할 (ADMIN, SUPERVISOR, MANAGER, MENTEE)", required = true) @PathVariable SystemRole role
+		@AuthenticationPrincipal CustomUserDetails user,
+		@PathVariable Long memberId,
+		@PathVariable SystemRole role,
+		@RequestParam(required = false) String reason
 	) {
-		revokeSystemRole.revoke(new RevokeSystemRole.Request(memberId, role));
+		revokeSystemRole.revoke(new RevokeSystemRole.Request(
+			memberId,
+			role,
+			user.getMemberId(),
+			reason
+		));
 
 		return ResponseEntity.noContent().build();
 	}
