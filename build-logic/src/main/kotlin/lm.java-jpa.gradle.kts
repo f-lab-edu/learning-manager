@@ -12,7 +12,7 @@ dependencies {
     "runtimeOnly"(catalog.findLibrary("mysql-connector").get())
     "runtimeOnly"(catalog.findLibrary("h2").get())
 
-    // QueryDSL
+    // QueryDSL JPA
     "implementation"(variantOf(catalog.findLibrary("querydsl-jpa").get()) { classifier("jakarta") })
     "annotationProcessor"(variantOf(catalog.findLibrary("querydsl-apt").get()) { classifier("jakarta") })
     "annotationProcessor"("jakarta.annotation:jakarta.annotation-api")

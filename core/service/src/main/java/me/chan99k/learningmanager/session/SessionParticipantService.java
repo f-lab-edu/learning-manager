@@ -5,7 +5,6 @@ import java.time.Clock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.chan99k.learningmanager.course.CourseQueryRepository;
 import me.chan99k.learningmanager.exception.DomainException;
 
 @Service
@@ -14,22 +13,20 @@ public class SessionParticipantService implements SessionParticipantManagement {
 
 	private final SessionQueryRepository sessionQueryRepository;
 	private final SessionCommandRepository sessionCommandRepository;
-	private final CourseQueryRepository courseQueryRepository;
 	private final Clock clock;
 
 	public SessionParticipantService(SessionQueryRepository sessionQueryRepository,
-		SessionCommandRepository sessionCommandRepository, CourseQueryRepository courseQueryRepository,
+		SessionCommandRepository sessionCommandRepository,
 		Clock clock) {
 		this.sessionQueryRepository = sessionQueryRepository;
 		this.sessionCommandRepository = sessionCommandRepository;
-		this.courseQueryRepository = courseQueryRepository;
+
 		this.clock = clock;
 	}
 
 	@Override
 	public SessionParticipantResponse addParticipant(Long requestedBy, Long sessionId, AddParticipantRequest request) {
 		Session session = getSessionById(sessionId);
-		validateSessionParticipantManagementPermission(session, requestedBy);
 
 		session.addParticipant(request.memberId(), request.role());
 		Session savedSession = sessionCommandRepository.save(session);
@@ -40,7 +37,6 @@ public class SessionParticipantService implements SessionParticipantManagement {
 	@Override
 	public SessionParticipantResponse removeParticipant(Long requestedBy, RemoveParticipantRequest request) {
 		Session session = getSessionById(request.sessionId());
-		validateSessionParticipantManagementPermission(session, requestedBy);
 
 		// HOST 자신을 제거하는 경우 검증
 		validateHostSelfRemoval(session, request.memberId(), requestedBy);
@@ -54,7 +50,6 @@ public class SessionParticipantService implements SessionParticipantManagement {
 	@Override
 	public SessionParticipantResponse changeParticipantRole(Long requestedBy, ChangeParticipantRoleRequest request) {
 		Session session = getSessionById(request.sessionId());
-		validateSessionParticipantManagementPermission(session, requestedBy);
 
 		session.changeParticipantRole(request.memberId(), request.newRole(), clock);
 		Session savedSession = sessionCommandRepository.save(session);
@@ -68,40 +63,11 @@ public class SessionParticipantService implements SessionParticipantManagement {
 	}
 
 	/**
-	 * 현재 사용자가 세션 참여자 관리 권한이 있는지 확인합니다.
-	 * 다음 중 하나의 조건을 만족해야 합니다:
-	 * 1. 세션이 속한 Course의 MANAGER 역할을 가진 사용자
-	 * 2. 해당 세션의 HOST 역할을 가진 참여자
-	 *
-	 * @param session 권한을 확인할 세션
-	 * @param requestedBy 요청자 ID
-	 * @throws DomainException 세션 참여자 관리 권한이 없는 경우
-	 */
-	private void validateSessionParticipantManagementPermission(Session session, Long requestedBy) {
-		// Course MANAGER 권한 확인 (세션이 Course에 속한 경우)
-		boolean isCourseManager = false;
-		if (session.getCourseId() != null) {
-			isCourseManager = courseQueryRepository.findManagedCourseById(session.getCourseId(), requestedBy)
-				.isPresent();
-		}
-
-		// 세션 HOST 권한 확인
-		boolean isSessionHost = session.getParticipants().stream()
-			.anyMatch(p -> p.getMemberId().equals(requestedBy)
-				&& p.getRole() == SessionParticipantRole.HOST);
-
-		// 둘 중 하나 만족시 권한 허용
-		if (!isCourseManager && !isSessionHost) {
-			throw new DomainException(SessionProblemCode.NOT_SESSION_HOST);
-		}
-	}
-
-	/**
 	 * HOST가 자신을 세션에서 제거하려고 할 때의 검증 로직입니다.
 	 * HOST는 다른 HOST가 있는 경우에만 자신을 제거할 수 있습니다.
 	 *
-	 * @param session 세션 정보
-	 * @param memberId 제거하려는 멤버 ID
+	 * @param session     세션 정보
+	 * @param memberId    제거하려는 멤버 ID
 	 * @param requestedBy 요청자 ID
 	 * @throws DomainException HOST가 혼자 남은 상태에서 자신을 제거하려고 할 때
 	 */

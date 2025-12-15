@@ -1,6 +1,6 @@
 # 제품 요구사항 명세서 (PRD): Learning Manager
 
-> v.0.0.9 | 25.12.14
+> v.0.0.9 | 25.12.16
 ---
 
 ## 1. 개요 (Overview)
@@ -45,7 +45,8 @@
 ### 데이터 접근 계층
 
 - **Spring Data JPA**: 기본 CRUD 및 단순 쿼리
-- **QueryDSL 5.1**: 타입 안전한 동적 쿼리 (복잡한 조건 검색, DTO Projection)
+- **QueryDSL-JPA 5.1**: 타입 안전한 동적 쿼리 (복잡한 조건 검색, DTO Projection)
+- **QueryDSL-SQL 5.1**: JPA 독립적 직접 SQL 접근 (감사 로그 등 단순 INSERT 전용)
 - **Spring Data MongoDB**: MongoDB 접근 (Criteria API 기반 동적 쿼리)
 
 ---
@@ -502,6 +503,31 @@
 - ✅ 역할 회수 API (`DELETE /api/v1/admin/members/{memberId}/roles/{role}`)
 - ✅ 역할 조회 API (`GET /api/v1/admin/members/{memberId}/roles`)
 - ✅ 권한 에스컬레이션 방지 (SUPERVISOR는 ADMIN 부여 불가)
+
+#### 6.6.2 시스템 역할 변경 이력 (Audit Log)
+
+> 시스템 역할 부여/회수 시 변경 이력을 기록하여 보안 감사 및 추적을 지원합니다.
+
+**저장 정보:**
+
+- **memberId** (Long): 역할이 변경된 대상 회원 ID
+- **role** (SystemRole): 변경된 역할
+- **action** (String): 변경 유형 (`GRANTED` 또는 `REVOKED`)
+- **performedBy** (Long): 변경을 수행한 관리자 ID
+- **performedAt** (Instant): 변경 시각
+- **reason** (String): 변경 사유
+
+**기술적 특징:**
+
+- **이벤트 기반 아키텍처**: `@TransactionalEventListener(AFTER_COMMIT)` 사용
+- **QueryDSL-SQL**: JPA와 독립적인 직접 JDBC 접근으로 성능 최적화
+- **Sealed Interface**: `SystemRoleChangeEvent`의 `Granted`/`Revoked` 타입 안전성
+
+##### 구현 상태
+
+- ✅ 역할 부여 시 감사 로그 자동 기록
+- ✅ 역할 회수 시 감사 로그 자동 기록
+- ❌ 감사 로그 조회 API (향후 구현 예정)
 
 ---
 

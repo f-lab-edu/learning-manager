@@ -8,7 +8,9 @@ public interface RevokeSystemRole {
 
 	record Request(
 		Long memberId,
-		SystemRole role
+		SystemRole role,
+		Long performedBy,
+		String reason
 	) {
 	}
 }

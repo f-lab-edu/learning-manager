@@ -1,5 +1,6 @@
 plugins {
     id("lm.java-jpa")
+    id("lm.java-jdbc")
 }
 
 dependencies {

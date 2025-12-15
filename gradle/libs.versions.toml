@@ -96,6 +96,7 @@ spring-dotenv = { module = "me.paulschwarz:spring-dotenv", version = "4.0.0" }
 # QueryDSL
 querydsl-jpa = { module = "com.querydsl:querydsl-jpa", version.ref = "querydsl" }
 querydsl-apt = { module = "com.querydsl:querydsl-apt", version.ref = "querydsl" }
+querydsl-sql = { module = "com.querydsl:querydsl-sql", version.ref = "querydsl" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
