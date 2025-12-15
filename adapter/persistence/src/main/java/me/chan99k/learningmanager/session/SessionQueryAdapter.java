@@ -113,8 +113,10 @@ public class SessionQueryAdapter implements SessionQueryRepository {
 	}
 
 	@Override
-	public List<Session> findByYearMonth(YearMonth yearMonth, SessionType type, SessionLocation location,
-		Long courseId, Long curriculumId) {
+	public List<Session> findByYearMonth(
+		YearMonth yearMonth, SessionType type, SessionLocation location,
+		Long courseId, Long curriculumId
+	) {
 		LocalDate startOfMonth = yearMonth.atDay(1);
 		LocalDate startOfNextMonth = yearMonth.plusMonths(1).atDay(1);
 
@@ -128,8 +130,10 @@ public class SessionQueryAdapter implements SessionQueryRepository {
 	}
 
 	@Override
-	public List<Long> findSessionIdsByPeriodAndFilters(Instant startDate, Instant endDate, Long courseId,
-		Long curriculumId) {
+	public List<Long> findSessionIdsByPeriodAndFilters(
+		Instant startDate, Instant endDate, Long courseId,
+		Long curriculumId
+	) {
 		return jpaRepository.findIdsByPeriodAndFilters(startDate, endDate, courseId, curriculumId);
 	}
 

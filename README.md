@@ -1,6 +1,6 @@
 # Learning Manager
 
-> **v0.0.7** | 스터디 과정 관리 및 출석 시스템
+> **v0.0.9** | 스터디 과정 관리 및 출석 시스템
 
 회원의 온/오프라인 스터디 과정을 지원하는 백엔드 서비스입니다. 출석 관리, 일정 관리 등 반복적이고 비효율적인 업무를 자동화하여 **학습 과정 자체에 집중할 수 있는 인프라**를 제공합니다.
 
@@ -43,10 +43,11 @@
 
 | 구분        | 기술                    | 버전     |
 |-----------|-----------------------|--------|
-| Language  | Java                  | 17     |
+| Language  | Java                  | 21     |
 | Framework | Spring Boot           | 3.3.12 |
 | Security  | Spring Security + JWT | -      |
 | ORM       | Spring Data JPA       | -      |
+| Query     | QueryDSL              | 5.1.0  |
 | NoSQL     | Spring Data MongoDB   | -      |
 
 ### Database
@@ -163,7 +164,7 @@ learning-manager/
 
 ### 사전 요구사항
 
-- Java 17+
+- Java 21+
 - Docker & Docker Compose
 - Gradle 8.x
 
@@ -294,8 +295,8 @@ curl -X POST http://localhost:8080/api/v1/auth/token \
 
 | 문서                                         | 설명           |
 |--------------------------------------------|--------------|
-| [PRD v0.0.7](docs/Prd_v0_0_7.md)           | 제품 요구사항 명세서  |
-| [Usecases v0.0.7](docs/Usecases_v0_0_7.md) | 유스케이스 명세     |
+| [PRD v0.0.9](docs/Prd_v0_0_9.md)           | 제품 요구사항 명세서  |
+| [Usecases v0.0.9](docs/Usecases_v0_0_9.md) | 유스케이스 명세     |
 | [ERD](docs/entity-relation-diagram.puml)   | 엔티티 관계 다이어그램 |
 | [Components](docs/components.puml)         | 컴포넌트 다이어그램   |
 | [Sequences](docs/sequences/)               | 시퀀스 다이어그램    |

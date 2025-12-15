@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import me.chan99k.learningmanager.member.Account;
 import me.chan99k.learningmanager.member.Credential;
-import me.chan99k.learningmanager.member.Email;
 import me.chan99k.learningmanager.member.entity.AccountEntity;
 import me.chan99k.learningmanager.member.entity.CredentialEmbeddable;
 import me.chan99k.learningmanager.member.entity.MemberEntity;
@@ -57,7 +56,7 @@ public final class AccountMapper {
 		return Account.reconstitute(
 			entity.getId(),
 			entity.getStatus(),
-			Email.of(entity.getEmail()),
+			entity.getEmail(),
 			credentials,
 			entity.getCreatedAt(),
 			entity.getCreatedBy(),

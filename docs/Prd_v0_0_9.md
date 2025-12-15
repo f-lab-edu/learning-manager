@@ -1,6 +1,6 @@
 # 제품 요구사항 명세서 (PRD): Learning Manager
 
-> v.0.0.7 | 25.12.04
+> v.0.0.9 | 25.12.14
 ---
 
 ## 1. 개요 (Overview)
@@ -33,7 +33,7 @@
 
 ### 언어 및 프레임워크
 
-- **Java**: 17
+- **Java**: 21
 - **Spring Boot**: 3
 
 ### 데이터베이스
@@ -41,6 +41,12 @@
 - **MySQL**: 운영 RDB (Member, Course, Session 등 관계형 데이터)
 - **MongoDB**: 출석 시스템용 NoSQL DB (이벤트 소싱 기반 출석 데이터)
 - **H2**: 테스트용 인메모리 RDB
+
+### 데이터 접근 계층
+
+- **Spring Data JPA**: 기본 CRUD 및 단순 쿼리
+- **QueryDSL 5.1**: 타입 안전한 동적 쿼리 (복잡한 조건 검색, DTO Projection)
+- **Spring Data MongoDB**: MongoDB 접근 (Criteria API 기반 동적 쿼리)
 
 ---
 
@@ -249,9 +255,9 @@
 - `save()`: 회원 정보 변경 사항을 DB에 저장(또는 수정)합니다.
 - `saveHistory()`: 회원 상태 변경 이력을 DB에 기록합니다.
 
-#### 6.1.5 `MemberStatusHistory` : 회원 상태 변경 이력 (미구현)
+#### 6.1.5 `MemberStatusHistory` : 회원 상태 변경 이력 (부분 구현)
 
-> ⚠️ **현재 미구현**: 도메인 모델은 정의되어 있으나, 실제 상태 변경 시 이력 기록 로직이 구현되지 않음
+> ⚠️ **부분 구현**: 도메인 모델은 정의되어 있으나, 실제 상태 변경 시 이력 기록 로직이 구현되지 않음
 >
 > 회원의 상태가 변경될 때마다 해당 기록을 저장하여 추적합니다.
 
@@ -259,7 +265,7 @@
 - **status** (MemberStatus), **reason** (String)
 - **changedAt** (Instant)
 
-**구현 계획**: Member 상태 변경 메서드에서 자동으로 이력 기록하는 로직 추가 필요
+**구현 상태**: 도메인 모델 정의 완료. 이력 자동 기록 로직 구현 필요
 
 ### 6.2 Course
 
@@ -403,6 +409,22 @@
 - **LATE**: 지각 (추후 확장)
 - **LEFT_EARLY**: 조퇴 (추후 확장)
 
+#### 6.4.4 출석 수정 기능 (Attendance Correction)
+
+> 출석 기록에 오류가 있을 경우, 수강생이 수정을 요청하고 관리자가 승인/거절하는 워크플로우를 지원합니다.
+
+##### provides
+
+- `requestCorrection()`: 수강생이 출석 수정을 요청합니다.
+- `approveCorrection()`: 관리자가 출석 수정 요청을 승인합니다.
+- `rejectCorrection()`: 관리자가 출석 수정 요청을 거절합니다.
+
+##### 구현 상태
+
+- ✅ 출석 수정 요청 API (`POST /api/v1/attendance/{attendanceId}/correction`)
+- ✅ 출석 수정 승인 API (`POST /api/v1/attendance/{attendanceId}/correction/approve`)
+- ✅ 출석 수정 거절 API (`POST /api/v1/attendance/{attendanceId}/correction/reject`)
+
 ### 6.5 Auth
 
 #### 6.5.1 `RefreshToken` : 리프레시 토큰
@@ -452,7 +474,38 @@
 
 ---
 
-### 6.6 Notification (미구현)
+### 6.6 Admin (시스템 관리)
+
+#### 6.6.1 `SystemRole` : 시스템 역할
+
+> 시스템 전역에서 사용자의 권한을 정의합니다. 역할은 계층 구조를 가집니다.
+
+- **ADMIN** (Tier 1): 최고 관리자 - 모든 시스템 기능 접근 가능
+- **SUPERVISOR** (Tier 2): 감독자 - 일부 관리 기능 접근 가능
+- **MANAGER** (Tier 3): 매니저 - 과정 관리 기능 접근 가능
+- **MENTEE** (Tier 4): 멘티 - 기본 사용자 권한
+
+##### 역할 다중화 (Role Multiplexing)
+
+- 한 사용자가 여러 SystemRole을 가질 수 있습니다.
+- 역할은 `member_system_role` 테이블에서 별도로 관리됩니다.
+
+##### provides
+
+- `grantRole()`: 특정 회원에게 시스템 역할을 부여합니다.
+- `revokeRole()`: 특정 회원의 시스템 역할을 회수합니다.
+- `getRoles()`: 특정 회원의 모든 시스템 역할을 조회합니다.
+
+##### 구현 상태
+
+- ✅ 역할 부여 API (`POST /api/v1/admin/members/{memberId}/roles`)
+- ✅ 역할 회수 API (`DELETE /api/v1/admin/members/{memberId}/roles/{role}`)
+- ✅ 역할 조회 API (`GET /api/v1/admin/members/{memberId}/roles`)
+- ✅ 권한 에스컬레이션 방지 (SUPERVISOR는 ADMIN 부여 불가)
+
+---
+
+### 6.7 Notification (미구현)
 
 #### 6.6.1 `Notification` : 알림 (미구현)
 

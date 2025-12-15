@@ -3,10 +3,9 @@ package me.chan99k.learningmanager.member.entity;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -15,13 +14,14 @@ import jakarta.persistence.Table;
 import me.chan99k.learningmanager.common.MutableEntity;
 import me.chan99k.learningmanager.member.Email;
 import me.chan99k.learningmanager.member.MemberStatus;
+import me.chan99k.learningmanager.member.mapper.EmailConverter;
 
 @Entity
 @Table(name = "member")
 public class MemberEntity extends MutableEntity {
 
-	@Embedded
-	@AttributeOverride(name = "address", column = @Column(name = "primary_email"))
+	@Convert(converter = EmailConverter.class)
+	@Column(name = "primary_email")
 	private Email primaryEmail;
 
 	@OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)

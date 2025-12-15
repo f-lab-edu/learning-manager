@@ -8,6 +8,9 @@ import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+import com.querydsl.jpa.impl.JPAQueryFactory;
+
+import jakarta.persistence.EntityManager;
 import me.chan99k.learningmanager.member.SystemRoleHierarchy;
 
 @Configuration
@@ -25,4 +28,8 @@ public class JpaConfig {
 		return new SystemRoleHierarchy();
 	}
 
+	@Bean
+	public JPAQueryFactory jpaQueryFactory(EntityManager entityManager) {
+		return new JPAQueryFactory(entityManager);
+	}
 }
