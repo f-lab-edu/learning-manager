@@ -222,7 +222,7 @@ public class GlobalExceptionHandler {
 		);
 
 		problemDetail.setType(URI.create("https://api.lm.com/errors/ACCESS_DENIED"));
-		problemDetail.setTitle("Access Revoked");
+		problemDetail.setTitle("Access Denied");
 		problemDetail.setProperty("code", "ACCESS_DENIED");
 
 		return ResponseEntity.status(HttpStatus.FORBIDDEN)

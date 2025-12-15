@@ -2,6 +2,7 @@ package me.chan99k.learningmanager.authorization;
 
 import java.util.List;
 
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import me.chan99k.learningmanager.course.CourseRole;
@@ -27,7 +28,7 @@ public class SessionSecurityService {
 	}
 
 	public boolean isSessionManager(Long sessionId, Long memberId) {
-		Session session = sessionQueryRepository.findById(sessionId).orElse(null);
+		Session session = findSession(sessionId);
 		if (session == null) {
 			return false;
 		}
@@ -44,7 +45,7 @@ public class SessionSecurityService {
 	}
 
 	public boolean isSessionManagerOrMentor(Long sessionId, Long memberId) {
-		Session session = sessionQueryRepository.findById(sessionId).orElse(null);
+		Session session = findSession(sessionId);
 		if (session == null) {
 			return false;
 		}
@@ -60,7 +61,7 @@ public class SessionSecurityService {
 	}
 
 	public boolean isSessionMember(Long sessionId, Long memberId) {
-		Session session = sessionQueryRepository.findById(sessionId).orElse(null);
+		Session session = findSession(sessionId);
 		if (session == null) {
 			return false;
 		}
@@ -73,7 +74,7 @@ public class SessionSecurityService {
 	}
 
 	public boolean canManageSessionParticipants(Long sessionId, Long memberId) {
-		Session session = sessionQueryRepository.findById(sessionId).orElse(null);
+		Session session = findSession(sessionId);
 		if (session == null) {
 			return false;
 		}
@@ -92,5 +93,10 @@ public class SessionSecurityService {
 		return session.getParticipants().stream()
 			.anyMatch(p -> p.getMemberId().equals(memberId)
 				&& p.getRole() == SessionParticipantRole.HOST);
+	}
+
+	@Nullable
+	private Session findSession(Long sessionId) {
+		return sessionQueryRepository.findById(sessionId).orElse(null);
 	}
 }
