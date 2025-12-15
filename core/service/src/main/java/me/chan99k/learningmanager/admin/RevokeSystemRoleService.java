@@ -1,5 +1,8 @@
 package me.chan99k.learningmanager.admin;
 
+import java.time.Clock;
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,19 +16,34 @@ import me.chan99k.learningmanager.member.MemberQueryRepository;
 public class RevokeSystemRoleService implements RevokeSystemRole {
 	private final SystemAuthorizationPort authorizationPort;
 	private final MemberQueryRepository memberQueryRepository;
+	private final ApplicationEventPublisher eventPublisher;
+	private final Clock clock;
 
-	public RevokeSystemRoleService(SystemAuthorizationPort authorizationPort,
-		MemberQueryRepository memberQueryRepository) {
+	public RevokeSystemRoleService(
+		SystemAuthorizationPort authorizationPort,
+		MemberQueryRepository memberQueryRepository,
+		ApplicationEventPublisher eventPublisher,
+		Clock clock
+	) {
 		this.authorizationPort = authorizationPort;
 		this.memberQueryRepository = memberQueryRepository;
+		this.eventPublisher = eventPublisher;
+		this.clock = clock;
 	}
 
 	@Override
 	public void revoke(Request request) {
-		// NOTE :: ADMIN 이 스스로의 ADMIN 권한을 회수해버릴 수 있음 -> 막을 것인지 둘 것인지 고민중
-		var member = memberQueryRepository.findById(request.memberId()).orElseThrow(() -> new DomainException(
-			MemberProblemCode.MEMBER_NOT_FOUND));
+		var member = memberQueryRepository.findById(request.memberId())
+			.orElseThrow(() -> new DomainException(MemberProblemCode.MEMBER_NOT_FOUND));
 
 		authorizationPort.revokeRole(member.getId(), request.role());
+
+		eventPublisher.publishEvent(new SystemRoleChangeEvent.Revoked(
+			request.memberId(),
+			request.role(),
+			request.performedBy(),
+			clock.instant(),
+			request.reason()
+		));
 	}
 }
