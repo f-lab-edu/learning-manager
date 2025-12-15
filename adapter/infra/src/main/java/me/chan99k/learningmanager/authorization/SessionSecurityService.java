@@ -38,9 +38,9 @@ public class SessionSecurityService {
 			return systemAuthorizationPort.hasRoleOrHigher(memberId, SystemRole.OPERATOR);
 		}
 
-		// 과정 세션: MANAGER 권한 확인
-		return sessionAuthorizationPort.hasRoleForSession(
-			memberId, sessionId, CourseRole.MANAGER
+		// 과정 세션: MANAGER 권한 확인 (courseId 직접 전달)
+		return sessionAuthorizationPort.hasRoleForCourse(
+			memberId, session.getCourseId(), CourseRole.MANAGER
 		);
 	}
 
@@ -54,9 +54,9 @@ public class SessionSecurityService {
 			return systemAuthorizationPort.hasRoleOrHigher(memberId, SystemRole.OPERATOR);
 		}
 
-		// 과정 세션: MANAGER 또는 MENTOR 권한 확인
-		return sessionAuthorizationPort.hasAnyRoleForSession(
-			memberId, sessionId, List.of(CourseRole.MANAGER, CourseRole.MENTOR)
+		// 과정 세션: MANAGER 또는 MENTOR 권한 확인 (courseId 직접 전달)
+		return sessionAuthorizationPort.hasAnyRoleForCourse(
+			memberId, session.getCourseId(), List.of(CourseRole.MANAGER, CourseRole.MENTOR)
 		);
 	}
 
@@ -70,7 +70,8 @@ public class SessionSecurityService {
 			return systemAuthorizationPort.hasRoleOrHigher(memberId, SystemRole.OPERATOR);
 		}
 
-		return sessionAuthorizationPort.isMemberOfSession(memberId, sessionId);
+		// courseId 직접 전달
+		return sessionAuthorizationPort.isMemberOfCourse(memberId, session.getCourseId());
 	}
 
 	public boolean canManageSessionParticipants(Long sessionId, Long memberId) {
@@ -84,8 +85,9 @@ public class SessionSecurityService {
 			return systemAuthorizationPort.hasRoleOrHigher(memberId, SystemRole.OPERATOR);
 		}
 
-		// Course MANAGER 권한
-		if (sessionAuthorizationPort.hasRoleForSession(memberId, sessionId, CourseRole.MANAGER)) {
+		// Course MANAGER 권한 (courseId 직접 전달)
+		if (sessionAuthorizationPort.hasRoleForCourse(
+			memberId, session.getCourseId(), CourseRole.MANAGER)) {
 			return true;
 		}
 

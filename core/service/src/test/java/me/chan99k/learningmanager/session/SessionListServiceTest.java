@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.application.session;
+package me.chan99k.learningmanager.session;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -23,12 +23,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import me.chan99k.learningmanager.common.PageRequest;
 import me.chan99k.learningmanager.common.PageResult;
 import me.chan99k.learningmanager.common.SortOrder;
-import me.chan99k.learningmanager.session.Session;
-import me.chan99k.learningmanager.session.SessionListRetrieval;
-import me.chan99k.learningmanager.session.SessionListService;
-import me.chan99k.learningmanager.session.SessionLocation;
-import me.chan99k.learningmanager.session.SessionQueryRepository;
-import me.chan99k.learningmanager.session.SessionType;
 
 @ExtendWith(MockitoExtension.class)
 class SessionListServiceTest {

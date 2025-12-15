@@ -22,11 +22,13 @@ public class JpaSessionAuthorizationAdapter implements SessionAuthorizationPort 
 		this.courseAuthorizationPort = courseAuthorizationPort;
 	}
 
+	// === sessionId 기반 메서드 (courseId 조회 후 위임) ===
+
 	@Override
 	public boolean hasRoleForSession(Long memberId, Long sessionId, CourseRole role) {
 		return sessionRepository.findById(sessionId)
 			.map(SessionEntity::getCourseId)
-			.map(courseId -> courseAuthorizationPort.hasRole(memberId, courseId, role))
+			.map(courseId -> hasRoleForCourse(memberId, courseId, role))
 			.orElse(false);
 	}
 
@@ -34,7 +36,7 @@ public class JpaSessionAuthorizationAdapter implements SessionAuthorizationPort 
 	public boolean hasAnyRoleForSession(Long memberId, Long sessionId, List<CourseRole> roles) {
 		return sessionRepository.findById(sessionId)
 			.map(SessionEntity::getCourseId)
-			.map(courseId -> courseAuthorizationPort.hasAnyRole(memberId, courseId, roles))
+			.map(courseId -> hasAnyRoleForCourse(memberId, courseId, roles))
 			.orElse(false);
 	}
 
@@ -42,7 +44,24 @@ public class JpaSessionAuthorizationAdapter implements SessionAuthorizationPort 
 	public boolean isMemberOfSession(Long memberId, Long sessionId) {
 		return sessionRepository.findById(sessionId)
 			.map(SessionEntity::getCourseId)
-			.map(courseId -> courseAuthorizationPort.isMember(memberId, courseId))
+			.map(courseId -> isMemberOfCourse(memberId, courseId))
 			.orElse(false);
+	}
+
+	// === courseId 직접 전달 (중복 조회 방지) ===
+
+	@Override
+	public boolean hasRoleForCourse(Long memberId, Long courseId, CourseRole role) {
+		return courseAuthorizationPort.hasRole(memberId, courseId, role);
+	}
+
+	@Override
+	public boolean hasAnyRoleForCourse(Long memberId, Long courseId, List<CourseRole> roles) {
+		return courseAuthorizationPort.hasAnyRole(memberId, courseId, roles);
+	}
+
+	@Override
+	public boolean isMemberOfCourse(Long memberId, Long courseId) {
+		return courseAuthorizationPort.isMember(memberId, courseId);
 	}
 }
