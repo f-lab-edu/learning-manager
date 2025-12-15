@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.application.course;
+package me.chan99k.learningmanager.course;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
@@ -15,13 +15,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import me.chan99k.learningmanager.common.PageRequest;
 import me.chan99k.learningmanager.common.PageResult;
-import me.chan99k.learningmanager.course.Course;
-import me.chan99k.learningmanager.course.CourseDetailInfo;
-import me.chan99k.learningmanager.course.CourseDetailRetrieval;
-import me.chan99k.learningmanager.course.CourseDetailService;
-import me.chan99k.learningmanager.course.CourseMemberInfo;
-import me.chan99k.learningmanager.course.CourseQueryRepository;
-import me.chan99k.learningmanager.course.CourseRole;
 import me.chan99k.learningmanager.exception.DomainException;
 
 @ExtendWith(MockitoExtension.class)

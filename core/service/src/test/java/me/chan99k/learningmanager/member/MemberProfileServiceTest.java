@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.application.member;
+package me.chan99k.learningmanager.member;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
@@ -13,13 +13,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import me.chan99k.learningmanager.exception.DomainException;
-import me.chan99k.learningmanager.member.Member;
-import me.chan99k.learningmanager.member.MemberCommandRepository;
-import me.chan99k.learningmanager.member.MemberProblemCode;
-import me.chan99k.learningmanager.member.MemberProfileRetrieval;
-import me.chan99k.learningmanager.member.MemberProfileService;
-import me.chan99k.learningmanager.member.MemberProfileUpdate;
-import me.chan99k.learningmanager.member.MemberQueryRepository;
 
 @ExtendWith(MockitoExtension.class)
 class MemberProfileServiceTest {

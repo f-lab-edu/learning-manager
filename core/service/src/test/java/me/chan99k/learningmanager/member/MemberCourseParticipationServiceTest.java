@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.application.member;
+package me.chan99k.learningmanager.member;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -15,10 +15,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import me.chan99k.learningmanager.course.CourseRole;
-import me.chan99k.learningmanager.member.CourseParticipationInfo;
-import me.chan99k.learningmanager.member.MemberCourseParticipation;
-import me.chan99k.learningmanager.member.MemberCourseParticipationService;
-import me.chan99k.learningmanager.member.MemberCourseQueryRepository;
 
 @ExtendWith(MockitoExtension.class)
 class MemberCourseParticipationServiceTest {

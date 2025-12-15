@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.application.course;
+package me.chan99k.learningmanager.course;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -13,13 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.course.Course;
-import me.chan99k.learningmanager.course.CourseCommandRepository;
-import me.chan99k.learningmanager.course.CourseProblemCode;
-import me.chan99k.learningmanager.course.CourseQueryRepository;
-import me.chan99k.learningmanager.course.Curriculum;
-import me.chan99k.learningmanager.course.CurriculumInfoUpdate;
-import me.chan99k.learningmanager.course.CurriculumInfoUpdateService;
 import me.chan99k.learningmanager.exception.DomainException;
 
 @ExtendWith(MockitoExtension.class)

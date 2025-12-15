@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.application.course;
+package me.chan99k.learningmanager.course;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
@@ -13,13 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import me.chan99k.learningmanager.course.Course;
-import me.chan99k.learningmanager.course.CourseCommandRepository;
-import me.chan99k.learningmanager.course.CourseMemberAddition;
-import me.chan99k.learningmanager.course.CourseMemberService;
-import me.chan99k.learningmanager.course.CourseProblemCode;
-import me.chan99k.learningmanager.course.CourseQueryRepository;
-import me.chan99k.learningmanager.course.CourseRole;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.member.Email;
 import me.chan99k.learningmanager.member.Member;
@@ -155,7 +148,7 @@ class CourseMemberServiceTest {
 		CourseMemberAddition.Response response = courseMemberService.addMultipleMembers(managerId, courseId, members);
 
 		assertThat(response.totalCount()).isEqualTo(1);
-		assertThat(response.successCount()).isEqualTo(0);
+		assertThat(response.successCount()).isZero();
 		assertThat(response.failureCount()).isEqualTo(1);
 		assertThat(response.results()).hasSize(1);
 		assertThat(response.results().get(0).status()).isEqualTo("FAILED");

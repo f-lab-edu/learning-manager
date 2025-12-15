@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.application.member;
+package me.chan99k.learningmanager.member;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -15,14 +15,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
 import me.chan99k.learningmanager.exception.DomainException;
-import me.chan99k.learningmanager.member.Member;
-import me.chan99k.learningmanager.member.MemberCommandRepository;
-import me.chan99k.learningmanager.member.MemberProblemCode;
-import me.chan99k.learningmanager.member.MemberQueryRepository;
-import me.chan99k.learningmanager.member.MemberStatus;
-import me.chan99k.learningmanager.member.MemberStatusChange;
-import me.chan99k.learningmanager.member.MemberStatusChangeService;
-import me.chan99k.learningmanager.member.SystemRole;
 
 @ExtendWith(MockitoExtension.class)
 class MemberStatusChangeServiceTest {
