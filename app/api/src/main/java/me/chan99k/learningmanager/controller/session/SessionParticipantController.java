@@ -2,6 +2,7 @@ package me.chan99k.learningmanager.controller.session;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,16 +26,18 @@ public class SessionParticipantController {
 		this.sessionParticipantManagement = sessionParticipantManagement;
 	}
 
+	@PreAuthorize("@sessionSecurity.canManageSessionParticipants(#sessionId, #user.memberId)")
 	@PostMapping("/{sessionId}/participants")
 	public ResponseEntity<Void> addParticipant(
 		@AuthenticationPrincipal CustomUserDetails user,
-		@PathVariable("sessionId") Long sessionId,
+		@PathVariable Long sessionId,
 		@Valid @RequestBody SessionParticipantManagement.AddParticipantRequest request
 	) {
 		sessionParticipantManagement.addParticipant(user.getMemberId(), sessionId, request);
 		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
 
+	@PreAuthorize("@sessionSecurity.canManageSessionParticipants(#sessionId, #user.memberId)")
 	@DeleteMapping("/{sessionId}/participants/{memberId}")
 	public ResponseEntity<Void> removeParticipant(
 		@AuthenticationPrincipal CustomUserDetails user,
@@ -46,6 +49,7 @@ public class SessionParticipantController {
 		return ResponseEntity.noContent().build();
 	}
 
+	@PreAuthorize("@sessionSecurity.canManageSessionParticipants(#sessionId, #user.memberId)")
 	@PutMapping("/{sessionId}/participants/{memberId}/role")
 	public ResponseEntity<Void> changeParticipantRole(
 		@AuthenticationPrincipal CustomUserDetails user,
@@ -60,6 +64,7 @@ public class SessionParticipantController {
 		return ResponseEntity.noContent().build();
 	}
 
+	@PreAuthorize("@sessionSecurity.isSessionMember(#sessionId, #user.memberId)")
 	@DeleteMapping("/{sessionId}/participants/me")
 	public ResponseEntity<Void> leaveSession(
 		@AuthenticationPrincipal CustomUserDetails user,
