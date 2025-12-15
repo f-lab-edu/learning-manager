@@ -16,9 +16,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.bind.support.WebDataBinderFactory;
+import org.springframework.web.context.request.NativeWebRequest;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.method.support.ModelAndViewContainer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -27,6 +33,7 @@ import me.chan99k.learningmanager.admin.RetrieveSystemRole;
 import me.chan99k.learningmanager.admin.RevokeSystemRole;
 import me.chan99k.learningmanager.advice.GlobalExceptionHandler;
 import me.chan99k.learningmanager.member.SystemRole;
+import me.chan99k.learningmanager.security.CustomUserDetails;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SystemRoleAdminController 테스트")
@@ -34,7 +41,9 @@ class SystemRoleAdminControllerTest {
 
 	private MockMvc mockMvc;
 
-	private ObjectMapper objectMapper = new ObjectMapper();
+	private final ObjectMapper objectMapper = new ObjectMapper();
+
+	private static final Long PERFORMER_ID = 999L;
 
 	@InjectMocks
 	private SystemRoleAdminController controller;
@@ -50,8 +59,28 @@ class SystemRoleAdminControllerTest {
 
 	@BeforeEach
 	void setUp() {
+		// CustomUserDetails를 주입할 ArgumentResolver
+		HandlerMethodArgumentResolver mockUserResolver = new HandlerMethodArgumentResolver() {
+			@Override
+			public boolean supportsParameter(MethodParameter parameter) {
+				return parameter.getParameterType().equals(CustomUserDetails.class);
+			}
+
+			@Override
+			public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
+				NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
+				return new CustomUserDetails(
+					PERFORMER_ID,
+					"admin@test.com",
+					Set.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+				);
+			}
+
+		};
+
 		mockMvc = MockMvcBuilders
 			.standaloneSetup(controller)
+			.setCustomArgumentResolvers(mockUserResolver)
 			.setControllerAdvice(new GlobalExceptionHandler())
 			.build();
 	}
@@ -75,7 +104,9 @@ class SystemRoleAdminControllerTest {
 				.andExpect(status().isCreated());
 
 			then(grantSystemRole).should().grant(argThat(req ->
-				req.memberId().equals(memberId) && req.role() == SystemRole.OPERATOR
+				req.memberId().equals(memberId)
+					&& req.role() == SystemRole.OPERATOR
+					&& req.performedBy().equals(PERFORMER_ID)
 			));
 		}
 	}
@@ -96,7 +127,9 @@ class SystemRoleAdminControllerTest {
 				.andExpect(status().isNoContent());
 
 			then(revokeSystemRole).should().revoke(argThat(req ->
-				req.memberId().equals(memberId) && req.role() == SystemRole.OPERATOR
+				req.memberId().equals(memberId)
+					&& req.role() == SystemRole.OPERATOR
+					&& req.performedBy().equals(PERFORMER_ID)
 			));
 		}
 	}

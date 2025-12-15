@@ -133,7 +133,7 @@ public class AuthControllerTest {
 				.andDo(print())
 				.andExpect(status().isUnauthorized())
 				.andExpect(content().contentType("application/problem+json;charset=UTF-8"))
-				.andExpect(jsonPath("$.title").value("Domain Error"))
+				.andExpect(jsonPath("$.title").value("Authentication Error"))
 				.andExpect(jsonPath("$.code").value("AUTH001"));
 		}
 
@@ -211,7 +211,7 @@ public class AuthControllerTest {
 				.andDo(print())
 				.andExpect(status().isUnauthorized())
 				.andExpect(content().contentType("application/problem+json;charset=UTF-8"))
-				.andExpect(jsonPath("$.title").value("Domain Error"))
+				.andExpect(jsonPath("$.title").value("Authentication Error"))
 				.andExpect(jsonPath("$.code").value("AUTH003"));
 		}
 
@@ -229,7 +229,7 @@ public class AuthControllerTest {
 				.andDo(print())
 				.andExpect(status().isUnauthorized())
 				.andExpect(content().contentType("application/problem+json;charset=UTF-8"))
-				.andExpect(jsonPath("$.title").value("Domain Error"))
+				.andExpect(jsonPath("$.title").value("Authentication Error"))
 				.andExpect(jsonPath("$.code").value("AUTH004"));
 		}
 
