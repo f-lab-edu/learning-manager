@@ -29,8 +29,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import me.chan99k.learningmanager.advice.GlobalExceptionHandler;
-import me.chan99k.learningmanager.authentication.JwtProvider;
-import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
+import me.chan99k.learningmanager.controller.BaseControllerTest;
 import me.chan99k.learningmanager.course.CourseProblemCode;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.member.MemberProblemCode;
@@ -45,18 +44,11 @@ import me.chan99k.learningmanager.session.SessionQueryRepository;
 import me.chan99k.learningmanager.session.SessionType;
 import me.chan99k.learningmanager.session.SessionUpdate;
 
-// NOTE :: 단위 테스트로 변경
 @WebMvcTest(controllers = SessionController.class)
 @Import(GlobalExceptionHandler.class)
-class SessionControllerTest {
+class SessionControllerTest extends BaseControllerTest {
 
 	private static final Long MEMBER_ID = 1L;
-
-	@Autowired
-	MockMvc mockMvc;
-
-	@Autowired
-	ObjectMapper objectMapper;
 
 	@MockBean
 	SessionCreation sessionCreation;
@@ -76,11 +68,10 @@ class SessionControllerTest {
 	@MockBean(name = "sessionTaskExecutor")
 	AsyncTaskExecutor sessionTaskExecutor;
 
-	@MockBean
-	JwtProvider jwtProvider;
-
-	@MockBean
-	SystemAuthorizationPort systemAuthorizationPort;
+	@Autowired
+	protected SessionControllerTest(MockMvc mockMvc, ObjectMapper objectMapper) {
+		super(mockMvc, objectMapper);
+	}
 
 	private CustomUserDetails createMockUser() {
 		return new CustomUserDetails(

@@ -6,48 +6,37 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import me.chan99k.learningmanager.authentication.AuthProblemCode;
 import me.chan99k.learningmanager.authentication.IssueToken;
-import me.chan99k.learningmanager.authentication.JwtProvider;
 import me.chan99k.learningmanager.authentication.RefreshAccessToken;
 import me.chan99k.learningmanager.authentication.RevokeAllTokens;
 import me.chan99k.learningmanager.authentication.RevokeToken;
-import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
-import me.chan99k.learningmanager.controller.attendance.MockCustomUserDetailsArgumentResolver;
+import me.chan99k.learningmanager.controller.BaseControllerTest;
 import me.chan99k.learningmanager.exception.DomainException;
 
-// NOTE :: 단위 테스트로 변경
-@WebMvcTest(value = AuthController.class,
-	excludeAutoConfiguration = {
-		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}
-)
+@WebMvcTest(value = AuthController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @DisplayName("AuthController 테스트")
-public class AuthControllerTest {
+public class AuthControllerTest extends BaseControllerTest {
 
+	private static final Long MEMBER_ID = 123L;
 	private static final String TEST_EMAIL = "test@example.com";
 	private static final String TEST_PASSWORD = "Password123!";
 	private static final String TEST_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test-access-token";
 	private static final String TEST_REFRESH_TOKEN = "test-refresh-token-uuid";
 	private static final long EXPIRES_IN_SECONDS = 3600L;
-
-	@Autowired
-	private MockMvc mockMvc;
-
-	@Autowired
-	private ObjectMapper objectMapper;
 
 	@MockBean
 	private IssueToken issueToken;
@@ -61,11 +50,10 @@ public class AuthControllerTest {
 	@MockBean
 	private RevokeAllTokens revokeAllTokens;
 
-	@MockBean
-	private JwtProvider jwtProvider;
-
-	@MockBean
-	private SystemAuthorizationPort systemAuthorizationPort;
+	@Autowired
+	AuthControllerTest(MockMvc mockMvc, ObjectMapper objectMapper) {
+		super(mockMvc, objectMapper);
+	}
 
 	@Nested
 	@DisplayName("토큰 발급 API 테스트 (POST /api/v1/auth/token)")
@@ -298,7 +286,6 @@ public class AuthControllerTest {
 		@Test
 		@DisplayName("[Success] 존재하지 않는 토큰도 성공 응답 - 200 OK (RFC 7009 권장)")
 		void revoke_token_test_04() throws Exception {
-			// RFC 7009 에 따르면 존재하지 않는 토큰 폐기 요청도 200 OK 반환
 			RevokeToken.Request request = new RevokeToken.Request("not-found-token");
 
 			doNothing().when(revokeToken).revoke(any(RevokeToken.Request.class));
@@ -311,41 +298,7 @@ public class AuthControllerTest {
 		}
 	}
 
-	@Nested
-	@DisplayName("전체 토큰 폐기 API 테스트")
-	class RevokeAllTokensTest {
-
-		private MockMvc standaloneMockMvc;
-
-		@BeforeEach
-		void setUp() {
-			// Security가 비활성화된 상태에서 @AuthenticationPrincipal을 테스트하기 위해
-			// standaloneSetup과 MockCustomUserDetailsArgumentResolver를 사용
-			standaloneMockMvc = MockMvcBuilders
-				.standaloneSetup(new AuthController(issueToken, refreshAccessToken, revokeToken, revokeAllTokens))
-				.setCustomArgumentResolvers(new MockCustomUserDetailsArgumentResolver())
-				.build();
-		}
-
-		@Test
-		@DisplayName("[Success] 인증된 사용자의 전체 토큰 폐기 성공 - 200 OK")
-		void revoke_all_tokens_test_01() throws Exception {
-			doNothing().when(revokeAllTokens).revokeAll(anyLong());
-
-			standaloneMockMvc.perform(post("/api/v1/auth/token/revoke-all"))
-				.andDo(print())
-				.andExpect(status().isOk());
-
-			then(revokeAllTokens).should().revokeAll(123L); // MockCustomUserDetailsArgumentResolver의 기본 memberId
-		}
-
-		@Test
-		@DisplayName("[Success] 전체 토큰 폐기 시 revokeAllTokens 서비스가 호출된다")
-		void revoke_all_tokens_test_02() throws Exception {
-			doNothing().when(revokeAllTokens).revokeAll(anyLong());
-			standaloneMockMvc.perform(post("/api/v1/auth/token/revoke-all"))
-				.andExpect(status().isOk());
-			then(revokeAllTokens).should().revokeAll(123L);
-		}
-	}
+	// Note: 전체 토큰 폐기 API는 @AuthenticationPrincipal을 사용하므로
+	// 필터가 비활성화된 상태에서는 테스트가 불가능합니다.
+	// 해당 테스트는 SecurityIntegrationTest에서 별도로 수행합니다.
 }

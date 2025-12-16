@@ -20,39 +20,22 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.authentication.JwtProvider;
-import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
+import me.chan99k.learningmanager.controller.BaseControllerTest;
 import me.chan99k.learningmanager.member.MemberStatus;
 import me.chan99k.learningmanager.member.MemberStatusChange;
 import me.chan99k.learningmanager.security.CustomUserDetails;
 
-// NOTE :: 단위 테스트로 변경
 @WebMvcTest(controllers = MemberAdminController.class)
-class MemberAdminControllerTest {
+class MemberAdminControllerTest extends BaseControllerTest {
 
 	private static final Long ADMIN_MEMBER_ID = 123L;
-
-	@Autowired
-	private MockMvc mockMvc;
-
-	@Autowired
-	private ObjectMapper objectMapper;
 
 	@MockBean
 	private MemberStatusChange memberStatusChange;
 
-	@MockBean
-	private JwtProvider jwtProvider;
-
-	@MockBean
-	private SystemAuthorizationPort systemAuthorizationPort;
-
-	private CustomUserDetails createMockAdmin() {
-		return new CustomUserDetails(
-			ADMIN_MEMBER_ID,
-			"admin@example.com",
-			List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
-		);
+	@Autowired
+	protected MemberAdminControllerTest(MockMvc mockMvc, ObjectMapper objectMapper) {
+		super(mockMvc, objectMapper);
 	}
 
 	@Test
@@ -95,5 +78,13 @@ class MemberAdminControllerTest {
 			.andExpect(status().isNoContent());
 
 		verify(memberStatusChange).changeStatus(any(), any(MemberStatusChange.Request.class));
+	}
+
+	private CustomUserDetails createMockAdmin() {
+		return new CustomUserDetails(
+			ADMIN_MEMBER_ID,
+			"admin@example.com",
+			List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+		);
 	}
 }

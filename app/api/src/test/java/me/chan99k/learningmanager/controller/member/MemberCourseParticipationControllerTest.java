@@ -23,23 +23,20 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import me.chan99k.learningmanager.advice.GlobalExceptionHandler;
-import me.chan99k.learningmanager.authentication.JwtProvider;
-import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
+import me.chan99k.learningmanager.controller.BaseControllerTest;
 import me.chan99k.learningmanager.course.CourseRole;
 import me.chan99k.learningmanager.member.CourseParticipationInfo;
 import me.chan99k.learningmanager.member.MemberCourseParticipation;
 import me.chan99k.learningmanager.security.CustomUserDetails;
 
-// NOTE :: 단위 테스트로 변경
 @WebMvcTest(controllers = MemberCourseParticipationController.class)
 @Import(GlobalExceptionHandler.class)
-class MemberCourseParticipationControllerTest {
+class MemberCourseParticipationControllerTest extends BaseControllerTest {
 
 	private static final Long MEMBER_ID = 1L;
-
-	@Autowired
-	private MockMvc mockMvc;
 
 	@MockBean
 	private MemberCourseParticipation memberCourseParticipation;
@@ -47,11 +44,11 @@ class MemberCourseParticipationControllerTest {
 	@MockBean(name = "memberTaskExecutor")
 	private Executor memberTaskExecutor;
 
-	@MockBean
-	private JwtProvider jwtProvider;
-
-	@MockBean
-	private SystemAuthorizationPort systemAuthorizationPort;
+	@Autowired
+	protected MemberCourseParticipationControllerTest(MockMvc mockMvc,
+		ObjectMapper objectMapper) {
+		super(mockMvc, objectMapper);
+	}
 
 	private CustomUserDetails createMockUser() {
 		return new CustomUserDetails(
