@@ -42,6 +42,7 @@ public class AccountEntity extends MutableEntity {
 	private List<CredentialEmbeddable> credentials = new ArrayList<>();
 
 	public AccountEntity() {
+		// JPA 스펙 요구사항 + Mapper에서 인스턴스 생성을 위해 public
 	}
 
 	public MemberEntity getMember() {
