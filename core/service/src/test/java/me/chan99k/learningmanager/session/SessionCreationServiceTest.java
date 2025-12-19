@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.application.session;
+package me.chan99k.learningmanager.session;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -27,14 +27,6 @@ import me.chan99k.learningmanager.course.Curriculum;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.member.MemberProblemCode;
 import me.chan99k.learningmanager.member.SystemRole;
-import me.chan99k.learningmanager.session.Session;
-import me.chan99k.learningmanager.session.SessionCommandRepository;
-import me.chan99k.learningmanager.session.SessionCreation;
-import me.chan99k.learningmanager.session.SessionCreationService;
-import me.chan99k.learningmanager.session.SessionLocation;
-import me.chan99k.learningmanager.session.SessionProblemCode;
-import me.chan99k.learningmanager.session.SessionQueryRepository;
-import me.chan99k.learningmanager.session.SessionType;
 
 @ExtendWith(MockitoExtension.class)
 class SessionCreationServiceTest {

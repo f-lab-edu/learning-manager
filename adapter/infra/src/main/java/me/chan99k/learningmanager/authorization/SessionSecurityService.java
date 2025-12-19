@@ -12,7 +12,7 @@ import me.chan99k.learningmanager.session.SessionParticipantRole;
 import me.chan99k.learningmanager.session.SessionQueryRepository;
 
 @Service("sessionSecurity")
-public class SessionSecurityService {
+public class SessionSecurityService implements SessionSecurity {
 	private final SessionAuthorizationPort sessionAuthorizationPort;
 	private final SessionQueryRepository sessionQueryRepository;
 	private final SystemAuthorizationPort systemAuthorizationPort;
@@ -27,6 +27,7 @@ public class SessionSecurityService {
 		this.systemAuthorizationPort = systemAuthorizationPort;
 	}
 
+	@Override
 	public boolean isSessionManager(Long sessionId, Long memberId) {
 		Session session = findSession(sessionId);
 		if (session == null) {
@@ -44,6 +45,7 @@ public class SessionSecurityService {
 		);
 	}
 
+	@Override
 	public boolean isSessionManagerOrMentor(Long sessionId, Long memberId) {
 		Session session = findSession(sessionId);
 		if (session == null) {
@@ -60,6 +62,7 @@ public class SessionSecurityService {
 		);
 	}
 
+	@Override
 	public boolean isSessionMember(Long sessionId, Long memberId) {
 		Session session = findSession(sessionId);
 		if (session == null) {
@@ -74,6 +77,7 @@ public class SessionSecurityService {
 		return sessionAuthorizationPort.isMemberOfCourse(memberId, session.getCourseId());
 	}
 
+	@Override
 	public boolean canManageSessionParticipants(Long sessionId, Long memberId) {
 		Session session = findSession(sessionId);
 		if (session == null) {

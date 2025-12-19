@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.application.member;
+package me.chan99k.learningmanager.member;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -18,12 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import me.chan99k.learningmanager.course.Course;
 import me.chan99k.learningmanager.course.CourseQueryRepository;
 import me.chan99k.learningmanager.exception.DomainException;
-import me.chan99k.learningmanager.member.Account;
-import me.chan99k.learningmanager.member.Member;
-import me.chan99k.learningmanager.member.MemberCommandRepository;
-import me.chan99k.learningmanager.member.MemberProblemCode;
-import me.chan99k.learningmanager.member.MemberQueryRepository;
-import me.chan99k.learningmanager.member.MemberWithdrawalService;
 
 @ExtendWith(MockitoExtension.class)
 class MemberWithdrawalServiceTest {

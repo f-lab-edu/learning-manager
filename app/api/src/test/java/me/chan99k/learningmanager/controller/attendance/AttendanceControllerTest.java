@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.adapter.web.attendance;
+package me.chan99k.learningmanager.controller.attendance;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -18,44 +18,31 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import me.chan99k.learningmanager.attendance.AttendanceRetrieval;
 import me.chan99k.learningmanager.attendance.AttendanceStatus;
-import me.chan99k.learningmanager.authentication.JwtProvider;
-import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
-import me.chan99k.learningmanager.controller.attendance.AttendanceController;
+import me.chan99k.learningmanager.controller.BaseControllerTest;
 import me.chan99k.learningmanager.security.CustomUserDetails;
 
-// NOTE :: 단위 테스트로 변경
 @WebMvcTest(controllers = AttendanceController.class)
 @DisplayName("AttendanceController 테스트")
-class AttendanceControllerTest {
+class AttendanceControllerTest extends BaseControllerTest {
 
 	private static final Long MEMBER_ID = 123L;
 	private static final Long COURSE_ID = 456L;
 	private static final Long CURRICULUM_ID = 789L;
 
-	@Autowired
-	private MockMvc mockMvc;
-
 	@MockBean
 	private AttendanceRetrieval attendanceRetrieval;
 
-	@MockBean
-	private JwtProvider jwtProvider;
-
-	@MockBean
-	private SystemAuthorizationPort systemAuthorizationPort;
-
-	private CustomUserDetails createMockUser() {
-		return new CustomUserDetails(
-			MEMBER_ID,
-			"test@example.com",
-			List.of(new SimpleGrantedAuthority("ROLE_USER"))
-		);
+	@Autowired
+	protected AttendanceControllerTest(MockMvc mockMvc, ObjectMapper objectMapper) {
+		super(mockMvc, objectMapper);
 	}
 
 	@Test
-	@DisplayName("내 전체 출석 현황 조회 - 성공")
+	@DisplayName("[Success] 내 전체 출석 현황 조회 - 성공")
 	void getMyAllAttendanceStatus_Success() throws Exception {
 		AttendanceRetrieval.Response mockResponse = createMockResponse();
 		when(attendanceRetrieval.getMyAllAttendanceStatus(any(AttendanceRetrieval.AllAttendanceRequest.class)))
@@ -79,7 +66,7 @@ class AttendanceControllerTest {
 	}
 
 	@Test
-	@DisplayName("과정별 출석 현황 조회 - 성공")
+	@DisplayName("[Success] 과정별 출석 현황 조회 - 성공")
 	void getMyCourseAttendanceStatus_Success() throws Exception {
 		AttendanceRetrieval.Response mockResponse = createMockResponse();
 		when(attendanceRetrieval.getMyCourseAttendanceStatus(any(AttendanceRetrieval.CourseAttendanceRequest.class)))
@@ -99,7 +86,7 @@ class AttendanceControllerTest {
 	}
 
 	@Test
-	@DisplayName("커리큘럼별 출석 현황 조회 - 성공")
+	@DisplayName("[Success] 커리큘럼별 출석 현황 조회 - 성공")
 	void getMyCurriculumAttendanceStatus_Success() throws Exception {
 		AttendanceRetrieval.Response mockResponse = createMockResponse();
 		when(attendanceRetrieval.getMyCurriculumAttendanceStatus(
@@ -120,7 +107,7 @@ class AttendanceControllerTest {
 	}
 
 	@Test
-	@DisplayName("월별 출석 현황 조회 - 성공")
+	@DisplayName("[Success] 월별 출석 현황 조회 - 성공")
 	void getMyMonthlyAttendanceStatus_Success() throws Exception {
 		int year = 2025;
 		int month = 1;
@@ -149,7 +136,7 @@ class AttendanceControllerTest {
 	}
 
 	@Test
-	@DisplayName("기간별 출석 현황 조회 - 성공")
+	@DisplayName("[Success] 기간별 출석 현황 조회 - 성공")
 	void getMyPeriodAttendanceStatus_Success() throws Exception {
 		String startDate = "2025-01-01T00:00:00Z";
 		String endDate = "2025-01-31T23:59:59Z";
@@ -182,7 +169,7 @@ class AttendanceControllerTest {
 	}
 
 	@Test
-	@DisplayName("기간별 출석 현황 조회 - 필수 파라미터만 제공")
+	@DisplayName("[Success] 기간별 출석 현황 조회 - 필수 파라미터만 제공")
 	void getMyPeriodAttendanceStatus_RequiredParamsOnly_Success() throws Exception {
 		String startDate = "2025-01-01T00:00:00Z";
 		String endDate = "2025-01-31T23:59:59Z";
@@ -209,7 +196,7 @@ class AttendanceControllerTest {
 	}
 
 	@Test
-	@DisplayName("과정별 출석 현황 조회 - courseId 누락 시 400 에러")
+	@DisplayName("[Failure] 과정별 출석 현황 조회 - courseId 누락 시 400 에러")
 	void getMyCourseAttendanceStatus_MissingCourseId_BadRequest() throws Exception {
 		mockMvc.perform(get("/api/v1/attendance/status/my/course")
 				.with(user(createMockUser())))
@@ -219,7 +206,7 @@ class AttendanceControllerTest {
 	}
 
 	@Test
-	@DisplayName("커리큘럼별 출석 현황 조회 - curriculumId 누락 시 400 에러")
+	@DisplayName("[Failure] 커리큘럼 별 출석 현황 조회 - curriculumId 누락 시 400 에러")
 	void getMyCurriculumAttendanceStatus_MissingCurriculumId_BadRequest() throws Exception {
 		mockMvc.perform(get("/api/v1/attendance/status/my/curriculum")
 				.with(user(createMockUser())))
@@ -229,7 +216,7 @@ class AttendanceControllerTest {
 	}
 
 	@Test
-	@DisplayName("기간별 출석 현황 조회 - startDate 누락 시 400 에러")
+	@DisplayName("[Failure] 기간별 출석 현황 조회 - startDate 누락 시 400 에러")
 	void getMyPeriodAttendanceStatus_MissingStartDate_BadRequest() throws Exception {
 		mockMvc.perform(get("/api/v1/attendance/status/my/period")
 				.with(user(createMockUser()))
@@ -257,5 +244,13 @@ class AttendanceControllerTest {
 			new AttendanceRetrieval.AttendanceStatistics(1, 1, 0, 0, 0, 100.0);
 
 		return new AttendanceRetrieval.Response(List.of(sessionInfo), statistics);
+	}
+
+	private CustomUserDetails createMockUser() {
+		return new CustomUserDetails(
+			MEMBER_ID,
+			"test@example.com",
+			List.of(new SimpleGrantedAuthority("ROLE_USER"))
+		);
 	}
 }

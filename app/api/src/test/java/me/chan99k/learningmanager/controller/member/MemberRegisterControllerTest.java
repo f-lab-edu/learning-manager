@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.adapter.web.member;
+package me.chan99k.learningmanager.controller.member;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
@@ -19,39 +19,36 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.authentication.JwtProvider;
-import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
-import me.chan99k.learningmanager.controller.member.MemberRegisterController;
+import me.chan99k.learningmanager.controller.BaseControllerTest;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.member.MemberProblemCode;
 import me.chan99k.learningmanager.member.MemberRegistration;
 import me.chan99k.learningmanager.member.SignUpConfirmation;
 
-// NOTE :: 단위 테스트로 변경
 @WebMvcTest(value = MemberRegisterController.class,
 	excludeAutoConfiguration = {
 		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}
 )
-public class MemberRegisterControllerTest {
+public class MemberRegisterControllerTest extends BaseControllerTest {
 
 	private static final String TEST_EMAIL = "test@example.com";
 	private static final String TEST_PASSWORD = "testPassword123!";
 	private static final String ACTIVATION_TOKEN = "test-activation-token-123";
 	private static final Long MEMBER_ID = 2L;
-	@Autowired
-	private MockMvc mockMvc;
-	@Autowired
-	private ObjectMapper objectMapper;
+
 	@MockBean
 	private MemberRegistration memberRegistration;
+
 	@MockBean
 	private SignUpConfirmation signUpConfirmation;
+
 	@MockBean
 	private Executor memberTaskExecutor;
-	@MockBean
-	private JwtProvider jwtProvider;
-	@MockBean
-	private SystemAuthorizationPort systemAuthorizationPort;
+
+	@Autowired
+	protected MemberRegisterControllerTest(MockMvc mockMvc, ObjectMapper objectMapper) {
+		super(mockMvc, objectMapper);
+	}
 
 	@Nested
 	@DisplayName("회원가입 API 테스트")

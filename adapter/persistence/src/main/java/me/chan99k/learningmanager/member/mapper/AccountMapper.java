@@ -1,9 +1,7 @@
 package me.chan99k.learningmanager.member.mapper;
 
 import java.time.ZoneId;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import me.chan99k.learningmanager.member.Account;
 import me.chan99k.learningmanager.member.Credential;
@@ -35,8 +33,8 @@ public final class AccountMapper {
 		entity.setVersion(domain.getVersion());
 
 		List<CredentialEmbeddable> credentialList = domain.getCredentials().stream()
-			.map(credential -> toCredentialEmbeddable(credential, entity))
-			.collect(Collectors.toList());
+			.map(AccountMapper::toCredentialEmbeddable)
+			.toList();
 		entity.setCredentials(credentialList);
 
 		return entity;
@@ -50,8 +48,8 @@ public final class AccountMapper {
 		List<Credential> credentials = entity.getCredentials() != null
 			? entity.getCredentials().stream()
 			.map(AccountMapper::toCredentialDomain)
-			.collect(Collectors.toList())
-			: Collections.emptyList();
+			.toList()
+			: List.of();
 
 		return Account.reconstitute(
 			entity.getId(),
@@ -66,7 +64,7 @@ public final class AccountMapper {
 		);
 	}
 
-	private static CredentialEmbeddable toCredentialEmbeddable(Credential domain, AccountEntity accountEntity) {
+	private static CredentialEmbeddable toCredentialEmbeddable(Credential domain) {
 		return CredentialEmbeddable.builder()
 			.type(domain.getType())
 			.secret(domain.getSecret())

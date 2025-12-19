@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.application.session;
+package me.chan99k.learningmanager.session;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -23,14 +23,6 @@ import me.chan99k.learningmanager.course.CourseQueryRepository;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.member.MemberProblemCode;
 import me.chan99k.learningmanager.member.SystemRole;
-import me.chan99k.learningmanager.session.Session;
-import me.chan99k.learningmanager.session.SessionCommandRepository;
-import me.chan99k.learningmanager.session.SessionLocation;
-import me.chan99k.learningmanager.session.SessionProblemCode;
-import me.chan99k.learningmanager.session.SessionQueryRepository;
-import me.chan99k.learningmanager.session.SessionType;
-import me.chan99k.learningmanager.session.SessionUpdate;
-import me.chan99k.learningmanager.session.SessionUpdateService;
 
 @ExtendWith(MockitoExtension.class)
 class SessionUpdateServiceTest {

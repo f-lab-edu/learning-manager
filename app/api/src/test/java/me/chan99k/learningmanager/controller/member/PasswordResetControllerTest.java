@@ -1,4 +1,4 @@
-package me.chan99k.learningmanager.adapter.web.member;
+package me.chan99k.learningmanager.controller.member;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
@@ -17,32 +17,23 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.authentication.JwtProvider;
-import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
-import me.chan99k.learningmanager.controller.member.PasswordResetController;
+import me.chan99k.learningmanager.controller.BaseControllerTest;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.member.MemberProblemCode;
 import me.chan99k.learningmanager.member.PasswordResetConfirmation;
 import me.chan99k.learningmanager.member.PasswordResetRequest;
 import me.chan99k.learningmanager.member.PasswordResetVerification;
 
-// NOTE :: 단위 테스트로 변경
 @WebMvcTest(value = PasswordResetController.class,
 	excludeAutoConfiguration = {
 		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class}
 )
 @DisplayName("PasswordResetController 테스트")
-class PasswordResetControllerTest {
+class PasswordResetControllerTest extends BaseControllerTest {
 
 	private static final String TEST_EMAIL = "test@example.com";
 	private static final String RESET_TOKEN = "reset-token-abc123";
 	private static final String NEW_PASSWORD = "NewPassword123!";
-
-	@Autowired
-	private MockMvc mockMvc;
-
-	@Autowired
-	private ObjectMapper objectMapper;
 
 	@MockBean
 	private PasswordResetRequest passwordResetRequest;
@@ -53,11 +44,10 @@ class PasswordResetControllerTest {
 	@MockBean
 	private PasswordResetConfirmation passwordResetConfirmation;
 
-	@MockBean
-	private JwtProvider jwtProvider;
-
-	@MockBean
-	private SystemAuthorizationPort systemAuthorizationPort;
+	@Autowired
+	protected PasswordResetControllerTest(MockMvc mockMvc, ObjectMapper objectMapper) {
+		super(mockMvc, objectMapper);
+	}
 
 	@Nested
 	@DisplayName("비밀번호 재설정 요청 API 테스트 (POST /api/v1/auth/password/reset-request)")

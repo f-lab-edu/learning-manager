@@ -21,34 +21,25 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.chan99k.learningmanager.authentication.JwtProvider;
-import me.chan99k.learningmanager.authorization.SystemAuthorizationPort;
+import me.chan99k.learningmanager.controller.BaseControllerTest;
 import me.chan99k.learningmanager.exception.DomainException;
 import me.chan99k.learningmanager.member.MemberProblemCode;
 import me.chan99k.learningmanager.member.PasswordChange;
 import me.chan99k.learningmanager.security.CustomUserDetails;
 
-// NOTE :: 단위 테스트로 변경
 @WebMvcTest(controllers = PasswordChangeController.class)
 @DisplayName("PasswordChangeController 테스트")
-class PasswordChangeControllerTest {
+class PasswordChangeControllerTest extends BaseControllerTest {
 
 	private static final Long MEMBER_ID = 1L;
-
-	@Autowired
-	private MockMvc mockMvc;
-
-	@Autowired
-	private ObjectMapper objectMapper;
 
 	@MockBean
 	private PasswordChange passwordChange;
 
-	@MockBean
-	private JwtProvider jwtProvider;
-
-	@MockBean
-	private SystemAuthorizationPort systemAuthorizationPort;
+	@Autowired
+	protected PasswordChangeControllerTest(MockMvc mockMvc, ObjectMapper objectMapper) {
+		super(mockMvc, objectMapper);
+	}
 
 	@Test
 	@DisplayName("[Success] 비밀번호 변경 성공")

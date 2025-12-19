@@ -17,7 +17,7 @@ import me.chan99k.learningmanager.session.SessionQueryRepository;
 
 @Service("attendanceSecurity")
 @Transactional(readOnly = true)
-public class AttendanceSecurity {
+public class AttendanceSecurity implements AttendanceSecurityPort {
 
 	private final AttendanceQueryRepository attendanceQueryRepository;
 	private final SessionQueryRepository sessionQueryRepository;
@@ -36,6 +36,7 @@ public class AttendanceSecurity {
 		this.courseAuthorizationPort = courseAuthorizationPort;
 	}
 
+	@Override
 	public boolean canRequestCorrection(String attendanceId, Long memberId) {
 		Optional<Attendance> foundAttendance = attendanceQueryRepository.findById(attendanceId);
 		if (foundAttendance.isEmpty()) {
@@ -66,6 +67,7 @@ public class AttendanceSecurity {
 		);
 	}
 
+	@Override
 	public boolean canApproveCorrection(String attendanceId, Long memberId) {
 		Optional<Attendance> foundAttendance = attendanceQueryRepository.findById(attendanceId);
 		if (foundAttendance.isEmpty()) {
